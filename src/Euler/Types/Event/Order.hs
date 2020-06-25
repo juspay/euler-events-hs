@@ -2,7 +2,7 @@ module Euler.Types.Event.Order where
 
 import           Data.Text               (Text)
 import           Data.Time               (UTCTime)
-import           Euler.Types.Event       (Event (toProtoEvent))
+import           Euler.Class             (Event (toProtoEvent))
 import           Prelude                 hiding (id)
 
 import qualified Euler.Proto.Event       as Proto

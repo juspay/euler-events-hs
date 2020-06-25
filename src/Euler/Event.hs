@@ -3,8 +3,8 @@ module Euler.Event where
 import           Data.ByteString.Lazy       (ByteString, toStrict)
 import           Data.ByteString.Lazy.Char8 (pack)
 import qualified Data.ByteString.Lazy.Char8 as BSLC
+import           Euler.Class                (Event (toProtoEvent))
 import           Euler.Sink.Kafka           (sendToKafka)
-import           Euler.Types.Event          (Event (toProtoEvent))
 import           Proto3.Suite               (toLazyByteString)
 
 data Sink

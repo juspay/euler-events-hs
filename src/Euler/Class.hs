@@ -1,4 +1,4 @@
-module Euler.Types.Event where
+module Euler.Class where
 
 import qualified Euler.Proto.Event as Proto
 
