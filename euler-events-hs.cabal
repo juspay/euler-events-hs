@@ -26,7 +26,7 @@ library
     Euler.Types.Event
     Euler.Types.Event.Order
     Euler.Types.Event.Txn
-    -- Euler.Types.Event.Refund
+    Euler.Types.Event.Refund
     Euler.Utils
   default-language:    Haskell2010
   build-depends:

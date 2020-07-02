@@ -2,16 +2,15 @@
 
 module Euler.Types.Event.Txn where
 
-import           Data.Text               (Text)
-import           Data.Time               (UTCTime)
-import           Euler.Class             (Event (toProtoEvent))
-import           Prelude                 hiding (id)
+import           Data.Text             (Text)
+import           Data.Time             (UTCTime)
+import           Euler.Class           (Event (toProtoEvent))
+import           Prelude               hiding (id)
 
-import qualified Euler.Proto.Event       as Proto
-import qualified Euler.Proto.Event.Order as Proto
-import qualified Euler.Proto.Event.Txn   as Proto
-import           Euler.Util              (fromInt, fromMaybeBool, fromMaybeDouble, fromMaybeInt, fromMaybeText,
-                                          fromMaybeUTCTime, fromSumType, fromText, fromUTCTime)
+import qualified Euler.Proto.Event     as Proto
+import qualified Euler.Proto.Event.Txn as Proto
+import           Euler.Util            (fromInt, fromMaybeBool, fromMaybeDouble, fromMaybeInt, fromMaybeText,
+                                        fromMaybeUTCTime, fromSumType, fromText)
 
 data Txn =
   Txn
