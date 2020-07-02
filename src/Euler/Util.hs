@@ -1,12 +1,13 @@
 module Euler.Util where
 
 import           Data.Int              (Int64)
+import           Data.Maybe            (fromMaybe)
 import           Data.Text             (Text)
 import           Data.Text.Lazy        (fromStrict)
 import qualified Data.Text.Lazy        as Text.Lazy
 import           Data.Time.Clock       (UTCTime, diffTimeToPicoseconds, diffUTCTime)
 import           Data.Time.Clock.POSIX (posixSecondsToUTCTime)
-import           Euler.Constants       (defaultInt64, defaultLazyText)
+import           Euler.Constants       (defaultBool, defaultInt64, defaultLazyText)
 import           Proto3.Suite          (Enumerated (Enumerated))
 
 fromInt :: Integral a => a -> Int64
@@ -34,3 +35,9 @@ utcTimeToNanos :: UTCTime -> Integer
 utcTimeToNanos t =
   diffTimeToPicoseconds (realToFrac (diffUTCTime t (posixSecondsToUTCTime 0))) `div`
   1000
+
+fromMaybeBool :: Maybe Bool -> Bool
+fromMaybeBool = fromMaybe defaultBool
+
+fromMaybeDouble :: Maybe Double -> Double
+fromMaybeDouble = fromMaybe 0.0

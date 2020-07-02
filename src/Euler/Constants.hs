@@ -18,3 +18,9 @@ defaultInt64 = 0
 
 defaultLazyText :: Text.Lazy.Text
 defaultLazyText = ""
+
+defaultBool :: Bool
+defaultBool = False
+
+defaultDouble :: Double
+defaultDouble = 0.0

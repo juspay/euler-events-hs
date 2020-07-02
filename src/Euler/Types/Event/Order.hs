@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Euler.Types.Event.Order where
 
 import           Data.Text               (Text)
@@ -39,7 +41,6 @@ data Order =
     -- extra info
     , eventType         :: OrderEventType
     }
-  deriving (Show)
 
 -- defaultOrder :: Order
 -- defaultOrder = Order { id = 1,
@@ -75,13 +76,11 @@ data Currency
   | GBP
   | EUR
   | AED
-  deriving (Show)
 
 data OrderType
   = MANDATE_REGISTER
   | MANDATE_PAYMENT
   | ORDER_PAYMENT
-  deriving (Show)
 
 data OrderStatus
   = OrderStatusNew
@@ -102,7 +101,6 @@ data OrderStatus
   | OrderStatusCaptureFailed
   | OrderStatusVoidFailed
   | OrderStatusAutoRefunded
-  deriving (Show)
 
 data UDF =
   UDF
@@ -117,56 +115,50 @@ data UDF =
     , udf9  :: Maybe Text
     , udf10 :: Maybe Text
     }
-  deriving (Show)
 
 data MandateFeature
   = DISABLED
   | REQUIRED
   | OPTIONAL
-  deriving (Show)
 
 data OrderEventType
   = OrderCreate
   | OrderUpdate
-  deriving (Show)
 
 instance Event Order where
-  toProtoEvent order =
+  toProtoEvent Order {..} =
     Proto.Event
       { Proto.eventEvent =
           Just $
           Proto.EventEventOrder $
           Proto.Order
-            { Proto.orderId = fromInt $ id order
-            , Proto.orderVersion = fromInt $ version order
-            , Proto.orderAmount = amount order
-            , Proto.orderCurrency = fromSumType . fromCurrency $ currency order
-            , Proto.orderMerchantId = fromText $ merchantId order
-            , Proto.orderOrderId = fromText $ orderId order
-            , Proto.orderOrderUuid = fromText $ orderId order
-            , Proto.orderOrderType =
-                fromSumType . fromOrderType $ orderType order
+            { Proto.orderId = fromInt id
+            , Proto.orderVersion = fromInt version
+            , Proto.orderAmount = amount
+            , Proto.orderCurrency = fromSumType . fromCurrency $ currency
+            , Proto.orderMerchantId = fromText merchantId
+            , Proto.orderOrderId = fromText orderId
+            , Proto.orderOrderUuid = fromText orderId
+            , Proto.orderOrderType = fromSumType . fromOrderType $ orderType
             , Proto.orderOrderStatus =
-                fromSumType . fromOrderStatus $ orderStatus order
-            , Proto.orderCustomerId = fromMaybeText $ customerId order
-            , Proto.orderCustomerEmail = fromMaybeText $ customerEmail order
-            , Proto.orderCustomerPhone = fromMaybeText $ customerPhone order
-            , Proto.orderBillingAddressId =
-                fromMaybeInt $ billingAddressId order
-            , Proto.orderShippingAddressId =
-                fromMaybeInt $ shippingAddressId order
-            , Proto.orderUdf = Just $ fromUdf (udf order)
-            , Proto.orderDescription = fromMaybeText $ description order
-            , Proto.orderReturnUrl = fromMaybeText $ returnUrl order
-            , Proto.orderAmountRefunded = amountRefunded order
-            , Proto.orderRefundedEntirely = refundedEntirely order
-            , Proto.orderProductId = fromMaybeText $ productId order
-            , Proto.orderMandate = fromSumType . fromMandate $ mandate order
-            , Proto.orderLastSynced = fromMaybeUTCTime $ lastSynced order
-            , Proto.orderDateCreated = fromUTCTime $ dateCreated order
-            , Proto.orderLastModified = fromUTCTime $ lastModified order
+                fromSumType . fromOrderStatus $ orderStatus
+            , Proto.orderCustomerId = fromMaybeText customerId
+            , Proto.orderCustomerEmail = fromMaybeText customerEmail
+            , Proto.orderCustomerPhone = fromMaybeText customerPhone
+            , Proto.orderBillingAddressId = fromMaybeInt billingAddressId
+            , Proto.orderShippingAddressId = fromMaybeInt shippingAddressId
+            , Proto.orderUdf = Just . fromUdf $ udf
+            , Proto.orderDescription = fromMaybeText description
+            , Proto.orderReturnUrl = fromMaybeText returnUrl
+            , Proto.orderAmountRefunded = amountRefunded
+            , Proto.orderRefundedEntirely = refundedEntirely
+            , Proto.orderProductId = fromMaybeText productId
+            , Proto.orderMandate = fromSumType . fromMandate $ mandate
+            , Proto.orderLastSynced = fromMaybeUTCTime lastSynced
+            , Proto.orderDateCreated = fromUTCTime dateCreated
+            , Proto.orderLastModified = fromUTCTime lastModified
             , Proto.orderOrderEventType =
-                fromSumType . fromOrderEventType $ eventType order
+                fromSumType . fromOrderEventType $ eventType
             }
       }
 
