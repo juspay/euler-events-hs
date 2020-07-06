@@ -1,27 +1,28 @@
 module Euler.Event where
 
 import           Data.ByteString.Lazy       (ByteString, toStrict)
-import           Data.ByteString.Lazy.Char8 (pack)
 import qualified Data.ByteString.Lazy.Char8 as BSLC
 import           Euler.Class                (Event (toProtoEvent))
-import           Euler.Sink.Kafka           (sendToKafka)
+import           Euler.Sink.Kafka           (KafkaConfig, sendToKafka)
 import           Proto3.Suite               (toLazyByteString)
+import qualified Proto3.Suite.JSONPB        as ProtoJson
 
 data Sink
   = Stdout
-  | Kafka -- add KafkaConfig
+  | Kafka KafkaConfig
 
--- mkMsg :: Receiver -> (E.Event -> IO ())
+-- mkMsg :: Sink -> (E.Event -> IO ())
 -- init - strLogger = mkMsg Kafka
 send :: Event a => Sink -> a -> IO ()
 send sink event =
   let msg = encode sink event
    in case sink of
-        Stdout -> BSLC.putStrLn msg
-        Kafka  -> sendToKafka $ toStrict msg
+        Stdout            -> BSLC.putStrLn msg
+        Kafka kafkaConfig -> sendToKafka kafkaConfig $ toStrict msg
 
 encode :: Event a => Sink -> a -> ByteString
 encode sink event =
-  case sink of
-    Kafka  -> toLazyByteString . toProtoEvent $ event
-    Stdout -> pack . show . toProtoEvent $ event -- change to json
+  let msg = toProtoEvent event
+   in case sink of
+        Kafka _ -> toLazyByteString msg
+        Stdout  -> ProtoJson.encode ProtoJson.defaultOptions msg
