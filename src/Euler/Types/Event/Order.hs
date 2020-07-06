@@ -9,8 +9,7 @@ import           Prelude                 hiding (id)
 
 import qualified Euler.Proto.Event       as Proto
 import qualified Euler.Proto.Event.Order as Proto
-import           Euler.Util              (fromInt, fromMaybeInt, fromMaybeText, fromMaybeUTCTime, fromSumType, fromText,
-                                          fromUTCTime)
+import           Euler.Util              (fromInt, fromSumType, fromText, fromUTCTime)
 
 data Order =
   Order
@@ -142,19 +141,34 @@ instance Event Order where
             , Proto.orderOrderType = fromSumType . fromOrderType $ orderType
             , Proto.orderOrderStatus =
                 fromSumType . fromOrderStatus $ orderStatus
-            , Proto.orderCustomerId = fromMaybeText customerId
-            , Proto.orderCustomerEmail = fromMaybeText customerEmail
-            , Proto.orderCustomerPhone = fromMaybeText customerPhone
-            , Proto.orderBillingAddressId = fromMaybeInt billingAddressId
-            , Proto.orderShippingAddressId = fromMaybeInt shippingAddressId
+            , Proto.orderMaybeCustomerId =
+                Proto.OrderMaybeCustomerIdCustomerId . fromText <$> customerId
+            , Proto.orderMaybeCustomerEmail =
+                Proto.OrderMaybeCustomerEmailCustomerEmail . fromText <$>
+                customerEmail
+            , Proto.orderMaybeCustomerPhone =
+                Proto.OrderMaybeCustomerPhoneCustomerPhone . fromText <$>
+                customerPhone
+            , Proto.orderMaybeBillingAddressId =
+                Proto.OrderMaybeBillingAddressIdBillingAddressId . fromInt <$>
+                billingAddressId
+            , Proto.orderMaybeShippingAddressId =
+                Proto.OrderMaybeShippingAddressIdShippingAddressId . fromInt <$>
+                shippingAddressId
             , Proto.orderUdf = Just . fromUdf $ udf
-            , Proto.orderDescription = fromMaybeText description
-            , Proto.orderReturnUrl = fromMaybeText returnUrl
+            , Proto.orderMaybeDescription =
+                Proto.OrderMaybeDescriptionDescription . fromText <$>
+                description
+            , Proto.orderMaybeReturnUrl =
+                Proto.OrderMaybeReturnUrlReturnUrl . fromText <$> returnUrl
             , Proto.orderAmountRefunded = amountRefunded
             , Proto.orderRefundedEntirely = refundedEntirely
-            , Proto.orderProductId = fromMaybeText productId
+            , Proto.orderMaybeProductId =
+                Proto.OrderMaybeProductIdProductId . fromText <$> productId
             , Proto.orderMandate = fromSumType . fromMandate $ mandate
-            , Proto.orderLastSynced = fromMaybeUTCTime lastSynced
+            , Proto.orderMaybeLastSynced =
+                Proto.OrderMaybeLastSyncedLastSynced . fromUTCTime <$>
+                lastSynced
             , Proto.orderDateCreated = fromUTCTime dateCreated
             , Proto.orderLastModified = fromUTCTime lastModified
             , Proto.orderOrderEventType =
@@ -205,18 +219,18 @@ fromOrderStatus orderStatus' =
     OrderStatusAutoRefunded -> Proto.OrderStatusORDER_STATUS_AUTO_REFUNDED
 
 fromUdf :: UDF -> Proto.UDF
-fromUdf udf' =
+fromUdf UDF {..} =
   Proto.UDF
-    { Proto.udfUdf1 = fromMaybeText $ udf1 udf'
-    , Proto.udfUdf2 = fromMaybeText $ udf2 udf'
-    , Proto.udfUdf3 = fromMaybeText $ udf3 udf'
-    , Proto.udfUdf4 = fromMaybeText $ udf4 udf'
-    , Proto.udfUdf5 = fromMaybeText $ udf5 udf'
-    , Proto.udfUdf6 = fromMaybeText $ udf6 udf'
-    , Proto.udfUdf7 = fromMaybeText $ udf7 udf'
-    , Proto.udfUdf8 = fromMaybeText $ udf8 udf'
-    , Proto.udfUdf9 = fromMaybeText $ udf9 udf'
-    , Proto.udfUdf10 = fromMaybeText $ udf10 udf'
+    { Proto.udfMaybeUdf1 = Proto.UDFMaybeUdf1Udf1 . fromText <$> udf1
+    , Proto.udfMaybeUdf2 = Proto.UDFMaybeUdf2Udf2 . fromText <$> udf2
+    , Proto.udfMaybeUdf3 = Proto.UDFMaybeUdf3Udf3 . fromText <$> udf3
+    , Proto.udfMaybeUdf4 = Proto.UDFMaybeUdf4Udf4 . fromText <$> udf4
+    , Proto.udfMaybeUdf5 = Proto.UDFMaybeUdf5Udf5 . fromText <$> udf5
+    , Proto.udfMaybeUdf6 = Proto.UDFMaybeUdf6Udf6 . fromText <$> udf6
+    , Proto.udfMaybeUdf7 = Proto.UDFMaybeUdf7Udf7 . fromText <$> udf7
+    , Proto.udfMaybeUdf8 = Proto.UDFMaybeUdf8Udf8 . fromText <$> udf8
+    , Proto.udfMaybeUdf9 = Proto.UDFMaybeUdf9Udf9 . fromText <$> udf9
+    , Proto.udfMaybeUdf10 = Proto.UDFMaybeUdf10Udf10 . fromText <$> udf10
     }
 
 fromMandate :: MandateFeature -> Proto.MandateFeature

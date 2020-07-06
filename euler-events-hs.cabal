@@ -19,14 +19,22 @@ library
   other-modules:
     Euler.Constants
     Euler.Proto.Event
+    Euler.Proto.Event.Card
     Euler.Proto.Event.Order
-    Euler.Proto.Event.Txn
     Euler.Proto.Event.Refund
+    Euler.Proto.Event.ResellerAccount
+    Euler.Proto.Event.RiskManagementAccount
+    Euler.Proto.Event.TxnCardInfo
+    Euler.Proto.Event.TxnDetail
     Euler.Sink.Kafka
     Euler.Types.Event
+    Euler.Types.Event.Card
     Euler.Types.Event.Order
-    Euler.Types.Event.Txn
     Euler.Types.Event.Refund
+    Euler.Types.Event.ResellerAccount
+    Euler.Types.Event.RiskManagementAccount
+    Euler.Types.Event.TxnCardInfo
+    Euler.Types.Event.TxnDetail
     Euler.Utils
   default-language:    Haskell2010
   build-depends:

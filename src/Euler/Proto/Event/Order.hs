@@ -45,17 +45,21 @@ data Order = Order{orderId :: Hs.Int64, orderVersion :: Hs.Int64,
                    HsProtobuf.Enumerated Euler.Proto.Event.Order.OrderType,
                    orderOrderStatus ::
                    HsProtobuf.Enumerated Euler.Proto.Event.Order.OrderStatus,
-                   orderCustomerId :: Hs.Text, orderCustomerEmail :: Hs.Text,
-                   orderCustomerPhone :: Hs.Text, orderBillingAddressId :: Hs.Int64,
-                   orderShippingAddressId :: Hs.Int64,
                    orderUdf :: Hs.Maybe Euler.Proto.Event.Order.UDF,
-                   orderDescription :: Hs.Text, orderReturnUrl :: Hs.Text,
                    orderAmountRefunded :: Hs.Double, orderRefundedEntirely :: Hs.Bool,
-                   orderProductId :: Hs.Text,
                    orderMandate ::
                    HsProtobuf.Enumerated Euler.Proto.Event.Order.MandateFeature,
-                   orderLastSynced :: Hs.Int64, orderDateCreated :: Hs.Int64,
-                   orderLastModified :: Hs.Int64,
+                   orderDateCreated :: Hs.Int64, orderLastModified :: Hs.Int64,
+                   orderMaybeCustomerId :: Hs.Maybe OrderMaybeCustomerId,
+                   orderMaybeCustomerEmail :: Hs.Maybe OrderMaybeCustomerEmail,
+                   orderMaybeCustomerPhone :: Hs.Maybe OrderMaybeCustomerPhone,
+                   orderMaybeBillingAddressId :: Hs.Maybe OrderMaybeBillingAddressId,
+                   orderMaybeShippingAddressId ::
+                   Hs.Maybe OrderMaybeShippingAddressId,
+                   orderMaybeDescription :: Hs.Maybe OrderMaybeDescription,
+                   orderMaybeReturnUrl :: Hs.Maybe OrderMaybeReturnUrl,
+                   orderMaybeProductId :: Hs.Maybe OrderMaybeProductId,
+                   orderMaybeLastSynced :: Hs.Maybe OrderMaybeLastSynced,
                    orderOrderEventType ::
                    HsProtobuf.Enumerated Euler.Proto.Event.Order.OrderEventType}
            deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
@@ -71,20 +75,20 @@ instance HsProtobuf.Message Order where
                 orderAmount = orderAmount, orderCurrency = orderCurrency,
                 orderMerchantId = orderMerchantId, orderOrderId = orderOrderId,
                 orderOrderUuid = orderOrderUuid, orderOrderType = orderOrderType,
-                orderOrderStatus = orderOrderStatus,
-                orderCustomerId = orderCustomerId,
-                orderCustomerEmail = orderCustomerEmail,
-                orderCustomerPhone = orderCustomerPhone,
-                orderBillingAddressId = orderBillingAddressId,
-                orderShippingAddressId = orderShippingAddressId,
-                orderUdf = orderUdf, orderDescription = orderDescription,
-                orderReturnUrl = orderReturnUrl,
+                orderOrderStatus = orderOrderStatus, orderUdf = orderUdf,
                 orderAmountRefunded = orderAmountRefunded,
                 orderRefundedEntirely = orderRefundedEntirely,
-                orderProductId = orderProductId, orderMandate = orderMandate,
-                orderLastSynced = orderLastSynced,
-                orderDateCreated = orderDateCreated,
+                orderMandate = orderMandate, orderDateCreated = orderDateCreated,
                 orderLastModified = orderLastModified,
+                orderMaybeCustomerId = orderMaybeCustomerId,
+                orderMaybeCustomerEmail = orderMaybeCustomerEmail,
+                orderMaybeCustomerPhone = orderMaybeCustomerPhone,
+                orderMaybeBillingAddressId = orderMaybeBillingAddressId,
+                orderMaybeShippingAddressId = orderMaybeShippingAddressId,
+                orderMaybeDescription = orderMaybeDescription,
+                orderMaybeReturnUrl = orderMaybeReturnUrl,
+                orderMaybeProductId = orderMaybeProductId,
+                orderMaybeLastSynced = orderMaybeLastSynced,
                 orderOrderEventType = orderOrderEventType}
           = (Hs.mconcat
                [(HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 1)
@@ -106,37 +110,82 @@ instance HsProtobuf.Message Order where
                 (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 9)
                    orderOrderStatus),
                 (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 10)
-                   orderCustomerId),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 11)
-                   orderCustomerEmail),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 12)
-                   orderCustomerPhone),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 13)
-                   orderBillingAddressId),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 14)
-                   orderShippingAddressId),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 15)
                    (Hs.coerce @(Hs.Maybe Euler.Proto.Event.Order.UDF)
                       @(HsProtobuf.Nested Euler.Proto.Event.Order.UDF)
                       orderUdf)),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 16)
-                   orderDescription),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 17)
-                   orderReturnUrl),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 18)
+                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 11)
                    orderAmountRefunded),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 19)
+                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 12)
                    orderRefundedEntirely),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 20)
-                   orderProductId),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 21)
+                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 13)
                    orderMandate),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 22)
-                   orderLastSynced),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 23)
+                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 14)
                    orderDateCreated),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 24)
+                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 15)
                    orderLastModified),
+                case orderMaybeCustomerId of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             OrderMaybeCustomerIdCustomerId y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 16)
+                                     (HsProtobuf.ForceEmit y)),
+                case orderMaybeCustomerEmail of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             OrderMaybeCustomerEmailCustomerEmail y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 17)
+                                     (HsProtobuf.ForceEmit y)),
+                case orderMaybeCustomerPhone of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             OrderMaybeCustomerPhoneCustomerPhone y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 18)
+                                     (HsProtobuf.ForceEmit y)),
+                case orderMaybeBillingAddressId of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             OrderMaybeBillingAddressIdBillingAddressId y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 19)
+                                     (HsProtobuf.ForceEmit y)),
+                case orderMaybeShippingAddressId of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             OrderMaybeShippingAddressIdShippingAddressId y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 20)
+                                     (HsProtobuf.ForceEmit y)),
+                case orderMaybeDescription of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             OrderMaybeDescriptionDescription y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 21)
+                                     (HsProtobuf.ForceEmit y)),
+                case orderMaybeReturnUrl of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             OrderMaybeReturnUrlReturnUrl y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 22)
+                                     (HsProtobuf.ForceEmit y)),
+                case orderMaybeProductId of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             OrderMaybeProductIdProductId y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 23)
+                                     (HsProtobuf.ForceEmit y)),
+                case orderMaybeLastSynced of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             OrderMaybeLastSyncedLastSynced y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 24)
+                                     (HsProtobuf.ForceEmit y)),
                 (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 25)
                    orderOrderEventType)])
         decodeMessage _
@@ -168,8 +217,10 @@ instance HsProtobuf.Message Order where
               (HsProtobuf.at HsProtobuf.decodeMessageField
                  (HsProtobuf.FieldNumber 9))
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 10))
+              (Hs.coerce @(_ (HsProtobuf.Nested Euler.Proto.Event.Order.UDF))
+                 @(_ (Hs.Maybe Euler.Proto.Event.Order.UDF))
+                 (HsProtobuf.at HsProtobuf.decodeMessageField
+                    (HsProtobuf.FieldNumber 10)))
               <*>
               (HsProtobuf.at HsProtobuf.decodeMessageField
                  (HsProtobuf.FieldNumber 11))
@@ -183,37 +234,54 @@ instance HsProtobuf.Message Order where
               (HsProtobuf.at HsProtobuf.decodeMessageField
                  (HsProtobuf.FieldNumber 14))
               <*>
-              (Hs.coerce @(_ (HsProtobuf.Nested Euler.Proto.Event.Order.UDF))
-                 @(_ (Hs.Maybe Euler.Proto.Event.Order.UDF))
-                 (HsProtobuf.at HsProtobuf.decodeMessageField
-                    (HsProtobuf.FieldNumber 15)))
-              <*>
               (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 16))
+                 (HsProtobuf.FieldNumber 15))
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 17))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 16),
+                   (Hs.pure (Hs.Just Hs.. OrderMaybeCustomerIdCustomerId)) <*>
+                     HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 18))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 17),
+                   (Hs.pure (Hs.Just Hs.. OrderMaybeCustomerEmailCustomerEmail)) <*>
+                     HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 19))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 18),
+                   (Hs.pure (Hs.Just Hs.. OrderMaybeCustomerPhoneCustomerPhone)) <*>
+                     HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 20))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 19),
+                   (Hs.pure (Hs.Just Hs.. OrderMaybeBillingAddressIdBillingAddressId))
+                     <*> HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 21))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 20),
+                   (Hs.pure
+                      (Hs.Just Hs.. OrderMaybeShippingAddressIdShippingAddressId))
+                     <*> HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 22))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 21),
+                   (Hs.pure (Hs.Just Hs.. OrderMaybeDescriptionDescription)) <*>
+                     HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 23))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 22),
+                   (Hs.pure (Hs.Just Hs.. OrderMaybeReturnUrlReturnUrl)) <*>
+                     HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 24))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 23),
+                   (Hs.pure (Hs.Just Hs.. OrderMaybeProductIdProductId)) <*>
+                     HsProtobuf.decodeMessageField)])
+              <*>
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 24),
+                   (Hs.pure (Hs.Just Hs.. OrderMaybeLastSyncedLastSynced)) <*>
+                     HsProtobuf.decodeMessageField)])
               <*>
               (HsProtobuf.at HsProtobuf.decodeMessageField
                  (HsProtobuf.FieldNumber 25))
@@ -266,77 +334,32 @@ instance HsProtobuf.Message Order where
                 []
                 ""),
              (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 10)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "customer_id")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 11)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "customer_email")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 12)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "customer_phone")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 13)
-                (HsProtobuf.Prim HsProtobuf.Int64)
-                (HsProtobuf.Single "billing_address_id")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 14)
-                (HsProtobuf.Prim HsProtobuf.Int64)
-                (HsProtobuf.Single "shipping_address_id")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 15)
                 (HsProtobuf.Prim (HsProtobuf.Named (HsProtobuf.Single "UDF")))
                 (HsProtobuf.Single "udf")
                 []
                 ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 16)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "description")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 17)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "return_url")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 18)
+             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 11)
                 (HsProtobuf.Prim HsProtobuf.Double)
                 (HsProtobuf.Single "amount_refunded")
                 []
                 ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 19)
+             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 12)
                 (HsProtobuf.Prim HsProtobuf.Bool)
                 (HsProtobuf.Single "refunded_entirely")
                 []
                 ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 20)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "product_id")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 21)
+             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 13)
                 (HsProtobuf.Prim
                    (HsProtobuf.Named (HsProtobuf.Single "MandateFeature")))
                 (HsProtobuf.Single "mandate")
                 []
                 ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 22)
-                (HsProtobuf.Prim HsProtobuf.Int64)
-                (HsProtobuf.Single "last_synced")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 23)
+             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 14)
                 (HsProtobuf.Prim HsProtobuf.Int64)
                 (HsProtobuf.Single "date_created")
                 []
                 ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 24)
+             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 15)
                 (HsProtobuf.Prim HsProtobuf.Int64)
                 (HsProtobuf.Single "last_modified")
                 []
@@ -355,13 +378,117 @@ instance HsJSONPB.ToJSONPB Order where
           = (HsJSONPB.object
                ["id" .= f1, "version" .= f2, "amount" .= f3, "currency" .= f4,
                 "merchant_id" .= f5, "order_id" .= f6, "order_uuid" .= f7,
-                "order_type" .= f8, "order_status" .= f9, "customer_id" .= f10,
-                "customer_email" .= f11, "customer_phone" .= f12,
-                "billing_address_id" .= f13, "shipping_address_id" .= f14,
-                "udf" .= f15, "description" .= f16, "return_url" .= f17,
-                "amount_refunded" .= f18, "refunded_entirely" .= f19,
-                "product_id" .= f20, "mandate" .= f21, "last_synced" .= f22,
-                "date_created" .= f23, "last_modified" .= f24,
+                "order_type" .= f8, "order_status" .= f9, "udf" .= f10,
+                "amount_refunded" .= f11, "refunded_entirely" .= f12,
+                "mandate" .= f13, "date_created" .= f14, "last_modified" .= f15,
+                (let encodeMaybe_customer_id
+                       = (case f16 of
+                              Hs.Just (OrderMaybeCustomerIdCustomerId f16)
+                                -> (HsJSONPB.pair "customer_id" f16)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_customer_id" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_customer_id] options))
+                         options
+                       else encodeMaybe_customer_id options),
+                (let encodeMaybe_customer_email
+                       = (case f17 of
+                              Hs.Just (OrderMaybeCustomerEmailCustomerEmail f17)
+                                -> (HsJSONPB.pair "customer_email" f17)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_customer_email" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_customer_email] options))
+                         options
+                       else encodeMaybe_customer_email options),
+                (let encodeMaybe_customer_phone
+                       = (case f18 of
+                              Hs.Just (OrderMaybeCustomerPhoneCustomerPhone f18)
+                                -> (HsJSONPB.pair "customer_phone" f18)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_customer_phone" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_customer_phone] options))
+                         options
+                       else encodeMaybe_customer_phone options),
+                (let encodeMaybe_billing_address_id
+                       = (case f19 of
+                              Hs.Just (OrderMaybeBillingAddressIdBillingAddressId f19)
+                                -> (HsJSONPB.pair "billing_address_id" f19)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_billing_address_id" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_billing_address_id] options))
+                         options
+                       else encodeMaybe_billing_address_id options),
+                (let encodeMaybe_shipping_address_id
+                       = (case f20 of
+                              Hs.Just (OrderMaybeShippingAddressIdShippingAddressId f20)
+                                -> (HsJSONPB.pair "shipping_address_id" f20)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_shipping_address_id" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_shipping_address_id] options))
+                         options
+                       else encodeMaybe_shipping_address_id options),
+                (let encodeMaybe_description
+                       = (case f21 of
+                              Hs.Just (OrderMaybeDescriptionDescription f21)
+                                -> (HsJSONPB.pair "description" f21)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_description" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_description] options))
+                         options
+                       else encodeMaybe_description options),
+                (let encodeMaybe_return_url
+                       = (case f22 of
+                              Hs.Just (OrderMaybeReturnUrlReturnUrl f22)
+                                -> (HsJSONPB.pair "return_url" f22)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_return_url" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_return_url] options))
+                         options
+                       else encodeMaybe_return_url options),
+                (let encodeMaybe_product_id
+                       = (case f23 of
+                              Hs.Just (OrderMaybeProductIdProductId f23)
+                                -> (HsJSONPB.pair "product_id" f23)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_product_id" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_product_id] options))
+                         options
+                       else encodeMaybe_product_id options),
+                (let encodeMaybe_last_synced
+                       = (case f24 of
+                              Hs.Just (OrderMaybeLastSyncedLastSynced f24)
+                                -> (HsJSONPB.pair "last_synced" f24)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_last_synced" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_last_synced] options))
+                         options
+                       else encodeMaybe_last_synced options),
                 "order_event_type" .= f25])
         toEncodingPB
           (Order f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15 f16 f17
@@ -369,13 +496,117 @@ instance HsJSONPB.ToJSONPB Order where
           = (HsJSONPB.pairs
                ["id" .= f1, "version" .= f2, "amount" .= f3, "currency" .= f4,
                 "merchant_id" .= f5, "order_id" .= f6, "order_uuid" .= f7,
-                "order_type" .= f8, "order_status" .= f9, "customer_id" .= f10,
-                "customer_email" .= f11, "customer_phone" .= f12,
-                "billing_address_id" .= f13, "shipping_address_id" .= f14,
-                "udf" .= f15, "description" .= f16, "return_url" .= f17,
-                "amount_refunded" .= f18, "refunded_entirely" .= f19,
-                "product_id" .= f20, "mandate" .= f21, "last_synced" .= f22,
-                "date_created" .= f23, "last_modified" .= f24,
+                "order_type" .= f8, "order_status" .= f9, "udf" .= f10,
+                "amount_refunded" .= f11, "refunded_entirely" .= f12,
+                "mandate" .= f13, "date_created" .= f14, "last_modified" .= f15,
+                (let encodeMaybe_customer_id
+                       = (case f16 of
+                              Hs.Just (OrderMaybeCustomerIdCustomerId f16)
+                                -> (HsJSONPB.pair "customer_id" f16)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_customer_id" .=
+                          (HsJSONPB.pairsOrNull [encodeMaybe_customer_id] options))
+                         options
+                       else encodeMaybe_customer_id options),
+                (let encodeMaybe_customer_email
+                       = (case f17 of
+                              Hs.Just (OrderMaybeCustomerEmailCustomerEmail f17)
+                                -> (HsJSONPB.pair "customer_email" f17)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_customer_email" .=
+                          (HsJSONPB.pairsOrNull [encodeMaybe_customer_email] options))
+                         options
+                       else encodeMaybe_customer_email options),
+                (let encodeMaybe_customer_phone
+                       = (case f18 of
+                              Hs.Just (OrderMaybeCustomerPhoneCustomerPhone f18)
+                                -> (HsJSONPB.pair "customer_phone" f18)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_customer_phone" .=
+                          (HsJSONPB.pairsOrNull [encodeMaybe_customer_phone] options))
+                         options
+                       else encodeMaybe_customer_phone options),
+                (let encodeMaybe_billing_address_id
+                       = (case f19 of
+                              Hs.Just (OrderMaybeBillingAddressIdBillingAddressId f19)
+                                -> (HsJSONPB.pair "billing_address_id" f19)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_billing_address_id" .=
+                          (HsJSONPB.pairsOrNull [encodeMaybe_billing_address_id] options))
+                         options
+                       else encodeMaybe_billing_address_id options),
+                (let encodeMaybe_shipping_address_id
+                       = (case f20 of
+                              Hs.Just (OrderMaybeShippingAddressIdShippingAddressId f20)
+                                -> (HsJSONPB.pair "shipping_address_id" f20)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_shipping_address_id" .=
+                          (HsJSONPB.pairsOrNull [encodeMaybe_shipping_address_id] options))
+                         options
+                       else encodeMaybe_shipping_address_id options),
+                (let encodeMaybe_description
+                       = (case f21 of
+                              Hs.Just (OrderMaybeDescriptionDescription f21)
+                                -> (HsJSONPB.pair "description" f21)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_description" .=
+                          (HsJSONPB.pairsOrNull [encodeMaybe_description] options))
+                         options
+                       else encodeMaybe_description options),
+                (let encodeMaybe_return_url
+                       = (case f22 of
+                              Hs.Just (OrderMaybeReturnUrlReturnUrl f22)
+                                -> (HsJSONPB.pair "return_url" f22)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_return_url" .=
+                          (HsJSONPB.pairsOrNull [encodeMaybe_return_url] options))
+                         options
+                       else encodeMaybe_return_url options),
+                (let encodeMaybe_product_id
+                       = (case f23 of
+                              Hs.Just (OrderMaybeProductIdProductId f23)
+                                -> (HsJSONPB.pair "product_id" f23)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_product_id" .=
+                          (HsJSONPB.pairsOrNull [encodeMaybe_product_id] options))
+                         options
+                       else encodeMaybe_product_id options),
+                (let encodeMaybe_last_synced
+                       = (case f24 of
+                              Hs.Just (OrderMaybeLastSyncedLastSynced f24)
+                                -> (HsJSONPB.pair "last_synced" f24)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_last_synced" .=
+                          (HsJSONPB.pairsOrNull [encodeMaybe_last_synced] options))
+                         options
+                       else encodeMaybe_last_synced options),
                 "order_event_type" .= f25])
  
 instance HsJSONPB.FromJSONPB Order where
@@ -390,21 +621,106 @@ instance HsJSONPB.FromJSONPB Order where
                     <*> obj .: "order_uuid"
                     <*> obj .: "order_type"
                     <*> obj .: "order_status"
-                    <*> obj .: "customer_id"
-                    <*> obj .: "customer_email"
-                    <*> obj .: "customer_phone"
-                    <*> obj .: "billing_address_id"
-                    <*> obj .: "shipping_address_id"
                     <*> obj .: "udf"
-                    <*> obj .: "description"
-                    <*> obj .: "return_url"
                     <*> obj .: "amount_refunded"
                     <*> obj .: "refunded_entirely"
-                    <*> obj .: "product_id"
                     <*> obj .: "mandate"
-                    <*> obj .: "last_synced"
                     <*> obj .: "date_created"
                     <*> obj .: "last_modified"
+                    <*>
+                    (let parseMaybe_customer_id parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. OrderMaybeCustomerIdCustomerId <$>
+                                  (HsJSONPB.parseField parseObj "customer_id"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_customer_id") Hs.>>=
+                          (HsJSONPB.withObject "maybe_customer_id" parseMaybe_customer_id))
+                         <|> (parseMaybe_customer_id obj))
+                    <*>
+                    (let parseMaybe_customer_email parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. OrderMaybeCustomerEmailCustomerEmail <$>
+                                  (HsJSONPB.parseField parseObj "customer_email"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_customer_email") Hs.>>=
+                          (HsJSONPB.withObject "maybe_customer_email"
+                             parseMaybe_customer_email))
+                         <|> (parseMaybe_customer_email obj))
+                    <*>
+                    (let parseMaybe_customer_phone parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. OrderMaybeCustomerPhoneCustomerPhone <$>
+                                  (HsJSONPB.parseField parseObj "customer_phone"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_customer_phone") Hs.>>=
+                          (HsJSONPB.withObject "maybe_customer_phone"
+                             parseMaybe_customer_phone))
+                         <|> (parseMaybe_customer_phone obj))
+                    <*>
+                    (let parseMaybe_billing_address_id parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. OrderMaybeBillingAddressIdBillingAddressId <$>
+                                  (HsJSONPB.parseField parseObj "billing_address_id"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_billing_address_id") Hs.>>=
+                          (HsJSONPB.withObject "maybe_billing_address_id"
+                             parseMaybe_billing_address_id))
+                         <|> (parseMaybe_billing_address_id obj))
+                    <*>
+                    (let parseMaybe_shipping_address_id parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. OrderMaybeShippingAddressIdShippingAddressId <$>
+                                  (HsJSONPB.parseField parseObj "shipping_address_id"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_shipping_address_id") Hs.>>=
+                          (HsJSONPB.withObject "maybe_shipping_address_id"
+                             parseMaybe_shipping_address_id))
+                         <|> (parseMaybe_shipping_address_id obj))
+                    <*>
+                    (let parseMaybe_description parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. OrderMaybeDescriptionDescription <$>
+                                  (HsJSONPB.parseField parseObj "description"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_description") Hs.>>=
+                          (HsJSONPB.withObject "maybe_description" parseMaybe_description))
+                         <|> (parseMaybe_description obj))
+                    <*>
+                    (let parseMaybe_return_url parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. OrderMaybeReturnUrlReturnUrl <$>
+                                  (HsJSONPB.parseField parseObj "return_url"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_return_url") Hs.>>=
+                          (HsJSONPB.withObject "maybe_return_url" parseMaybe_return_url))
+                         <|> (parseMaybe_return_url obj))
+                    <*>
+                    (let parseMaybe_product_id parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. OrderMaybeProductIdProductId <$>
+                                  (HsJSONPB.parseField parseObj "product_id"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_product_id") Hs.>>=
+                          (HsJSONPB.withObject "maybe_product_id" parseMaybe_product_id))
+                         <|> (parseMaybe_product_id obj))
+                    <*>
+                    (let parseMaybe_last_synced parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. OrderMaybeLastSyncedLastSynced <$>
+                                  (HsJSONPB.parseField parseObj "last_synced"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_last_synced") Hs.>>=
+                          (HsJSONPB.withObject "maybe_last_synced" parseMaybe_last_synced))
+                         <|> (parseMaybe_last_synced obj))
                     <*> obj .: "order_event_type"))
  
 instance HsJSONPB.ToJSON Order where
@@ -434,36 +750,38 @@ instance HsJSONPB.ToSchema Order where
                orderOrderType <- declare_order_type Proxy.Proxy
                let declare_order_status = HsJSONPB.declareSchemaRef
                orderOrderStatus <- declare_order_status Proxy.Proxy
-               let declare_customer_id = HsJSONPB.declareSchemaRef
-               orderCustomerId <- declare_customer_id Proxy.Proxy
-               let declare_customer_email = HsJSONPB.declareSchemaRef
-               orderCustomerEmail <- declare_customer_email Proxy.Proxy
-               let declare_customer_phone = HsJSONPB.declareSchemaRef
-               orderCustomerPhone <- declare_customer_phone Proxy.Proxy
-               let declare_billing_address_id = HsJSONPB.declareSchemaRef
-               orderBillingAddressId <- declare_billing_address_id Proxy.Proxy
-               let declare_shipping_address_id = HsJSONPB.declareSchemaRef
-               orderShippingAddressId <- declare_shipping_address_id Proxy.Proxy
                let declare_udf = HsJSONPB.declareSchemaRef
                orderUdf <- declare_udf Proxy.Proxy
-               let declare_description = HsJSONPB.declareSchemaRef
-               orderDescription <- declare_description Proxy.Proxy
-               let declare_return_url = HsJSONPB.declareSchemaRef
-               orderReturnUrl <- declare_return_url Proxy.Proxy
                let declare_amount_refunded = HsJSONPB.declareSchemaRef
                orderAmountRefunded <- declare_amount_refunded Proxy.Proxy
                let declare_refunded_entirely = HsJSONPB.declareSchemaRef
                orderRefundedEntirely <- declare_refunded_entirely Proxy.Proxy
-               let declare_product_id = HsJSONPB.declareSchemaRef
-               orderProductId <- declare_product_id Proxy.Proxy
                let declare_mandate = HsJSONPB.declareSchemaRef
                orderMandate <- declare_mandate Proxy.Proxy
-               let declare_last_synced = HsJSONPB.declareSchemaRef
-               orderLastSynced <- declare_last_synced Proxy.Proxy
                let declare_date_created = HsJSONPB.declareSchemaRef
                orderDateCreated <- declare_date_created Proxy.Proxy
                let declare_last_modified = HsJSONPB.declareSchemaRef
                orderLastModified <- declare_last_modified Proxy.Proxy
+               let declare_maybe_customer_id = HsJSONPB.declareSchemaRef
+               orderMaybeCustomerId <- declare_maybe_customer_id Proxy.Proxy
+               let declare_maybe_customer_email = HsJSONPB.declareSchemaRef
+               orderMaybeCustomerEmail <- declare_maybe_customer_email Proxy.Proxy
+               let declare_maybe_customer_phone = HsJSONPB.declareSchemaRef
+               orderMaybeCustomerPhone <- declare_maybe_customer_phone Proxy.Proxy
+               let declare_maybe_billing_address_id = HsJSONPB.declareSchemaRef
+               orderMaybeBillingAddressId <- declare_maybe_billing_address_id
+                                               Proxy.Proxy
+               let declare_maybe_shipping_address_id = HsJSONPB.declareSchemaRef
+               orderMaybeShippingAddressId <- declare_maybe_shipping_address_id
+                                                Proxy.Proxy
+               let declare_maybe_description = HsJSONPB.declareSchemaRef
+               orderMaybeDescription <- declare_maybe_description Proxy.Proxy
+               let declare_maybe_return_url = HsJSONPB.declareSchemaRef
+               orderMaybeReturnUrl <- declare_maybe_return_url Proxy.Proxy
+               let declare_maybe_product_id = HsJSONPB.declareSchemaRef
+               orderMaybeProductId <- declare_maybe_product_id Proxy.Proxy
+               let declare_maybe_last_synced = HsJSONPB.declareSchemaRef
+               orderMaybeLastSynced <- declare_maybe_last_synced Proxy.Proxy
                let declare_order_event_type = HsJSONPB.declareSchemaRef
                orderOrderEventType <- declare_order_event_type Proxy.Proxy
                let _ = Hs.pure Order <*> HsJSONPB.asProxy declare_id <*>
@@ -475,21 +793,21 @@ instance HsJSONPB.ToSchema Order where
                          <*> HsJSONPB.asProxy declare_order_uuid
                          <*> HsJSONPB.asProxy declare_order_type
                          <*> HsJSONPB.asProxy declare_order_status
-                         <*> HsJSONPB.asProxy declare_customer_id
-                         <*> HsJSONPB.asProxy declare_customer_email
-                         <*> HsJSONPB.asProxy declare_customer_phone
-                         <*> HsJSONPB.asProxy declare_billing_address_id
-                         <*> HsJSONPB.asProxy declare_shipping_address_id
                          <*> HsJSONPB.asProxy declare_udf
-                         <*> HsJSONPB.asProxy declare_description
-                         <*> HsJSONPB.asProxy declare_return_url
                          <*> HsJSONPB.asProxy declare_amount_refunded
                          <*> HsJSONPB.asProxy declare_refunded_entirely
-                         <*> HsJSONPB.asProxy declare_product_id
                          <*> HsJSONPB.asProxy declare_mandate
-                         <*> HsJSONPB.asProxy declare_last_synced
                          <*> HsJSONPB.asProxy declare_date_created
                          <*> HsJSONPB.asProxy declare_last_modified
+                         <*> HsJSONPB.asProxy declare_maybe_customer_id
+                         <*> HsJSONPB.asProxy declare_maybe_customer_email
+                         <*> HsJSONPB.asProxy declare_maybe_customer_phone
+                         <*> HsJSONPB.asProxy declare_maybe_billing_address_id
+                         <*> HsJSONPB.asProxy declare_maybe_shipping_address_id
+                         <*> HsJSONPB.asProxy declare_maybe_description
+                         <*> HsJSONPB.asProxy declare_maybe_return_url
+                         <*> HsJSONPB.asProxy declare_maybe_product_id
+                         <*> HsJSONPB.asProxy declare_maybe_last_synced
                          <*> HsJSONPB.asProxy declare_order_event_type
                Hs.return
                  (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName = Hs.Just "Order",
@@ -507,26 +825,267 @@ instance HsJSONPB.ToSchema Order where
                                                         ("order_uuid", orderOrderUuid),
                                                         ("order_type", orderOrderType),
                                                         ("order_status", orderOrderStatus),
-                                                        ("customer_id", orderCustomerId),
-                                                        ("customer_email", orderCustomerEmail),
-                                                        ("customer_phone", orderCustomerPhone),
-                                                        ("billing_address_id",
-                                                         orderBillingAddressId),
-                                                        ("shipping_address_id",
-                                                         orderShippingAddressId),
                                                         ("udf", orderUdf),
-                                                        ("description", orderDescription),
-                                                        ("return_url", orderReturnUrl),
                                                         ("amount_refunded", orderAmountRefunded),
                                                         ("refunded_entirely",
                                                          orderRefundedEntirely),
-                                                        ("product_id", orderProductId),
                                                         ("mandate", orderMandate),
-                                                        ("last_synced", orderLastSynced),
                                                         ("date_created", orderDateCreated),
                                                         ("last_modified", orderLastModified),
+                                                        ("maybe_customer_id", orderMaybeCustomerId),
+                                                        ("maybe_customer_email",
+                                                         orderMaybeCustomerEmail),
+                                                        ("maybe_customer_phone",
+                                                         orderMaybeCustomerPhone),
+                                                        ("maybe_billing_address_id",
+                                                         orderMaybeBillingAddressId),
+                                                        ("maybe_shipping_address_id",
+                                                         orderMaybeShippingAddressId),
+                                                        ("maybe_description",
+                                                         orderMaybeDescription),
+                                                        ("maybe_return_url", orderMaybeReturnUrl),
+                                                        ("maybe_product_id", orderMaybeProductId),
+                                                        ("maybe_last_synced", orderMaybeLastSynced),
                                                         ("order_event_type",
                                                          orderOrderEventType)]}})
+ 
+data OrderMaybeCustomerId = OrderMaybeCustomerIdCustomerId Hs.Text
+                          deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named OrderMaybeCustomerId where
+        nameOf _ = (Hs.fromString "OrderMaybeCustomerId")
+ 
+instance HsJSONPB.ToSchema OrderMaybeCustomerId where
+        declareNamedSchema _
+          = do let declare_customer_id = HsJSONPB.declareSchemaRef
+               orderMaybeCustomerIdCustomerId <- declare_customer_id Proxy.Proxy
+               let _ = Hs.pure OrderMaybeCustomerIdCustomerId <*>
+                         HsJSONPB.asProxy declare_customer_id
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "OrderMaybeCustomerId",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("customer_id",
+                                                         orderMaybeCustomerIdCustomerId)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data OrderMaybeCustomerEmail = OrderMaybeCustomerEmailCustomerEmail Hs.Text
+                             deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named OrderMaybeCustomerEmail where
+        nameOf _ = (Hs.fromString "OrderMaybeCustomerEmail")
+ 
+instance HsJSONPB.ToSchema OrderMaybeCustomerEmail where
+        declareNamedSchema _
+          = do let declare_customer_email = HsJSONPB.declareSchemaRef
+               orderMaybeCustomerEmailCustomerEmail <- declare_customer_email
+                                                         Proxy.Proxy
+               let _ = Hs.pure OrderMaybeCustomerEmailCustomerEmail <*>
+                         HsJSONPB.asProxy declare_customer_email
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "OrderMaybeCustomerEmail",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("customer_email",
+                                                         orderMaybeCustomerEmailCustomerEmail)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data OrderMaybeCustomerPhone = OrderMaybeCustomerPhoneCustomerPhone Hs.Text
+                             deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named OrderMaybeCustomerPhone where
+        nameOf _ = (Hs.fromString "OrderMaybeCustomerPhone")
+ 
+instance HsJSONPB.ToSchema OrderMaybeCustomerPhone where
+        declareNamedSchema _
+          = do let declare_customer_phone = HsJSONPB.declareSchemaRef
+               orderMaybeCustomerPhoneCustomerPhone <- declare_customer_phone
+                                                         Proxy.Proxy
+               let _ = Hs.pure OrderMaybeCustomerPhoneCustomerPhone <*>
+                         HsJSONPB.asProxy declare_customer_phone
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "OrderMaybeCustomerPhone",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("customer_phone",
+                                                         orderMaybeCustomerPhoneCustomerPhone)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data OrderMaybeBillingAddressId = OrderMaybeBillingAddressIdBillingAddressId Hs.Int64
+                                deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named OrderMaybeBillingAddressId where
+        nameOf _ = (Hs.fromString "OrderMaybeBillingAddressId")
+ 
+instance HsJSONPB.ToSchema OrderMaybeBillingAddressId where
+        declareNamedSchema _
+          = do let declare_billing_address_id = HsJSONPB.declareSchemaRef
+               orderMaybeBillingAddressIdBillingAddressId <- declare_billing_address_id
+                                                               Proxy.Proxy
+               let _ = Hs.pure OrderMaybeBillingAddressIdBillingAddressId <*>
+                         HsJSONPB.asProxy declare_billing_address_id
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "OrderMaybeBillingAddressId",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("billing_address_id",
+                                                         orderMaybeBillingAddressIdBillingAddressId)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data OrderMaybeShippingAddressId = OrderMaybeShippingAddressIdShippingAddressId Hs.Int64
+                                 deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named OrderMaybeShippingAddressId where
+        nameOf _ = (Hs.fromString "OrderMaybeShippingAddressId")
+ 
+instance HsJSONPB.ToSchema OrderMaybeShippingAddressId where
+        declareNamedSchema _
+          = do let declare_shipping_address_id = HsJSONPB.declareSchemaRef
+               orderMaybeShippingAddressIdShippingAddressId <- declare_shipping_address_id
+                                                                 Proxy.Proxy
+               let _ = Hs.pure OrderMaybeShippingAddressIdShippingAddressId <*>
+                         HsJSONPB.asProxy declare_shipping_address_id
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "OrderMaybeShippingAddressId",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("shipping_address_id",
+                                                         orderMaybeShippingAddressIdShippingAddressId)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data OrderMaybeDescription = OrderMaybeDescriptionDescription Hs.Text
+                           deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named OrderMaybeDescription where
+        nameOf _ = (Hs.fromString "OrderMaybeDescription")
+ 
+instance HsJSONPB.ToSchema OrderMaybeDescription where
+        declareNamedSchema _
+          = do let declare_description = HsJSONPB.declareSchemaRef
+               orderMaybeDescriptionDescription <- declare_description Proxy.Proxy
+               let _ = Hs.pure OrderMaybeDescriptionDescription <*>
+                         HsJSONPB.asProxy declare_description
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "OrderMaybeDescription",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("description",
+                                                         orderMaybeDescriptionDescription)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data OrderMaybeReturnUrl = OrderMaybeReturnUrlReturnUrl Hs.Text
+                         deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named OrderMaybeReturnUrl where
+        nameOf _ = (Hs.fromString "OrderMaybeReturnUrl")
+ 
+instance HsJSONPB.ToSchema OrderMaybeReturnUrl where
+        declareNamedSchema _
+          = do let declare_return_url = HsJSONPB.declareSchemaRef
+               orderMaybeReturnUrlReturnUrl <- declare_return_url Proxy.Proxy
+               let _ = Hs.pure OrderMaybeReturnUrlReturnUrl <*>
+                         HsJSONPB.asProxy declare_return_url
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "OrderMaybeReturnUrl",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("return_url",
+                                                         orderMaybeReturnUrlReturnUrl)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data OrderMaybeProductId = OrderMaybeProductIdProductId Hs.Text
+                         deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named OrderMaybeProductId where
+        nameOf _ = (Hs.fromString "OrderMaybeProductId")
+ 
+instance HsJSONPB.ToSchema OrderMaybeProductId where
+        declareNamedSchema _
+          = do let declare_product_id = HsJSONPB.declareSchemaRef
+               orderMaybeProductIdProductId <- declare_product_id Proxy.Proxy
+               let _ = Hs.pure OrderMaybeProductIdProductId <*>
+                         HsJSONPB.asProxy declare_product_id
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "OrderMaybeProductId",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("product_id",
+                                                         orderMaybeProductIdProductId)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data OrderMaybeLastSynced = OrderMaybeLastSyncedLastSynced Hs.Int64
+                          deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named OrderMaybeLastSynced where
+        nameOf _ = (Hs.fromString "OrderMaybeLastSynced")
+ 
+instance HsJSONPB.ToSchema OrderMaybeLastSynced where
+        declareNamedSchema _
+          = do let declare_last_synced = HsJSONPB.declareSchemaRef
+               orderMaybeLastSyncedLastSynced <- declare_last_synced Proxy.Proxy
+               let _ = Hs.pure OrderMaybeLastSyncedLastSynced <*>
+                         HsJSONPB.asProxy declare_last_synced
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "OrderMaybeLastSynced",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("last_synced",
+                                                         orderMaybeLastSyncedLastSynced)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
  
 data Currency = CurrencyNO_CURRENCY
               | CurrencyINR
@@ -777,10 +1336,16 @@ instance HsJSONPB.FromJSON OrderStatus where
  
 instance HsProtobuf.Finite OrderStatus
  
-data UDF = UDF{udfUdf1 :: Hs.Text, udfUdf2 :: Hs.Text,
-               udfUdf3 :: Hs.Text, udfUdf4 :: Hs.Text, udfUdf5 :: Hs.Text,
-               udfUdf6 :: Hs.Text, udfUdf7 :: Hs.Text, udfUdf8 :: Hs.Text,
-               udfUdf9 :: Hs.Text, udfUdf10 :: Hs.Text}
+data UDF = UDF{udfMaybeUdf1 :: Hs.Maybe UDFMaybeUdf1,
+               udfMaybeUdf2 :: Hs.Maybe UDFMaybeUdf2,
+               udfMaybeUdf3 :: Hs.Maybe UDFMaybeUdf3,
+               udfMaybeUdf4 :: Hs.Maybe UDFMaybeUdf4,
+               udfMaybeUdf5 :: Hs.Maybe UDFMaybeUdf5,
+               udfMaybeUdf6 :: Hs.Maybe UDFMaybeUdf6,
+               udfMaybeUdf7 :: Hs.Maybe UDFMaybeUdf7,
+               udfMaybeUdf8 :: Hs.Maybe UDFMaybeUdf8,
+               udfMaybeUdf9 :: Hs.Maybe UDFMaybeUdf9,
+               udfMaybeUdf10 :: Hs.Maybe UDFMaybeUdf10}
          deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
  
 instance HsProtobuf.Named UDF where
@@ -790,130 +1355,456 @@ instance HsProtobuf.HasDefault UDF
  
 instance HsProtobuf.Message UDF where
         encodeMessage _
-          UDF{udfUdf1 = udfUdf1, udfUdf2 = udfUdf2, udfUdf3 = udfUdf3,
-              udfUdf4 = udfUdf4, udfUdf5 = udfUdf5, udfUdf6 = udfUdf6,
-              udfUdf7 = udfUdf7, udfUdf8 = udfUdf8, udfUdf9 = udfUdf9,
-              udfUdf10 = udfUdf10}
+          UDF{udfMaybeUdf1 = udfMaybeUdf1, udfMaybeUdf2 = udfMaybeUdf2,
+              udfMaybeUdf3 = udfMaybeUdf3, udfMaybeUdf4 = udfMaybeUdf4,
+              udfMaybeUdf5 = udfMaybeUdf5, udfMaybeUdf6 = udfMaybeUdf6,
+              udfMaybeUdf7 = udfMaybeUdf7, udfMaybeUdf8 = udfMaybeUdf8,
+              udfMaybeUdf9 = udfMaybeUdf9, udfMaybeUdf10 = udfMaybeUdf10}
           = (Hs.mconcat
-               [(HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 1)
-                   udfUdf1),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 2) udfUdf2),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 3) udfUdf3),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 4) udfUdf4),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 5) udfUdf5),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 6) udfUdf6),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 7) udfUdf7),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 8) udfUdf8),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 9) udfUdf9),
-                (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 10)
-                   udfUdf10)])
+               [case udfMaybeUdf1 of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             UDFMaybeUdf1Udf1 y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 1)
+                                     (HsProtobuf.ForceEmit y)),
+                case udfMaybeUdf2 of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             UDFMaybeUdf2Udf2 y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 2)
+                                     (HsProtobuf.ForceEmit y)),
+                case udfMaybeUdf3 of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             UDFMaybeUdf3Udf3 y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 3)
+                                     (HsProtobuf.ForceEmit y)),
+                case udfMaybeUdf4 of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             UDFMaybeUdf4Udf4 y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 4)
+                                     (HsProtobuf.ForceEmit y)),
+                case udfMaybeUdf5 of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             UDFMaybeUdf5Udf5 y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 5)
+                                     (HsProtobuf.ForceEmit y)),
+                case udfMaybeUdf6 of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             UDFMaybeUdf6Udf6 y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 6)
+                                     (HsProtobuf.ForceEmit y)),
+                case udfMaybeUdf7 of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             UDFMaybeUdf7Udf7 y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 7)
+                                     (HsProtobuf.ForceEmit y)),
+                case udfMaybeUdf8 of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             UDFMaybeUdf8Udf8 y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 8)
+                                     (HsProtobuf.ForceEmit y)),
+                case udfMaybeUdf9 of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             UDFMaybeUdf9Udf9 y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 9)
+                                     (HsProtobuf.ForceEmit y)),
+                case udfMaybeUdf10 of
+                    Hs.Nothing -> Hs.mempty
+                    Hs.Just x
+                      -> case x of
+                             UDFMaybeUdf10Udf10 y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 10)
+                                     (HsProtobuf.ForceEmit y))])
         decodeMessage _
           = (Hs.pure UDF) <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 1))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 1),
+                   (Hs.pure (Hs.Just Hs.. UDFMaybeUdf1Udf1)) <*>
+                     HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 2))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 2),
+                   (Hs.pure (Hs.Just Hs.. UDFMaybeUdf2Udf2)) <*>
+                     HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 3))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 3),
+                   (Hs.pure (Hs.Just Hs.. UDFMaybeUdf3Udf3)) <*>
+                     HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 4))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 4),
+                   (Hs.pure (Hs.Just Hs.. UDFMaybeUdf4Udf4)) <*>
+                     HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 5))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 5),
+                   (Hs.pure (Hs.Just Hs.. UDFMaybeUdf5Udf5)) <*>
+                     HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 6))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 6),
+                   (Hs.pure (Hs.Just Hs.. UDFMaybeUdf6Udf6)) <*>
+                     HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 7))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 7),
+                   (Hs.pure (Hs.Just Hs.. UDFMaybeUdf7Udf7)) <*>
+                     HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 8))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 8),
+                   (Hs.pure (Hs.Just Hs.. UDFMaybeUdf8Udf8)) <*>
+                     HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 9))
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 9),
+                   (Hs.pure (Hs.Just Hs.. UDFMaybeUdf9Udf9)) <*>
+                     HsProtobuf.decodeMessageField)])
               <*>
-              (HsProtobuf.at HsProtobuf.decodeMessageField
-                 (HsProtobuf.FieldNumber 10))
-        dotProto _
-          = [(HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 1)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "udf1")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 2)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "udf2")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 3)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "udf3")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 4)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "udf4")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 5)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "udf5")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 6)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "udf6")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 7)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "udf7")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 8)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "udf8")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 9)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "udf9")
-                []
-                ""),
-             (HsProtobuf.DotProtoField (HsProtobuf.FieldNumber 10)
-                (HsProtobuf.Prim HsProtobuf.String)
-                (HsProtobuf.Single "udf10")
-                []
-                "")]
+              (HsProtobuf.oneof Hs.Nothing
+                 [((HsProtobuf.FieldNumber 10),
+                   (Hs.pure (Hs.Just Hs.. UDFMaybeUdf10Udf10)) <*>
+                     HsProtobuf.decodeMessageField)])
+        dotProto _ = []
  
 instance HsJSONPB.ToJSONPB UDF where
         toJSONPB (UDF f1 f2 f3 f4 f5 f6 f7 f8 f9 f10)
           = (HsJSONPB.object
-               ["udf1" .= f1, "udf2" .= f2, "udf3" .= f3, "udf4" .= f4,
-                "udf5" .= f5, "udf6" .= f6, "udf7" .= f7, "udf8" .= f8,
-                "udf9" .= f9, "udf10" .= f10])
+               [(let encodeMaybe_udf1
+                       = (case f1 of
+                              Hs.Just (UDFMaybeUdf1Udf1 f1) -> (HsJSONPB.pair "udf1" f1)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf1" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_udf1] options))
+                         options
+                       else encodeMaybe_udf1 options),
+                (let encodeMaybe_udf2
+                       = (case f2 of
+                              Hs.Just (UDFMaybeUdf2Udf2 f2) -> (HsJSONPB.pair "udf2" f2)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf2" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_udf2] options))
+                         options
+                       else encodeMaybe_udf2 options),
+                (let encodeMaybe_udf3
+                       = (case f3 of
+                              Hs.Just (UDFMaybeUdf3Udf3 f3) -> (HsJSONPB.pair "udf3" f3)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf3" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_udf3] options))
+                         options
+                       else encodeMaybe_udf3 options),
+                (let encodeMaybe_udf4
+                       = (case f4 of
+                              Hs.Just (UDFMaybeUdf4Udf4 f4) -> (HsJSONPB.pair "udf4" f4)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf4" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_udf4] options))
+                         options
+                       else encodeMaybe_udf4 options),
+                (let encodeMaybe_udf5
+                       = (case f5 of
+                              Hs.Just (UDFMaybeUdf5Udf5 f5) -> (HsJSONPB.pair "udf5" f5)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf5" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_udf5] options))
+                         options
+                       else encodeMaybe_udf5 options),
+                (let encodeMaybe_udf6
+                       = (case f6 of
+                              Hs.Just (UDFMaybeUdf6Udf6 f6) -> (HsJSONPB.pair "udf6" f6)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf6" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_udf6] options))
+                         options
+                       else encodeMaybe_udf6 options),
+                (let encodeMaybe_udf7
+                       = (case f7 of
+                              Hs.Just (UDFMaybeUdf7Udf7 f7) -> (HsJSONPB.pair "udf7" f7)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf7" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_udf7] options))
+                         options
+                       else encodeMaybe_udf7 options),
+                (let encodeMaybe_udf8
+                       = (case f8 of
+                              Hs.Just (UDFMaybeUdf8Udf8 f8) -> (HsJSONPB.pair "udf8" f8)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf8" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_udf8] options))
+                         options
+                       else encodeMaybe_udf8 options),
+                (let encodeMaybe_udf9
+                       = (case f9 of
+                              Hs.Just (UDFMaybeUdf9Udf9 f9) -> (HsJSONPB.pair "udf9" f9)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf9" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_udf9] options))
+                         options
+                       else encodeMaybe_udf9 options),
+                (let encodeMaybe_udf10
+                       = (case f10 of
+                              Hs.Just (UDFMaybeUdf10Udf10 f10) -> (HsJSONPB.pair "udf10" f10)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf10" .=
+                          (HsJSONPB.objectOrNull [encodeMaybe_udf10] options))
+                         options
+                       else encodeMaybe_udf10 options)])
         toEncodingPB (UDF f1 f2 f3 f4 f5 f6 f7 f8 f9 f10)
           = (HsJSONPB.pairs
-               ["udf1" .= f1, "udf2" .= f2, "udf3" .= f3, "udf4" .= f4,
-                "udf5" .= f5, "udf6" .= f6, "udf7" .= f7, "udf8" .= f8,
-                "udf9" .= f9, "udf10" .= f10])
+               [(let encodeMaybe_udf1
+                       = (case f1 of
+                              Hs.Just (UDFMaybeUdf1Udf1 f1) -> (HsJSONPB.pair "udf1" f1)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf1" .= (HsJSONPB.pairsOrNull [encodeMaybe_udf1] options))
+                         options
+                       else encodeMaybe_udf1 options),
+                (let encodeMaybe_udf2
+                       = (case f2 of
+                              Hs.Just (UDFMaybeUdf2Udf2 f2) -> (HsJSONPB.pair "udf2" f2)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf2" .= (HsJSONPB.pairsOrNull [encodeMaybe_udf2] options))
+                         options
+                       else encodeMaybe_udf2 options),
+                (let encodeMaybe_udf3
+                       = (case f3 of
+                              Hs.Just (UDFMaybeUdf3Udf3 f3) -> (HsJSONPB.pair "udf3" f3)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf3" .= (HsJSONPB.pairsOrNull [encodeMaybe_udf3] options))
+                         options
+                       else encodeMaybe_udf3 options),
+                (let encodeMaybe_udf4
+                       = (case f4 of
+                              Hs.Just (UDFMaybeUdf4Udf4 f4) -> (HsJSONPB.pair "udf4" f4)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf4" .= (HsJSONPB.pairsOrNull [encodeMaybe_udf4] options))
+                         options
+                       else encodeMaybe_udf4 options),
+                (let encodeMaybe_udf5
+                       = (case f5 of
+                              Hs.Just (UDFMaybeUdf5Udf5 f5) -> (HsJSONPB.pair "udf5" f5)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf5" .= (HsJSONPB.pairsOrNull [encodeMaybe_udf5] options))
+                         options
+                       else encodeMaybe_udf5 options),
+                (let encodeMaybe_udf6
+                       = (case f6 of
+                              Hs.Just (UDFMaybeUdf6Udf6 f6) -> (HsJSONPB.pair "udf6" f6)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf6" .= (HsJSONPB.pairsOrNull [encodeMaybe_udf6] options))
+                         options
+                       else encodeMaybe_udf6 options),
+                (let encodeMaybe_udf7
+                       = (case f7 of
+                              Hs.Just (UDFMaybeUdf7Udf7 f7) -> (HsJSONPB.pair "udf7" f7)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf7" .= (HsJSONPB.pairsOrNull [encodeMaybe_udf7] options))
+                         options
+                       else encodeMaybe_udf7 options),
+                (let encodeMaybe_udf8
+                       = (case f8 of
+                              Hs.Just (UDFMaybeUdf8Udf8 f8) -> (HsJSONPB.pair "udf8" f8)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf8" .= (HsJSONPB.pairsOrNull [encodeMaybe_udf8] options))
+                         options
+                       else encodeMaybe_udf8 options),
+                (let encodeMaybe_udf9
+                       = (case f9 of
+                              Hs.Just (UDFMaybeUdf9Udf9 f9) -> (HsJSONPB.pair "udf9" f9)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf9" .= (HsJSONPB.pairsOrNull [encodeMaybe_udf9] options))
+                         options
+                       else encodeMaybe_udf9 options),
+                (let encodeMaybe_udf10
+                       = (case f10 of
+                              Hs.Just (UDFMaybeUdf10Udf10 f10) -> (HsJSONPB.pair "udf10" f10)
+                              Hs.Nothing -> Hs.mempty)
+                   in
+                   \ options ->
+                     if HsJSONPB.optEmitNamedOneof options then
+                       ("maybe_udf10" .=
+                          (HsJSONPB.pairsOrNull [encodeMaybe_udf10] options))
+                         options
+                       else encodeMaybe_udf10 options)])
  
 instance HsJSONPB.FromJSONPB UDF where
         parseJSONPB
           = (HsJSONPB.withObject "UDF"
                (\ obj ->
-                  (Hs.pure UDF) <*> obj .: "udf1" <*> obj .: "udf2" <*> obj .: "udf3"
-                    <*> obj .: "udf4"
-                    <*> obj .: "udf5"
-                    <*> obj .: "udf6"
-                    <*> obj .: "udf7"
-                    <*> obj .: "udf8"
-                    <*> obj .: "udf9"
-                    <*> obj .: "udf10"))
+                  (Hs.pure UDF) <*>
+                    (let parseMaybe_udf1 parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. UDFMaybeUdf1Udf1 <$>
+                                  (HsJSONPB.parseField parseObj "udf1"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_udf1") Hs.>>=
+                          (HsJSONPB.withObject "maybe_udf1" parseMaybe_udf1))
+                         <|> (parseMaybe_udf1 obj))
+                    <*>
+                    (let parseMaybe_udf2 parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. UDFMaybeUdf2Udf2 <$>
+                                  (HsJSONPB.parseField parseObj "udf2"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_udf2") Hs.>>=
+                          (HsJSONPB.withObject "maybe_udf2" parseMaybe_udf2))
+                         <|> (parseMaybe_udf2 obj))
+                    <*>
+                    (let parseMaybe_udf3 parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. UDFMaybeUdf3Udf3 <$>
+                                  (HsJSONPB.parseField parseObj "udf3"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_udf3") Hs.>>=
+                          (HsJSONPB.withObject "maybe_udf3" parseMaybe_udf3))
+                         <|> (parseMaybe_udf3 obj))
+                    <*>
+                    (let parseMaybe_udf4 parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. UDFMaybeUdf4Udf4 <$>
+                                  (HsJSONPB.parseField parseObj "udf4"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_udf4") Hs.>>=
+                          (HsJSONPB.withObject "maybe_udf4" parseMaybe_udf4))
+                         <|> (parseMaybe_udf4 obj))
+                    <*>
+                    (let parseMaybe_udf5 parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. UDFMaybeUdf5Udf5 <$>
+                                  (HsJSONPB.parseField parseObj "udf5"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_udf5") Hs.>>=
+                          (HsJSONPB.withObject "maybe_udf5" parseMaybe_udf5))
+                         <|> (parseMaybe_udf5 obj))
+                    <*>
+                    (let parseMaybe_udf6 parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. UDFMaybeUdf6Udf6 <$>
+                                  (HsJSONPB.parseField parseObj "udf6"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_udf6") Hs.>>=
+                          (HsJSONPB.withObject "maybe_udf6" parseMaybe_udf6))
+                         <|> (parseMaybe_udf6 obj))
+                    <*>
+                    (let parseMaybe_udf7 parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. UDFMaybeUdf7Udf7 <$>
+                                  (HsJSONPB.parseField parseObj "udf7"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_udf7") Hs.>>=
+                          (HsJSONPB.withObject "maybe_udf7" parseMaybe_udf7))
+                         <|> (parseMaybe_udf7 obj))
+                    <*>
+                    (let parseMaybe_udf8 parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. UDFMaybeUdf8Udf8 <$>
+                                  (HsJSONPB.parseField parseObj "udf8"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_udf8") Hs.>>=
+                          (HsJSONPB.withObject "maybe_udf8" parseMaybe_udf8))
+                         <|> (parseMaybe_udf8 obj))
+                    <*>
+                    (let parseMaybe_udf9 parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. UDFMaybeUdf9Udf9 <$>
+                                  (HsJSONPB.parseField parseObj "udf9"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_udf9") Hs.>>=
+                          (HsJSONPB.withObject "maybe_udf9" parseMaybe_udf9))
+                         <|> (parseMaybe_udf9 obj))
+                    <*>
+                    (let parseMaybe_udf10 parseObj
+                           = Hs.msum
+                               [Hs.Just Hs.. UDFMaybeUdf10Udf10 <$>
+                                  (HsJSONPB.parseField parseObj "udf10"),
+                                Hs.pure Hs.Nothing]
+                       in
+                       ((obj .: "maybe_udf10") Hs.>>=
+                          (HsJSONPB.withObject "maybe_udf10" parseMaybe_udf10))
+                         <|> (parseMaybe_udf10 obj))))
  
 instance HsJSONPB.ToJSON UDF where
         toJSON = HsJSONPB.toAesonValue
@@ -924,36 +1815,36 @@ instance HsJSONPB.FromJSON UDF where
  
 instance HsJSONPB.ToSchema UDF where
         declareNamedSchema _
-          = do let declare_udf1 = HsJSONPB.declareSchemaRef
-               udfUdf1 <- declare_udf1 Proxy.Proxy
-               let declare_udf2 = HsJSONPB.declareSchemaRef
-               udfUdf2 <- declare_udf2 Proxy.Proxy
-               let declare_udf3 = HsJSONPB.declareSchemaRef
-               udfUdf3 <- declare_udf3 Proxy.Proxy
-               let declare_udf4 = HsJSONPB.declareSchemaRef
-               udfUdf4 <- declare_udf4 Proxy.Proxy
-               let declare_udf5 = HsJSONPB.declareSchemaRef
-               udfUdf5 <- declare_udf5 Proxy.Proxy
-               let declare_udf6 = HsJSONPB.declareSchemaRef
-               udfUdf6 <- declare_udf6 Proxy.Proxy
-               let declare_udf7 = HsJSONPB.declareSchemaRef
-               udfUdf7 <- declare_udf7 Proxy.Proxy
-               let declare_udf8 = HsJSONPB.declareSchemaRef
-               udfUdf8 <- declare_udf8 Proxy.Proxy
-               let declare_udf9 = HsJSONPB.declareSchemaRef
-               udfUdf9 <- declare_udf9 Proxy.Proxy
-               let declare_udf10 = HsJSONPB.declareSchemaRef
-               udfUdf10 <- declare_udf10 Proxy.Proxy
-               let _ = Hs.pure UDF <*> HsJSONPB.asProxy declare_udf1 <*>
-                         HsJSONPB.asProxy declare_udf2
-                         <*> HsJSONPB.asProxy declare_udf3
-                         <*> HsJSONPB.asProxy declare_udf4
-                         <*> HsJSONPB.asProxy declare_udf5
-                         <*> HsJSONPB.asProxy declare_udf6
-                         <*> HsJSONPB.asProxy declare_udf7
-                         <*> HsJSONPB.asProxy declare_udf8
-                         <*> HsJSONPB.asProxy declare_udf9
-                         <*> HsJSONPB.asProxy declare_udf10
+          = do let declare_maybe_udf1 = HsJSONPB.declareSchemaRef
+               udfMaybeUdf1 <- declare_maybe_udf1 Proxy.Proxy
+               let declare_maybe_udf2 = HsJSONPB.declareSchemaRef
+               udfMaybeUdf2 <- declare_maybe_udf2 Proxy.Proxy
+               let declare_maybe_udf3 = HsJSONPB.declareSchemaRef
+               udfMaybeUdf3 <- declare_maybe_udf3 Proxy.Proxy
+               let declare_maybe_udf4 = HsJSONPB.declareSchemaRef
+               udfMaybeUdf4 <- declare_maybe_udf4 Proxy.Proxy
+               let declare_maybe_udf5 = HsJSONPB.declareSchemaRef
+               udfMaybeUdf5 <- declare_maybe_udf5 Proxy.Proxy
+               let declare_maybe_udf6 = HsJSONPB.declareSchemaRef
+               udfMaybeUdf6 <- declare_maybe_udf6 Proxy.Proxy
+               let declare_maybe_udf7 = HsJSONPB.declareSchemaRef
+               udfMaybeUdf7 <- declare_maybe_udf7 Proxy.Proxy
+               let declare_maybe_udf8 = HsJSONPB.declareSchemaRef
+               udfMaybeUdf8 <- declare_maybe_udf8 Proxy.Proxy
+               let declare_maybe_udf9 = HsJSONPB.declareSchemaRef
+               udfMaybeUdf9 <- declare_maybe_udf9 Proxy.Proxy
+               let declare_maybe_udf10 = HsJSONPB.declareSchemaRef
+               udfMaybeUdf10 <- declare_maybe_udf10 Proxy.Proxy
+               let _ = Hs.pure UDF <*> HsJSONPB.asProxy declare_maybe_udf1 <*>
+                         HsJSONPB.asProxy declare_maybe_udf2
+                         <*> HsJSONPB.asProxy declare_maybe_udf3
+                         <*> HsJSONPB.asProxy declare_maybe_udf4
+                         <*> HsJSONPB.asProxy declare_maybe_udf5
+                         <*> HsJSONPB.asProxy declare_maybe_udf6
+                         <*> HsJSONPB.asProxy declare_maybe_udf7
+                         <*> HsJSONPB.asProxy declare_maybe_udf8
+                         <*> HsJSONPB.asProxy declare_maybe_udf9
+                         <*> HsJSONPB.asProxy declare_maybe_udf10
                Hs.return
                  (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName = Hs.Just "UDF",
                                        HsJSONPB._namedSchemaSchema =
@@ -962,11 +1853,257 @@ instance HsJSONPB.ToSchema UDF where
                                                                  Hs.Just HsJSONPB.SwaggerObject},
                                                    HsJSONPB._schemaProperties =
                                                      HsJSONPB.insOrdFromList
-                                                       [("udf1", udfUdf1), ("udf2", udfUdf2),
-                                                        ("udf3", udfUdf3), ("udf4", udfUdf4),
-                                                        ("udf5", udfUdf5), ("udf6", udfUdf6),
-                                                        ("udf7", udfUdf7), ("udf8", udfUdf8),
-                                                        ("udf9", udfUdf9), ("udf10", udfUdf10)]}})
+                                                       [("maybe_udf1", udfMaybeUdf1),
+                                                        ("maybe_udf2", udfMaybeUdf2),
+                                                        ("maybe_udf3", udfMaybeUdf3),
+                                                        ("maybe_udf4", udfMaybeUdf4),
+                                                        ("maybe_udf5", udfMaybeUdf5),
+                                                        ("maybe_udf6", udfMaybeUdf6),
+                                                        ("maybe_udf7", udfMaybeUdf7),
+                                                        ("maybe_udf8", udfMaybeUdf8),
+                                                        ("maybe_udf9", udfMaybeUdf9),
+                                                        ("maybe_udf10", udfMaybeUdf10)]}})
+ 
+data UDFMaybeUdf1 = UDFMaybeUdf1Udf1 Hs.Text
+                  deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named UDFMaybeUdf1 where
+        nameOf _ = (Hs.fromString "UDFMaybeUdf1")
+ 
+instance HsJSONPB.ToSchema UDFMaybeUdf1 where
+        declareNamedSchema _
+          = do let declare_udf1 = HsJSONPB.declareSchemaRef
+               udfmaybeUdf1Udf1 <- declare_udf1 Proxy.Proxy
+               let _ = Hs.pure UDFMaybeUdf1Udf1 <*> HsJSONPB.asProxy declare_udf1
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "UDFMaybeUdf1",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("udf1", udfmaybeUdf1Udf1)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data UDFMaybeUdf2 = UDFMaybeUdf2Udf2 Hs.Text
+                  deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named UDFMaybeUdf2 where
+        nameOf _ = (Hs.fromString "UDFMaybeUdf2")
+ 
+instance HsJSONPB.ToSchema UDFMaybeUdf2 where
+        declareNamedSchema _
+          = do let declare_udf2 = HsJSONPB.declareSchemaRef
+               udfmaybeUdf2Udf2 <- declare_udf2 Proxy.Proxy
+               let _ = Hs.pure UDFMaybeUdf2Udf2 <*> HsJSONPB.asProxy declare_udf2
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "UDFMaybeUdf2",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("udf2", udfmaybeUdf2Udf2)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data UDFMaybeUdf3 = UDFMaybeUdf3Udf3 Hs.Text
+                  deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named UDFMaybeUdf3 where
+        nameOf _ = (Hs.fromString "UDFMaybeUdf3")
+ 
+instance HsJSONPB.ToSchema UDFMaybeUdf3 where
+        declareNamedSchema _
+          = do let declare_udf3 = HsJSONPB.declareSchemaRef
+               udfmaybeUdf3Udf3 <- declare_udf3 Proxy.Proxy
+               let _ = Hs.pure UDFMaybeUdf3Udf3 <*> HsJSONPB.asProxy declare_udf3
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "UDFMaybeUdf3",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("udf3", udfmaybeUdf3Udf3)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data UDFMaybeUdf4 = UDFMaybeUdf4Udf4 Hs.Text
+                  deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named UDFMaybeUdf4 where
+        nameOf _ = (Hs.fromString "UDFMaybeUdf4")
+ 
+instance HsJSONPB.ToSchema UDFMaybeUdf4 where
+        declareNamedSchema _
+          = do let declare_udf4 = HsJSONPB.declareSchemaRef
+               udfmaybeUdf4Udf4 <- declare_udf4 Proxy.Proxy
+               let _ = Hs.pure UDFMaybeUdf4Udf4 <*> HsJSONPB.asProxy declare_udf4
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "UDFMaybeUdf4",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("udf4", udfmaybeUdf4Udf4)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data UDFMaybeUdf5 = UDFMaybeUdf5Udf5 Hs.Text
+                  deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named UDFMaybeUdf5 where
+        nameOf _ = (Hs.fromString "UDFMaybeUdf5")
+ 
+instance HsJSONPB.ToSchema UDFMaybeUdf5 where
+        declareNamedSchema _
+          = do let declare_udf5 = HsJSONPB.declareSchemaRef
+               udfmaybeUdf5Udf5 <- declare_udf5 Proxy.Proxy
+               let _ = Hs.pure UDFMaybeUdf5Udf5 <*> HsJSONPB.asProxy declare_udf5
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "UDFMaybeUdf5",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("udf5", udfmaybeUdf5Udf5)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data UDFMaybeUdf6 = UDFMaybeUdf6Udf6 Hs.Text
+                  deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named UDFMaybeUdf6 where
+        nameOf _ = (Hs.fromString "UDFMaybeUdf6")
+ 
+instance HsJSONPB.ToSchema UDFMaybeUdf6 where
+        declareNamedSchema _
+          = do let declare_udf6 = HsJSONPB.declareSchemaRef
+               udfmaybeUdf6Udf6 <- declare_udf6 Proxy.Proxy
+               let _ = Hs.pure UDFMaybeUdf6Udf6 <*> HsJSONPB.asProxy declare_udf6
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "UDFMaybeUdf6",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("udf6", udfmaybeUdf6Udf6)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data UDFMaybeUdf7 = UDFMaybeUdf7Udf7 Hs.Text
+                  deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named UDFMaybeUdf7 where
+        nameOf _ = (Hs.fromString "UDFMaybeUdf7")
+ 
+instance HsJSONPB.ToSchema UDFMaybeUdf7 where
+        declareNamedSchema _
+          = do let declare_udf7 = HsJSONPB.declareSchemaRef
+               udfmaybeUdf7Udf7 <- declare_udf7 Proxy.Proxy
+               let _ = Hs.pure UDFMaybeUdf7Udf7 <*> HsJSONPB.asProxy declare_udf7
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "UDFMaybeUdf7",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("udf7", udfmaybeUdf7Udf7)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data UDFMaybeUdf8 = UDFMaybeUdf8Udf8 Hs.Text
+                  deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named UDFMaybeUdf8 where
+        nameOf _ = (Hs.fromString "UDFMaybeUdf8")
+ 
+instance HsJSONPB.ToSchema UDFMaybeUdf8 where
+        declareNamedSchema _
+          = do let declare_udf8 = HsJSONPB.declareSchemaRef
+               udfmaybeUdf8Udf8 <- declare_udf8 Proxy.Proxy
+               let _ = Hs.pure UDFMaybeUdf8Udf8 <*> HsJSONPB.asProxy declare_udf8
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "UDFMaybeUdf8",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("udf8", udfmaybeUdf8Udf8)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data UDFMaybeUdf9 = UDFMaybeUdf9Udf9 Hs.Text
+                  deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named UDFMaybeUdf9 where
+        nameOf _ = (Hs.fromString "UDFMaybeUdf9")
+ 
+instance HsJSONPB.ToSchema UDFMaybeUdf9 where
+        declareNamedSchema _
+          = do let declare_udf9 = HsJSONPB.declareSchemaRef
+               udfmaybeUdf9Udf9 <- declare_udf9 Proxy.Proxy
+               let _ = Hs.pure UDFMaybeUdf9Udf9 <*> HsJSONPB.asProxy declare_udf9
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "UDFMaybeUdf9",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("udf9", udfmaybeUdf9Udf9)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
+ 
+data UDFMaybeUdf10 = UDFMaybeUdf10Udf10 Hs.Text
+                   deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
+ 
+instance HsProtobuf.Named UDFMaybeUdf10 where
+        nameOf _ = (Hs.fromString "UDFMaybeUdf10")
+ 
+instance HsJSONPB.ToSchema UDFMaybeUdf10 where
+        declareNamedSchema _
+          = do let declare_udf10 = HsJSONPB.declareSchemaRef
+               udfmaybeUdf10Udf10 <- declare_udf10 Proxy.Proxy
+               let _ = Hs.pure UDFMaybeUdf10Udf10 <*>
+                         HsJSONPB.asProxy declare_udf10
+               Hs.return
+                 (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
+                                         Hs.Just "UDFMaybeUdf10",
+                                       HsJSONPB._namedSchemaSchema =
+                                         Hs.mempty{HsJSONPB._schemaParamSchema =
+                                                     Hs.mempty{HsJSONPB._paramSchemaType =
+                                                                 Hs.Just HsJSONPB.SwaggerObject},
+                                                   HsJSONPB._schemaProperties =
+                                                     HsJSONPB.insOrdFromList
+                                                       [("udf10", udfmaybeUdf10Udf10)],
+                                                   HsJSONPB._schemaMinProperties = Hs.Just 1,
+                                                   HsJSONPB._schemaMaxProperties = Hs.Just 1}})
  
 data MandateFeature = MandateFeatureNO_MANDATE_FEATURE
                     | MandateFeatureDISABLED

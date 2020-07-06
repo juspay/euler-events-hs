@@ -34,9 +34,13 @@ import qualified Data.Word as Hs (Word16, Word32, Word64)
 import qualified GHC.Enum as Hs
 import qualified GHC.Generics as Hs
 import qualified Unsafe.Coerce as Hs
+import qualified Euler.Proto.Event.Card
 import qualified Euler.Proto.Event.Order
-import qualified Euler.Proto.Event.Txn
+import qualified Euler.Proto.Event.TxnDetail
+import qualified Euler.Proto.Event.TxnCardInfo
 import qualified Euler.Proto.Event.Refund
+import qualified Euler.Proto.Event.ResellerAccount
+import qualified Euler.Proto.Event.RiskManagementAccount
  
 data Event = Event{eventEvent :: Hs.Maybe EventEvent}
            deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
@@ -58,15 +62,38 @@ instance HsProtobuf.Message Event where
                                      (Hs.coerce @(Hs.Maybe Euler.Proto.Event.Order.Order)
                                         @(HsProtobuf.Nested Euler.Proto.Event.Order.Order)
                                         (Hs.Just y)))
-                             EventEventTxn y
+                             EventEventTxnDetail y
                                -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 2)
-                                     (Hs.coerce @(Hs.Maybe Euler.Proto.Event.Txn.Txn)
-                                        @(HsProtobuf.Nested Euler.Proto.Event.Txn.Txn)
+                                     (Hs.coerce @(Hs.Maybe Euler.Proto.Event.TxnDetail.TxnDetail)
+                                        @(HsProtobuf.Nested Euler.Proto.Event.TxnDetail.TxnDetail)
                                         (Hs.Just y)))
                              EventEventRefund y
                                -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 3)
                                      (Hs.coerce @(Hs.Maybe Euler.Proto.Event.Refund.Refund)
                                         @(HsProtobuf.Nested Euler.Proto.Event.Refund.Refund)
+                                        (Hs.Just y)))
+                             EventEventTxnCardInfo y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 4)
+                                     (Hs.coerce
+                                        @(Hs.Maybe Euler.Proto.Event.TxnCardInfo.TxnCardInfo)
+                                        @(HsProtobuf.Nested Euler.Proto.Event.TxnCardInfo.TxnCardInfo)
+                                        (Hs.Just y)))
+                             EventEventCard y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 5)
+                                     (Hs.coerce @(Hs.Maybe Euler.Proto.Event.Card.Card)
+                                        @(HsProtobuf.Nested Euler.Proto.Event.Card.Card)
+                                        (Hs.Just y)))
+                             EventEventResellerAccount y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 6)
+                                     (Hs.coerce
+                                        @(Hs.Maybe Euler.Proto.Event.ResellerAccount.ResellerAccount)
+                                        @(HsProtobuf.Nested Euler.Proto.Event.ResellerAccount.ResellerAccount)
+                                        (Hs.Just y)))
+                             EventEventRiskManagementAccount y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 7)
+                                     (Hs.coerce
+                                        @(Hs.Maybe Euler.Proto.Event.RiskManagementAccount.RiskManagementAccount)
+                                        @(HsProtobuf.Nested Euler.Proto.Event.RiskManagementAccount.RiskManagementAccount)
                                         (Hs.Just y)))])
         decodeMessage _
           = (Hs.pure Event) <*>
@@ -77,38 +104,76 @@ instance HsProtobuf.Message Event where
                         @(_ (Hs.Maybe Euler.Proto.Event.Order.Order))
                         HsProtobuf.decodeMessageField)),
                   ((HsProtobuf.FieldNumber 2),
-                   (Hs.pure (Hs.fmap EventEventTxn)) <*>
-                     (Hs.coerce @(_ (HsProtobuf.Nested Euler.Proto.Event.Txn.Txn))
-                        @(_ (Hs.Maybe Euler.Proto.Event.Txn.Txn))
+                   (Hs.pure (Hs.fmap EventEventTxnDetail)) <*>
+                     (Hs.coerce
+                        @(_ (HsProtobuf.Nested Euler.Proto.Event.TxnDetail.TxnDetail))
+                        @(_ (Hs.Maybe Euler.Proto.Event.TxnDetail.TxnDetail))
                         HsProtobuf.decodeMessageField)),
                   ((HsProtobuf.FieldNumber 3),
                    (Hs.pure (Hs.fmap EventEventRefund)) <*>
                      (Hs.coerce @(_ (HsProtobuf.Nested Euler.Proto.Event.Refund.Refund))
                         @(_ (Hs.Maybe Euler.Proto.Event.Refund.Refund))
+                        HsProtobuf.decodeMessageField)),
+                  ((HsProtobuf.FieldNumber 4),
+                   (Hs.pure (Hs.fmap EventEventTxnCardInfo)) <*>
+                     (Hs.coerce
+                        @(_ (HsProtobuf.Nested Euler.Proto.Event.TxnCardInfo.TxnCardInfo))
+                        @(_ (Hs.Maybe Euler.Proto.Event.TxnCardInfo.TxnCardInfo))
+                        HsProtobuf.decodeMessageField)),
+                  ((HsProtobuf.FieldNumber 5),
+                   (Hs.pure (Hs.fmap EventEventCard)) <*>
+                     (Hs.coerce @(_ (HsProtobuf.Nested Euler.Proto.Event.Card.Card))
+                        @(_ (Hs.Maybe Euler.Proto.Event.Card.Card))
+                        HsProtobuf.decodeMessageField)),
+                  ((HsProtobuf.FieldNumber 6),
+                   (Hs.pure (Hs.fmap EventEventResellerAccount)) <*>
+                     (Hs.coerce
+                        @(_ (HsProtobuf.Nested Euler.Proto.Event.ResellerAccount.ResellerAccount))
+                        @(_ (Hs.Maybe Euler.Proto.Event.ResellerAccount.ResellerAccount))
+                        HsProtobuf.decodeMessageField)),
+                  ((HsProtobuf.FieldNumber 7),
+                   (Hs.pure (Hs.fmap EventEventRiskManagementAccount)) <*>
+                     (Hs.coerce
+                        @(_ (HsProtobuf.Nested Euler.Proto.Event.RiskManagementAccount.RiskManagementAccount))
+                        @(_ (Hs.Maybe Euler.Proto.Event.RiskManagementAccount.RiskManagementAccount))
                         HsProtobuf.decodeMessageField))])
         dotProto _ = []
  
 instance HsJSONPB.ToJSONPB Event where
-        toJSONPB (Event f1_or_f2_or_f3)
+        toJSONPB (Event f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7)
           = (HsJSONPB.object
                [(let encodeEvent
-                       = (case f1_or_f2_or_f3 of
+                       = (case f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7 of
                               Hs.Just (EventEventOrder f1) -> (HsJSONPB.pair "order" f1)
-                              Hs.Just (EventEventTxn f2) -> (HsJSONPB.pair "txn" f2)
+                              Hs.Just (EventEventTxnDetail f2) -> (HsJSONPB.pair "txn_detail" f2)
                               Hs.Just (EventEventRefund f3) -> (HsJSONPB.pair "refund" f3)
+                              Hs.Just (EventEventTxnCardInfo f4)
+                                -> (HsJSONPB.pair "txn_card_info" f4)
+                              Hs.Just (EventEventCard f5) -> (HsJSONPB.pair "card" f5)
+                              Hs.Just (EventEventResellerAccount f6)
+                                -> (HsJSONPB.pair "reseller_account" f6)
+                              Hs.Just (EventEventRiskManagementAccount f7)
+                                -> (HsJSONPB.pair "risk_management_account" f7)
                               Hs.Nothing -> Hs.mempty)
                    in
                    \ options ->
                      if HsJSONPB.optEmitNamedOneof options then
                        ("event" .= (HsJSONPB.objectOrNull [encodeEvent] options)) options
                        else encodeEvent options)])
-        toEncodingPB (Event f1_or_f2_or_f3)
+        toEncodingPB (Event f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7)
           = (HsJSONPB.pairs
                [(let encodeEvent
-                       = (case f1_or_f2_or_f3 of
+                       = (case f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7 of
                               Hs.Just (EventEventOrder f1) -> (HsJSONPB.pair "order" f1)
-                              Hs.Just (EventEventTxn f2) -> (HsJSONPB.pair "txn" f2)
+                              Hs.Just (EventEventTxnDetail f2) -> (HsJSONPB.pair "txn_detail" f2)
                               Hs.Just (EventEventRefund f3) -> (HsJSONPB.pair "refund" f3)
+                              Hs.Just (EventEventTxnCardInfo f4)
+                                -> (HsJSONPB.pair "txn_card_info" f4)
+                              Hs.Just (EventEventCard f5) -> (HsJSONPB.pair "card" f5)
+                              Hs.Just (EventEventResellerAccount f6)
+                                -> (HsJSONPB.pair "reseller_account" f6)
+                              Hs.Just (EventEventRiskManagementAccount f7)
+                                -> (HsJSONPB.pair "risk_management_account" f7)
                               Hs.Nothing -> Hs.mempty)
                    in
                    \ options ->
@@ -125,10 +190,18 @@ instance HsJSONPB.FromJSONPB Event where
                            = Hs.msum
                                [Hs.Just Hs.. EventEventOrder <$>
                                   (HsJSONPB.parseField parseObj "order"),
-                                Hs.Just Hs.. EventEventTxn <$>
-                                  (HsJSONPB.parseField parseObj "txn"),
+                                Hs.Just Hs.. EventEventTxnDetail <$>
+                                  (HsJSONPB.parseField parseObj "txn_detail"),
                                 Hs.Just Hs.. EventEventRefund <$>
                                   (HsJSONPB.parseField parseObj "refund"),
+                                Hs.Just Hs.. EventEventTxnCardInfo <$>
+                                  (HsJSONPB.parseField parseObj "txn_card_info"),
+                                Hs.Just Hs.. EventEventCard <$>
+                                  (HsJSONPB.parseField parseObj "card"),
+                                Hs.Just Hs.. EventEventResellerAccount <$>
+                                  (HsJSONPB.parseField parseObj "reseller_account"),
+                                Hs.Just Hs.. EventEventRiskManagementAccount <$>
+                                  (HsJSONPB.parseField parseObj "risk_management_account"),
                                 Hs.pure Hs.Nothing]
                        in
                        ((obj .: "event") Hs.>>= (HsJSONPB.withObject "event" parseEvent))
@@ -157,8 +230,12 @@ instance HsJSONPB.ToSchema Event where
                                                        [("event", eventEvent)]}})
  
 data EventEvent = EventEventOrder Euler.Proto.Event.Order.Order
-                | EventEventTxn Euler.Proto.Event.Txn.Txn
+                | EventEventTxnDetail Euler.Proto.Event.TxnDetail.TxnDetail
                 | EventEventRefund Euler.Proto.Event.Refund.Refund
+                | EventEventTxnCardInfo Euler.Proto.Event.TxnCardInfo.TxnCardInfo
+                | EventEventCard Euler.Proto.Event.Card.Card
+                | EventEventResellerAccount Euler.Proto.Event.ResellerAccount.ResellerAccount
+                | EventEventRiskManagementAccount Euler.Proto.Event.RiskManagementAccount.RiskManagementAccount
                 deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
  
 instance HsProtobuf.Named EventEvent where
@@ -169,13 +246,30 @@ instance HsJSONPB.ToSchema EventEvent where
           = do let declare_order = HsJSONPB.declareSchemaRef
                eventEventOrder <- declare_order Proxy.Proxy
                let _ = Hs.pure EventEventOrder <*> HsJSONPB.asProxy declare_order
-               let declare_txn = HsJSONPB.declareSchemaRef
-               eventEventTxn <- declare_txn Proxy.Proxy
-               let _ = Hs.pure EventEventTxn <*> HsJSONPB.asProxy declare_txn
+               let declare_txn_detail = HsJSONPB.declareSchemaRef
+               eventEventTxnDetail <- declare_txn_detail Proxy.Proxy
+               let _ = Hs.pure EventEventTxnDetail <*>
+                         HsJSONPB.asProxy declare_txn_detail
                let declare_refund = HsJSONPB.declareSchemaRef
                eventEventRefund <- declare_refund Proxy.Proxy
                let _ = Hs.pure EventEventRefund <*>
                          HsJSONPB.asProxy declare_refund
+               let declare_txn_card_info = HsJSONPB.declareSchemaRef
+               eventEventTxnCardInfo <- declare_txn_card_info Proxy.Proxy
+               let _ = Hs.pure EventEventTxnCardInfo <*>
+                         HsJSONPB.asProxy declare_txn_card_info
+               let declare_card = HsJSONPB.declareSchemaRef
+               eventEventCard <- declare_card Proxy.Proxy
+               let _ = Hs.pure EventEventCard <*> HsJSONPB.asProxy declare_card
+               let declare_reseller_account = HsJSONPB.declareSchemaRef
+               eventEventResellerAccount <- declare_reseller_account Proxy.Proxy
+               let _ = Hs.pure EventEventResellerAccount <*>
+                         HsJSONPB.asProxy declare_reseller_account
+               let declare_risk_management_account = HsJSONPB.declareSchemaRef
+               eventEventRiskManagementAccount <- declare_risk_management_account
+                                                    Proxy.Proxy
+               let _ = Hs.pure EventEventRiskManagementAccount <*>
+                         HsJSONPB.asProxy declare_risk_management_account
                Hs.return
                  (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
                                          Hs.Just "EventEvent",
@@ -186,7 +280,13 @@ instance HsJSONPB.ToSchema EventEvent where
                                                    HsJSONPB._schemaProperties =
                                                      HsJSONPB.insOrdFromList
                                                        [("order", eventEventOrder),
-                                                        ("txn", eventEventTxn),
-                                                        ("refund", eventEventRefund)],
+                                                        ("txn_detail", eventEventTxnDetail),
+                                                        ("refund", eventEventRefund),
+                                                        ("txn_card_info", eventEventTxnCardInfo),
+                                                        ("card", eventEventCard),
+                                                        ("reseller_account",
+                                                         eventEventResellerAccount),
+                                                        ("risk_management_account",
+                                                         eventEventRiskManagementAccount)],
                                                    HsJSONPB._schemaMinProperties = Hs.Just 1,
                                                    HsJSONPB._schemaMaxProperties = Hs.Just 1}})

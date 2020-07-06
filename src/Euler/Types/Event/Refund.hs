@@ -5,12 +5,10 @@ module Euler.Types.Event.Refund where
 import           Data.Text                (Text)
 import           Data.Time                (UTCTime)
 import           Euler.Class              (Event (toProtoEvent))
-import           Prelude                  hiding (id)
-
 import qualified Euler.Proto.Event        as Proto
 import qualified Euler.Proto.Event.Refund as Proto
-import           Euler.Util               (fromInt, fromMaybeBool, fromMaybeDouble, fromMaybeInt, fromMaybeText,
-                                           fromMaybeUTCTime, fromSumType, fromText, fromUTCTime)
+import           Euler.Util               (fromInt, fromSumType, fromText, fromUTCTime)
+import           Prelude                  hiding (id)
 
 data Refund =
   Refund
@@ -59,27 +57,53 @@ instance Event Refund where
           Proto.Refund
             { Proto.refundId = fromInt id
             , Proto.refundAmount = amount
-            , Proto.refundAuthorizationId = fromMaybeText authorizationId
+            , Proto.refundMaybeAuthorizationId =
+                Proto.RefundMaybeAuthorizationIdAuthorizationId . fromText <$>
+                authorizationId
             , Proto.refundDateCreated = fromUTCTime dateCreated
-            , Proto.refundEpgTxnId = fromMaybeText epgTxnId
+            , Proto.refundMaybeEpgTxnId =
+                Proto.RefundMaybeEpgTxnIdEpgTxnId . fromText <$> epgTxnId
             , Proto.refundGateway = fromText gateway
             , Proto.refundProcessed = processed
-            , Proto.refundRootReferenceNumber =
-                fromMaybeText rootReferenceNumber
-            , Proto.refundTxnDetailId = fromMaybeInt txnDetailId
-            , Proto.refundReferenceId = fromMaybeText referenceId
+            , Proto.refundMaybeRootReferenceNumber =
+                Proto.RefundMaybeRootReferenceNumberRootReferenceNumber .
+                fromText <$>
+                rootReferenceNumber
+            , Proto.refundMaybeTxnDetailId =
+                Proto.RefundMaybeTxnDetailIdTxnDetailId . fromInt <$>
+                txnDetailId
+            , Proto.refundMaybeReferenceId =
+                Proto.RefundMaybeReferenceIdReferenceId . fromText <$>
+                referenceId
             , Proto.refundStatus = fromSumType . fromStatus $ status
-            , Proto.refundUniqueRequestId = fromMaybeText uniqueRequestId
-            , Proto.refundErrorMessage = fromMaybeText errorMessage
-            , Proto.refundSentToGateway = fromMaybeBool sentToGateway
-            , Proto.refundResponseCode = fromMaybeText responseCode
-            , Proto.refundInternalReferenceId =
-                fromMaybeText internalReferenceId
-            , Proto.refundRefundArn = fromMaybeText refundArn
-            , Proto.refundInitiatedBy = fromMaybeText initiatedBy
-            , Proto.refundRefundType = fromMaybeText refundType
-            , Proto.refundRefundSource = fromMaybeText refundSource
-            , Proto.refundLastModified = fromMaybeUTCTime lastModified
+            , Proto.refundMaybeUniqueRequestId =
+                Proto.RefundMaybeUniqueRequestIdUniqueRequestId . fromText <$>
+                uniqueRequestId
+            , Proto.refundMaybeErrorMessage =
+                Proto.RefundMaybeErrorMessageErrorMessage . fromText <$>
+                errorMessage
+            , Proto.refundMaybeSentToGateway =
+                Proto.RefundMaybeSentToGatewaySentToGateway <$> sentToGateway
+            , Proto.refundMaybeResponseCode =
+                Proto.RefundMaybeResponseCodeResponseCode . fromText <$>
+                responseCode
+            , Proto.refundMaybeInternalReferenceId =
+                Proto.RefundMaybeInternalReferenceIdInternalReferenceId .
+                fromText <$>
+                internalReferenceId
+            , Proto.refundMaybeRefundArn =
+                Proto.RefundMaybeRefundArnRefundArn . fromText <$> refundArn
+            , Proto.refundMaybeInitiatedBy =
+                Proto.RefundMaybeInitiatedByInitiatedBy . fromText <$>
+                initiatedBy
+            , Proto.refundMaybeRefundType =
+                Proto.RefundMaybeRefundTypeRefundType . fromText <$> refundType
+            , Proto.refundMaybeRefundSource =
+                Proto.RefundMaybeRefundSourceRefundSource . fromText <$>
+                refundSource
+            , Proto.refundMaybeLastModified =
+                Proto.RefundMaybeLastModifiedLastModified . fromUTCTime <$>
+                lastModified
             , Proto.refundRefundEventType =
                 fromSumType . fromEventType $ eventType
             }

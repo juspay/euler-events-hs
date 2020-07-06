@@ -1,16 +1,14 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Euler.Types.Event.Txn where
+module Euler.Types.Event.TxnDetail where
 
-import           Data.Text             (Text)
-import           Data.Time             (UTCTime)
-import           Euler.Class           (Event (toProtoEvent))
-import           Prelude               hiding (id)
-
-import qualified Euler.Proto.Event     as Proto
-import qualified Euler.Proto.Event.Txn as Proto
-import           Euler.Util            (fromInt, fromMaybeBool, fromMaybeDouble, fromMaybeInt, fromMaybeText,
-                                        fromMaybeUTCTime, fromSumType, fromText)
+import           Data.Text                   (Text)
+import           Data.Time                   (UTCTime)
+import           Euler.Class                 (Event (toProtoEvent))
+import qualified Euler.Proto.Event           as Proto
+import qualified Euler.Proto.Event.TxnDetail as Proto
+import           Euler.Util                  (fromInt, fromSumType, fromText, fromUTCTime)
+import           Prelude                     hiding (id)
 
 data Txn =
   Txn
@@ -151,43 +149,86 @@ instance Event Txn where
     Proto.Event
       { Proto.eventEvent =
           Just $
-          Proto.EventEventTxn $
-          Proto.Txn
-            { Proto.txnId = fromInt id
-            , Proto.txnVersion = fromInt version
-            , Proto.txnErrorMessage = fromMaybeText errorMessage
-            , Proto.txnOrderId = fromText orderId
-            , Proto.txnTxnStatus = fromSumType . fromStatus $ status
-            , Proto.txnTxnId = fromText txnId
-            , Proto.txnTxnType = fromText txnType
-            , Proto.txnDateCreated = fromMaybeUTCTime dateCreated
-            , Proto.txnLastModified = fromMaybeUTCTime lastModified
-            , Proto.txnSuccessResponseId = fromMaybeInt successResponseId
-            , Proto.txnTxnMode = fromMaybeText txnMode
-            , Proto.txnAddToLocker = fromMaybeBool addToLocker
-            , Proto.txnMerchantId = fromMaybeText merchantId
-            , Proto.txnBankErrorCode = fromMaybeText bankErrorCode
-            , Proto.txnBankErrorMessage = fromMaybeText bankErrorMessage
-            , Proto.txnGateway = fromSumType . fromMaybeGateway $ gateway
-            , Proto.txnExpressCheckout = fromMaybeBool expressCheckout
-            , Proto.txnRedirect = fromMaybeBool redirect
-            , Proto.txnGatewayPayload = fromMaybeText gatewayPayload
-            , Proto.txnIsEmi = fromMaybeBool isEmi
-            , Proto.txnEmiBank = fromMaybeText emiBank
-            , Proto.txnEmiTenure = fromMaybeInt emiTenure
-            , Proto.txnUsername = fromMaybeText username
-            , Proto.txnTxnUuid = fromMaybeText txnUuid
-            , Proto.txnMerchantGatewayAccountId =
-                fromMaybeInt merchantGatewayAccountId
-            , Proto.txnTxnAmount = fromMaybeDouble txnAmount
-            , Proto.txnTxnObjectType = fromMaybeText txnObjectType
-            , Proto.txnSourceObject = fromMaybeText sourceObject
-            , Proto.txnSourceObjectId = fromMaybeText sourceObjectId
-            , Proto.txnCurrency = fromMaybeText currency
-            , Proto.txnNetAmount = fromMaybeDouble netAmount
-            , Proto.txnSurchargeAmount = fromMaybeDouble surchargeAmount
-            , Proto.txnTaxAmount = fromMaybeDouble taxAmount
-            , Proto.txnTxnEventType = fromSumType . fromEventType $ eventType
+          Proto.EventEventTxnDetail $
+          Proto.TxnDetail
+            { Proto.txnDetailId = fromInt id
+            , Proto.txnDetailVersion = fromInt version
+            , Proto.txnDetailMaybeErrorMessage =
+                Proto.TxnDetailMaybeErrorMessageErrorMessage . fromText <$>
+                errorMessage
+            , Proto.txnDetailOrderId = fromText orderId
+            , Proto.txnDetailTxnStatus = fromSumType . fromStatus $ status
+            , Proto.txnDetailTxnId = fromText txnId
+            , Proto.txnDetailTxnType = fromText txnType
+            , Proto.txnDetailMaybeDateCreated =
+                Proto.TxnDetailMaybeDateCreatedDateCreated . fromUTCTime <$>
+                dateCreated
+            , Proto.txnDetailMaybeLastModified =
+                Proto.TxnDetailMaybeLastModifiedLastModified . fromUTCTime <$>
+                lastModified
+            , Proto.txnDetailMaybeSuccessResponseId =
+                Proto.TxnDetailMaybeSuccessResponseIdSuccessResponseId . fromInt <$>
+                successResponseId
+            , Proto.txnDetailMaybeTxnMode =
+                Proto.TxnDetailMaybeTxnModeTxnMode . fromText <$> txnMode
+            , Proto.txnDetailMaybeAddToLocker =
+                Proto.TxnDetailMaybeAddToLockerAddToLocker <$> addToLocker
+            , Proto.txnDetailMaybeMerchantId =
+                Proto.TxnDetailMaybeMerchantIdMerchantId . fromText <$>
+                merchantId
+            , Proto.txnDetailMaybeBankErrorCode =
+                Proto.TxnDetailMaybeBankErrorCodeBankErrorCode . fromText <$>
+                bankErrorCode
+            , Proto.txnDetailMaybeBankErrorMessage =
+                Proto.TxnDetailMaybeBankErrorMessageBankErrorMessage . fromText <$>
+                bankErrorMessage
+            , Proto.txnDetailMaybeGateway =
+                Proto.TxnDetailMaybeGatewayGateway . fromSumType . fromGateway <$>
+                gateway
+            , Proto.txnDetailMaybeExpressCheckout =
+                Proto.TxnDetailMaybeExpressCheckoutExpressCheckout <$>
+                expressCheckout
+            , Proto.txnDetailMaybeRedirect =
+                Proto.TxnDetailMaybeRedirectRedirect <$> redirect
+            , Proto.txnDetailMaybeGatewayPayload =
+                Proto.TxnDetailMaybeGatewayPayloadGatewayPayload . fromText <$>
+                gatewayPayload
+            , Proto.txnDetailMaybeIsEmi =
+                Proto.TxnDetailMaybeIsEmiIsEmi <$> isEmi
+            , Proto.txnDetailMaybeEmiBank =
+                Proto.TxnDetailMaybeEmiBankEmiBank . fromText <$> emiBank
+            , Proto.txnDetailMaybeEmiTenure =
+                Proto.TxnDetailMaybeEmiTenureEmiTenure . fromInt <$> emiTenure
+            , Proto.txnDetailMaybeUsername =
+                Proto.TxnDetailMaybeUsernameUsername . fromText <$> username
+            , Proto.txnDetailMaybeTxnUuid =
+                Proto.TxnDetailMaybeTxnUuidTxnUuid . fromText <$> txnUuid
+            , Proto.txnDetailMaybeMerchantGatewayAccountId =
+                Proto.TxnDetailMaybeMerchantGatewayAccountIdMerchantGatewayAccountId .
+                fromInt <$>
+                merchantGatewayAccountId
+            , Proto.txnDetailMaybeTxnAmount =
+                Proto.TxnDetailMaybeTxnAmountTxnAmount <$> txnAmount
+            , Proto.txnDetailMaybeTxnObjectType =
+                Proto.TxnDetailMaybeTxnObjectTypeTxnObjectType . fromText <$>
+                txnObjectType
+            , Proto.txnDetailMaybeSourceObject =
+                Proto.TxnDetailMaybeSourceObjectSourceObject . fromText <$>
+                sourceObject
+            , Proto.txnDetailMaybeSourceObjectId =
+                Proto.TxnDetailMaybeSourceObjectIdSourceObjectId . fromText <$>
+                sourceObjectId
+            , Proto.txnDetailMaybeCurrency =
+                Proto.TxnDetailMaybeCurrencyCurrency . fromText <$> currency
+            , Proto.txnDetailMaybeNetAmount =
+                Proto.TxnDetailMaybeNetAmountNetAmount <$> netAmount
+            , Proto.txnDetailMaybeSurchargeAmount =
+                Proto.TxnDetailMaybeSurchargeAmountSurchargeAmount <$>
+                surchargeAmount
+            , Proto.txnDetailMaybeTaxAmount =
+                Proto.TxnDetailMaybeTaxAmountTaxAmount <$> taxAmount
+            , Proto.txnDetailTxnEventType =
+                fromSumType . fromEventType $ eventType
             }
       }
 
@@ -211,9 +252,8 @@ fromStatus txnStatus =
     CAPTURE_FAILED        -> Proto.TxnStatusCAPTURE_FAILED
     VOID_FAILED           -> Proto.TxnStatusVOID_FAILED
 
-fromMaybeGateway :: Maybe Gateway -> Proto.Gateway
-fromMaybeGateway Nothing = Proto.GatewayNO_GATEWAY
-fromMaybeGateway (Just gateway) =
+fromGateway :: Gateway -> Proto.Gateway
+fromGateway gateway =
   case gateway of
     AXIS           -> Proto.GatewayAXIS
     HDFC           -> Proto.GatewayHDFC
