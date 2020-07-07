@@ -35,7 +35,10 @@ import qualified GHC.Enum as Hs
 import qualified GHC.Generics as Hs
 import qualified Unsafe.Coerce as Hs
 import qualified Euler.Proto.Event.Card
+import qualified Euler.Proto.Event.Chargeback
 import qualified Euler.Proto.Event.Order
+import qualified Euler.Proto.Event.Customer
+import qualified Euler.Proto.Event.Feature
 import qualified Euler.Proto.Event.TxnDetail
 import qualified Euler.Proto.Event.TxnCardInfo
 import qualified Euler.Proto.Event.Refund
@@ -94,6 +97,21 @@ instance HsProtobuf.Message Event where
                                      (Hs.coerce
                                         @(Hs.Maybe Euler.Proto.Event.RiskManagementAccount.RiskManagementAccount)
                                         @(HsProtobuf.Nested Euler.Proto.Event.RiskManagementAccount.RiskManagementAccount)
+                                        (Hs.Just y)))
+                             EventEventChargeback y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 8)
+                                     (Hs.coerce @(Hs.Maybe Euler.Proto.Event.Chargeback.Chargeback)
+                                        @(HsProtobuf.Nested Euler.Proto.Event.Chargeback.Chargeback)
+                                        (Hs.Just y)))
+                             EventEventCustomer y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 9)
+                                     (Hs.coerce @(Hs.Maybe Euler.Proto.Event.Customer.Customer)
+                                        @(HsProtobuf.Nested Euler.Proto.Event.Customer.Customer)
+                                        (Hs.Just y)))
+                             EventEventFeature y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 10)
+                                     (Hs.coerce @(Hs.Maybe Euler.Proto.Event.Feature.Feature)
+                                        @(HsProtobuf.Nested Euler.Proto.Event.Feature.Feature)
                                         (Hs.Just y)))])
         decodeMessage _
           = (Hs.pure Event) <*>
@@ -136,14 +154,34 @@ instance HsProtobuf.Message Event where
                      (Hs.coerce
                         @(_ (HsProtobuf.Nested Euler.Proto.Event.RiskManagementAccount.RiskManagementAccount))
                         @(_ (Hs.Maybe Euler.Proto.Event.RiskManagementAccount.RiskManagementAccount))
+                        HsProtobuf.decodeMessageField)),
+                  ((HsProtobuf.FieldNumber 8),
+                   (Hs.pure (Hs.fmap EventEventChargeback)) <*>
+                     (Hs.coerce
+                        @(_ (HsProtobuf.Nested Euler.Proto.Event.Chargeback.Chargeback))
+                        @(_ (Hs.Maybe Euler.Proto.Event.Chargeback.Chargeback))
+                        HsProtobuf.decodeMessageField)),
+                  ((HsProtobuf.FieldNumber 9),
+                   (Hs.pure (Hs.fmap EventEventCustomer)) <*>
+                     (Hs.coerce
+                        @(_ (HsProtobuf.Nested Euler.Proto.Event.Customer.Customer))
+                        @(_ (Hs.Maybe Euler.Proto.Event.Customer.Customer))
+                        HsProtobuf.decodeMessageField)),
+                  ((HsProtobuf.FieldNumber 10),
+                   (Hs.pure (Hs.fmap EventEventFeature)) <*>
+                     (Hs.coerce
+                        @(_ (HsProtobuf.Nested Euler.Proto.Event.Feature.Feature))
+                        @(_ (Hs.Maybe Euler.Proto.Event.Feature.Feature))
                         HsProtobuf.decodeMessageField))])
         dotProto _ = []
  
 instance HsJSONPB.ToJSONPB Event where
-        toJSONPB (Event f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7)
+        toJSONPB
+          (Event f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7_or_f8_or_f9_or_f10)
           = (HsJSONPB.object
                [(let encodeEvent
-                       = (case f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7 of
+                       = (case f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7_or_f8_or_f9_or_f10
+                            of
                               Hs.Just (EventEventOrder f1) -> (HsJSONPB.pair "order" f1)
                               Hs.Just (EventEventTxnDetail f2) -> (HsJSONPB.pair "txn_detail" f2)
                               Hs.Just (EventEventRefund f3) -> (HsJSONPB.pair "refund" f3)
@@ -154,16 +192,22 @@ instance HsJSONPB.ToJSONPB Event where
                                 -> (HsJSONPB.pair "reseller_account" f6)
                               Hs.Just (EventEventRiskManagementAccount f7)
                                 -> (HsJSONPB.pair "risk_management_account" f7)
+                              Hs.Just (EventEventChargeback f8)
+                                -> (HsJSONPB.pair "chargeback" f8)
+                              Hs.Just (EventEventCustomer f9) -> (HsJSONPB.pair "customer" f9)
+                              Hs.Just (EventEventFeature f10) -> (HsJSONPB.pair "feature" f10)
                               Hs.Nothing -> Hs.mempty)
                    in
                    \ options ->
                      if HsJSONPB.optEmitNamedOneof options then
                        ("event" .= (HsJSONPB.objectOrNull [encodeEvent] options)) options
                        else encodeEvent options)])
-        toEncodingPB (Event f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7)
+        toEncodingPB
+          (Event f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7_or_f8_or_f9_or_f10)
           = (HsJSONPB.pairs
                [(let encodeEvent
-                       = (case f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7 of
+                       = (case f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7_or_f8_or_f9_or_f10
+                            of
                               Hs.Just (EventEventOrder f1) -> (HsJSONPB.pair "order" f1)
                               Hs.Just (EventEventTxnDetail f2) -> (HsJSONPB.pair "txn_detail" f2)
                               Hs.Just (EventEventRefund f3) -> (HsJSONPB.pair "refund" f3)
@@ -174,6 +218,10 @@ instance HsJSONPB.ToJSONPB Event where
                                 -> (HsJSONPB.pair "reseller_account" f6)
                               Hs.Just (EventEventRiskManagementAccount f7)
                                 -> (HsJSONPB.pair "risk_management_account" f7)
+                              Hs.Just (EventEventChargeback f8)
+                                -> (HsJSONPB.pair "chargeback" f8)
+                              Hs.Just (EventEventCustomer f9) -> (HsJSONPB.pair "customer" f9)
+                              Hs.Just (EventEventFeature f10) -> (HsJSONPB.pair "feature" f10)
                               Hs.Nothing -> Hs.mempty)
                    in
                    \ options ->
@@ -202,6 +250,12 @@ instance HsJSONPB.FromJSONPB Event where
                                   (HsJSONPB.parseField parseObj "reseller_account"),
                                 Hs.Just Hs.. EventEventRiskManagementAccount <$>
                                   (HsJSONPB.parseField parseObj "risk_management_account"),
+                                Hs.Just Hs.. EventEventChargeback <$>
+                                  (HsJSONPB.parseField parseObj "chargeback"),
+                                Hs.Just Hs.. EventEventCustomer <$>
+                                  (HsJSONPB.parseField parseObj "customer"),
+                                Hs.Just Hs.. EventEventFeature <$>
+                                  (HsJSONPB.parseField parseObj "feature"),
                                 Hs.pure Hs.Nothing]
                        in
                        ((obj .: "event") Hs.>>= (HsJSONPB.withObject "event" parseEvent))
@@ -236,6 +290,9 @@ data EventEvent = EventEventOrder Euler.Proto.Event.Order.Order
                 | EventEventCard Euler.Proto.Event.Card.Card
                 | EventEventResellerAccount Euler.Proto.Event.ResellerAccount.ResellerAccount
                 | EventEventRiskManagementAccount Euler.Proto.Event.RiskManagementAccount.RiskManagementAccount
+                | EventEventChargeback Euler.Proto.Event.Chargeback.Chargeback
+                | EventEventCustomer Euler.Proto.Event.Customer.Customer
+                | EventEventFeature Euler.Proto.Event.Feature.Feature
                 deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
  
 instance HsProtobuf.Named EventEvent where
@@ -270,6 +327,18 @@ instance HsJSONPB.ToSchema EventEvent where
                                                     Proxy.Proxy
                let _ = Hs.pure EventEventRiskManagementAccount <*>
                          HsJSONPB.asProxy declare_risk_management_account
+               let declare_chargeback = HsJSONPB.declareSchemaRef
+               eventEventChargeback <- declare_chargeback Proxy.Proxy
+               let _ = Hs.pure EventEventChargeback <*>
+                         HsJSONPB.asProxy declare_chargeback
+               let declare_customer = HsJSONPB.declareSchemaRef
+               eventEventCustomer <- declare_customer Proxy.Proxy
+               let _ = Hs.pure EventEventCustomer <*>
+                         HsJSONPB.asProxy declare_customer
+               let declare_feature = HsJSONPB.declareSchemaRef
+               eventEventFeature <- declare_feature Proxy.Proxy
+               let _ = Hs.pure EventEventFeature <*>
+                         HsJSONPB.asProxy declare_feature
                Hs.return
                  (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
                                          Hs.Just "EventEvent",
@@ -287,6 +356,9 @@ instance HsJSONPB.ToSchema EventEvent where
                                                         ("reseller_account",
                                                          eventEventResellerAccount),
                                                         ("risk_management_account",
-                                                         eventEventRiskManagementAccount)],
+                                                         eventEventRiskManagementAccount),
+                                                        ("chargeback", eventEventChargeback),
+                                                        ("customer", eventEventCustomer),
+                                                        ("feature", eventEventFeature)],
                                                    HsJSONPB._schemaMinProperties = Hs.Just 1,
                                                    HsJSONPB._schemaMaxProperties = Hs.Just 1}})

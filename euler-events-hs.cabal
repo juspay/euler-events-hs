@@ -20,6 +20,9 @@ library
     Euler.Constants
     Euler.Proto.Event
     Euler.Proto.Event.Card
+    Euler.Proto.Event.Chargeback
+    Euler.Proto.Event.Customer
+    Euler.Proto.Event.Feature
     Euler.Proto.Event.Order
     Euler.Proto.Event.Refund
     Euler.Proto.Event.ResellerAccount
@@ -29,6 +32,9 @@ library
     Euler.Sink.Kafka
     Euler.Types.Event
     Euler.Types.Event.Card
+    Euler.Types.Event.Chargeback
+    Euler.Types.Event.Customer
+    Euler.Types.Event.Feature
     Euler.Types.Event.Order
     Euler.Types.Event.Refund
     Euler.Types.Event.ResellerAccount
