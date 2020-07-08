@@ -40,10 +40,12 @@ import qualified Euler.Proto.Event.Order
 import qualified Euler.Proto.Event.Customer
 import qualified Euler.Proto.Event.Feature
 import qualified Euler.Proto.Event.TxnDetail
+import qualified Euler.Proto.Event.Mandate
 import qualified Euler.Proto.Event.TxnCardInfo
 import qualified Euler.Proto.Event.Refund
 import qualified Euler.Proto.Event.ResellerAccount
 import qualified Euler.Proto.Event.RiskManagementAccount
+import qualified Euler.Proto.Event.SecondFactor
  
 data Event = Event{eventEvent :: Hs.Maybe EventEvent}
            deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
@@ -112,6 +114,17 @@ instance HsProtobuf.Message Event where
                                -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 10)
                                      (Hs.coerce @(Hs.Maybe Euler.Proto.Event.Feature.Feature)
                                         @(HsProtobuf.Nested Euler.Proto.Event.Feature.Feature)
+                                        (Hs.Just y)))
+                             EventEventMandate y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 11)
+                                     (Hs.coerce @(Hs.Maybe Euler.Proto.Event.Mandate.Mandate)
+                                        @(HsProtobuf.Nested Euler.Proto.Event.Mandate.Mandate)
+                                        (Hs.Just y)))
+                             EventEventSecondFactor y
+                               -> (HsProtobuf.encodeMessageField (HsProtobuf.FieldNumber 12)
+                                     (Hs.coerce
+                                        @(Hs.Maybe Euler.Proto.Event.SecondFactor.SecondFactor)
+                                        @(HsProtobuf.Nested Euler.Proto.Event.SecondFactor.SecondFactor)
                                         (Hs.Just y)))])
         decodeMessage _
           = (Hs.pure Event) <*>
@@ -172,15 +185,29 @@ instance HsProtobuf.Message Event where
                      (Hs.coerce
                         @(_ (HsProtobuf.Nested Euler.Proto.Event.Feature.Feature))
                         @(_ (Hs.Maybe Euler.Proto.Event.Feature.Feature))
+                        HsProtobuf.decodeMessageField)),
+                  ((HsProtobuf.FieldNumber 11),
+                   (Hs.pure (Hs.fmap EventEventMandate)) <*>
+                     (Hs.coerce
+                        @(_ (HsProtobuf.Nested Euler.Proto.Event.Mandate.Mandate))
+                        @(_ (Hs.Maybe Euler.Proto.Event.Mandate.Mandate))
+                        HsProtobuf.decodeMessageField)),
+                  ((HsProtobuf.FieldNumber 12),
+                   (Hs.pure (Hs.fmap EventEventSecondFactor)) <*>
+                     (Hs.coerce
+                        @(_ (HsProtobuf.Nested Euler.Proto.Event.SecondFactor.SecondFactor))
+                        @(_ (Hs.Maybe Euler.Proto.Event.SecondFactor.SecondFactor))
                         HsProtobuf.decodeMessageField))])
         dotProto _ = []
  
 instance HsJSONPB.ToJSONPB Event where
         toJSONPB
-          (Event f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7_or_f8_or_f9_or_f10)
+          (Event
+             f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7_or_f8_or_f9_or_f10_or_f11_or_f12)
           = (HsJSONPB.object
                [(let encodeEvent
-                       = (case f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7_or_f8_or_f9_or_f10
+                       = (case
+                            f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7_or_f8_or_f9_or_f10_or_f11_or_f12
                             of
                               Hs.Just (EventEventOrder f1) -> (HsJSONPB.pair "order" f1)
                               Hs.Just (EventEventTxnDetail f2) -> (HsJSONPB.pair "txn_detail" f2)
@@ -196,6 +223,9 @@ instance HsJSONPB.ToJSONPB Event where
                                 -> (HsJSONPB.pair "chargeback" f8)
                               Hs.Just (EventEventCustomer f9) -> (HsJSONPB.pair "customer" f9)
                               Hs.Just (EventEventFeature f10) -> (HsJSONPB.pair "feature" f10)
+                              Hs.Just (EventEventMandate f11) -> (HsJSONPB.pair "mandate" f11)
+                              Hs.Just (EventEventSecondFactor f12)
+                                -> (HsJSONPB.pair "second_factor" f12)
                               Hs.Nothing -> Hs.mempty)
                    in
                    \ options ->
@@ -203,10 +233,12 @@ instance HsJSONPB.ToJSONPB Event where
                        ("event" .= (HsJSONPB.objectOrNull [encodeEvent] options)) options
                        else encodeEvent options)])
         toEncodingPB
-          (Event f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7_or_f8_or_f9_or_f10)
+          (Event
+             f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7_or_f8_or_f9_or_f10_or_f11_or_f12)
           = (HsJSONPB.pairs
                [(let encodeEvent
-                       = (case f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7_or_f8_or_f9_or_f10
+                       = (case
+                            f1_or_f2_or_f3_or_f4_or_f5_or_f6_or_f7_or_f8_or_f9_or_f10_or_f11_or_f12
                             of
                               Hs.Just (EventEventOrder f1) -> (HsJSONPB.pair "order" f1)
                               Hs.Just (EventEventTxnDetail f2) -> (HsJSONPB.pair "txn_detail" f2)
@@ -222,6 +254,9 @@ instance HsJSONPB.ToJSONPB Event where
                                 -> (HsJSONPB.pair "chargeback" f8)
                               Hs.Just (EventEventCustomer f9) -> (HsJSONPB.pair "customer" f9)
                               Hs.Just (EventEventFeature f10) -> (HsJSONPB.pair "feature" f10)
+                              Hs.Just (EventEventMandate f11) -> (HsJSONPB.pair "mandate" f11)
+                              Hs.Just (EventEventSecondFactor f12)
+                                -> (HsJSONPB.pair "second_factor" f12)
                               Hs.Nothing -> Hs.mempty)
                    in
                    \ options ->
@@ -256,6 +291,10 @@ instance HsJSONPB.FromJSONPB Event where
                                   (HsJSONPB.parseField parseObj "customer"),
                                 Hs.Just Hs.. EventEventFeature <$>
                                   (HsJSONPB.parseField parseObj "feature"),
+                                Hs.Just Hs.. EventEventMandate <$>
+                                  (HsJSONPB.parseField parseObj "mandate"),
+                                Hs.Just Hs.. EventEventSecondFactor <$>
+                                  (HsJSONPB.parseField parseObj "second_factor"),
                                 Hs.pure Hs.Nothing]
                        in
                        ((obj .: "event") Hs.>>= (HsJSONPB.withObject "event" parseEvent))
@@ -293,6 +332,8 @@ data EventEvent = EventEventOrder Euler.Proto.Event.Order.Order
                 | EventEventChargeback Euler.Proto.Event.Chargeback.Chargeback
                 | EventEventCustomer Euler.Proto.Event.Customer.Customer
                 | EventEventFeature Euler.Proto.Event.Feature.Feature
+                | EventEventMandate Euler.Proto.Event.Mandate.Mandate
+                | EventEventSecondFactor Euler.Proto.Event.SecondFactor.SecondFactor
                 deriving (Hs.Show, Hs.Eq, Hs.Ord, Hs.Generic, Hs.NFData)
  
 instance HsProtobuf.Named EventEvent where
@@ -339,6 +380,14 @@ instance HsJSONPB.ToSchema EventEvent where
                eventEventFeature <- declare_feature Proxy.Proxy
                let _ = Hs.pure EventEventFeature <*>
                          HsJSONPB.asProxy declare_feature
+               let declare_mandate = HsJSONPB.declareSchemaRef
+               eventEventMandate <- declare_mandate Proxy.Proxy
+               let _ = Hs.pure EventEventMandate <*>
+                         HsJSONPB.asProxy declare_mandate
+               let declare_second_factor = HsJSONPB.declareSchemaRef
+               eventEventSecondFactor <- declare_second_factor Proxy.Proxy
+               let _ = Hs.pure EventEventSecondFactor <*>
+                         HsJSONPB.asProxy declare_second_factor
                Hs.return
                  (HsJSONPB.NamedSchema{HsJSONPB._namedSchemaName =
                                          Hs.Just "EventEvent",
@@ -359,6 +408,8 @@ instance HsJSONPB.ToSchema EventEvent where
                                                          eventEventRiskManagementAccount),
                                                         ("chargeback", eventEventChargeback),
                                                         ("customer", eventEventCustomer),
-                                                        ("feature", eventEventFeature)],
+                                                        ("feature", eventEventFeature),
+                                                        ("mandate", eventEventMandate),
+                                                        ("second_factor", eventEventSecondFactor)],
                                                    HsJSONPB._schemaMinProperties = Hs.Just 1,
                                                    HsJSONPB._schemaMaxProperties = Hs.Just 1}})

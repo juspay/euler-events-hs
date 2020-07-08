@@ -23,10 +23,12 @@ library
     Euler.Proto.Event.Chargeback
     Euler.Proto.Event.Customer
     Euler.Proto.Event.Feature
+    Euler.Proto.Event.Mandate
     Euler.Proto.Event.Order
     Euler.Proto.Event.Refund
     Euler.Proto.Event.ResellerAccount
     Euler.Proto.Event.RiskManagementAccount
+    Euler.Proto.Event.SecondFactor
     Euler.Proto.Event.TxnCardInfo
     Euler.Proto.Event.TxnDetail
     Euler.Sink.Kafka
@@ -35,10 +37,12 @@ library
     Euler.Types.Event.Chargeback
     Euler.Types.Event.Customer
     Euler.Types.Event.Feature
+    Euler.Types.Event.Mandate
     Euler.Types.Event.Order
     Euler.Types.Event.Refund
     Euler.Types.Event.ResellerAccount
     Euler.Types.Event.RiskManagementAccount
+    Euler.Types.Event.SecondFactor
     Euler.Types.Event.TxnCardInfo
     Euler.Types.Event.TxnDetail
     Euler.Utils
