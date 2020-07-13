@@ -27,6 +27,69 @@ packages:
     git: https://github.com/awakesecurity/proto3-wire.git
     commit: 5df56fe1ad26a18b1dfbb2a5b8d35b4c1ad63f53
 - completed:
+    name: beam-mysql
+    version: 0.3.0.0
+    git: https://github.com/juspay/beam-mysql
+    pantry-tree:
+      size: 542
+      sha256: 84a5983f91aac3c3c484fe4aa8fe9d489afc4685cee340dadb5bb941cfc788d2
+    commit: 7960580e041188459cfafef9c49aa6535ef4243e
+  original:
+    git: https://github.com/juspay/beam-mysql
+    commit: 7960580e041188459cfafef9c49aa6535ef4243e
+- completed:
+    subdir: beam-core
+    name: beam-core
+    version: 0.9.0.0
+    git: https://github.com/juspay/beam
+    pantry-tree:
+      size: 2623
+      sha256: 365f420adf34642df7ffac56f80a578da48b3bebfac140748f3e163f83b4e37c
+    commit: b626c85f4d86b0960359d8b99613a9a0439667a2
+  original:
+    subdir: beam-core
+    git: https://github.com/juspay/beam
+    commit: b626c85f4d86b0960359d8b99613a9a0439667a2
+- completed:
+    subdir: beam-migrate
+    name: beam-migrate
+    version: 0.5.0.0
+    git: https://github.com/juspay/beam
+    pantry-tree:
+      size: 1825
+      sha256: 3ef904145e6e05e2f1cf6558e40f109f2751f08d2f8ce446f4e43ab70675936b
+    commit: b626c85f4d86b0960359d8b99613a9a0439667a2
+  original:
+    subdir: beam-migrate
+    git: https://github.com/juspay/beam
+    commit: b626c85f4d86b0960359d8b99613a9a0439667a2
+- completed:
+    subdir: beam-sqlite
+    name: beam-sqlite
+    version: 0.5.0.0
+    git: https://github.com/juspay/beam
+    pantry-tree:
+      size: 859
+      sha256: 7e7b71af08698075ebf1cddb7437ee6f02ad565d313efd04c95919a330b6dee4
+    commit: b626c85f4d86b0960359d8b99613a9a0439667a2
+  original:
+    subdir: beam-sqlite
+    git: https://github.com/juspay/beam
+    commit: b626c85f4d86b0960359d8b99613a9a0439667a2
+- completed:
+    subdir: beam-postgres
+    name: beam-postgres
+    version: 0.5.0.0
+    git: https://github.com/juspay/beam
+    pantry-tree:
+      size: 2507
+      sha256: b361d1eb8fe769bee4ba44c2049f70f26cb5b83566db438bbdc68406f6543d37
+    commit: b626c85f4d86b0960359d8b99613a9a0439667a2
+  original:
+    subdir: beam-postgres
+    git: https://github.com/juspay/beam
+    commit: b626c85f4d86b0960359d8b99613a9a0439667a2
+- completed:
     hackage: parameterized-0.5.0.0@sha256:880717fbb958de1bac015f0a375ab6636f162a72483d987a11e305da6fac6c97,1969
     pantry-tree:
       size: 1019
@@ -40,9 +103,58 @@ packages:
       sha256: befdbe5d4a8754d14f50b3c6e5e7701ff2f9a465f1a9515b2e600f18fd8dbcf7
   original:
     hackage: hw-kafka-client-3.1.1@sha256:096d8701bdcede42a80ee9b7b97de8d335b6e19fadead4cd9d129e598c3c9e55,4736
+- completed:
+    hackage: currency-codes-3.0.0.1@sha256:a4b24669dd91e805b11d9eb267becd0ba6d726927e535e03d5f3f368f44c1cf4,2902
+    pantry-tree:
+      size: 548
+      sha256: 9802924b7472c67d93312eedbbb49ab250b9651101b27668133b9f5d15dbca78
+  original:
+    hackage: currency-codes-3.0.0.1@sha256:a4b24669dd91e805b11d9eb267becd0ba6d726927e535e03d5f3f368f44c1cf4,2902
+- completed:
+    hackage: d10-0.2.1.6@sha256:09432c6d07f10336e34fc41d3df9282210d8efa9a6c4fadcebbfbd0f38def4ba,2797
+    pantry-tree:
+      size: 512
+      sha256: a143d66c56d058fe058ff70705c09f6860491962791a4917480baaeb5f0fbd41
+  original:
+    hackage: d10-0.2.1.6@sha256:09432c6d07f10336e34fc41d3df9282210d8efa9a6c4fadcebbfbd0f38def4ba,2797
+- completed:
+    hackage: dependent-map-0.4.0.0@sha256:ca2b131046f4340a1c35d138c5a003fe4a5be96b14efc26291ed35fd08c62221,1657
+    pantry-tree:
+      size: 551
+      sha256: 5defa30010904d2ad05a036f3eaf83793506717c93cbeb599f40db1a3632cfc5
+  original:
+    hackage: dependent-map-0.4.0.0@sha256:ca2b131046f4340a1c35d138c5a003fe4a5be96b14efc26291ed35fd08c62221,1657
+- completed:
+    hackage: dependent-sum-0.7.1.0@sha256:5599aa89637db434431b1dd3fa7c34bc3d565ee44f0519bfbc877be1927c2531,2068
+    pantry-tree:
+      size: 290
+      sha256: 9cbfb32b5a8a782b7a1c941803fd517633cb699159b851c1d82267a9e9391b50
+  original:
+    hackage: dependent-sum-0.7.1.0@sha256:5599aa89637db434431b1dd3fa7c34bc3d565ee44f0519bfbc877be1927c2531,2068
+- completed:
+    hackage: sqlite-simple-0.4.18.0@sha256:3ceea56375c0a3590c814e411a4eb86943f8d31b93b110ca159c90689b6b39e5,3002
+    pantry-tree:
+      size: 1930
+      sha256: e58b9955e483d51ee0966f8ba4384305d871480e2a38b32ee0fcd4573d74cf95
+  original:
+    hackage: sqlite-simple-0.4.18.0@sha256:3ceea56375c0a3590c814e411a4eb86943f8d31b93b110ca159c90689b6b39e5,3002
+- completed:
+    hackage: constraints-extras-0.3.0.2@sha256:bf6884be65958e9188ae3c9e5547abfd6d201df021bff8a4704c2c4fe1e1ae5b,1784
+    pantry-tree:
+      size: 594
+      sha256: b0bcc96d375ee11b1972a2e9e8e42039b3f420b0e1c46e9c70652470445a6505
+  original:
+    hackage: constraints-extras-0.3.0.2@sha256:bf6884be65958e9188ae3c9e5547abfd6d201df021bff8a4704c2c4fe1e1ae5b,1784
+- completed:
+    hackage: direct-sqlite-2.3.26@sha256:04e835402f1508abca383182023e4e2b9b86297b8533afbd4e57d1a5652e0c23,3718
+    pantry-tree:
+      size: 770
+      sha256: 11874ab21e10c5b54cd1e02a037b677dc1e2ee9986f38c599612c56654dc01c3
+  original:
+    hackage: direct-sqlite-2.3.26@sha256:04e835402f1508abca383182023e4e2b9b86297b8533afbd4e57d1a5652e0c23,3718
 snapshots:
 - completed:
-    size: 491373
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/15/3.yaml
-    sha256: 29e9ff61b8bf4b4fcff55cde3ac106ebb971f0d21331dccac9eee63374fa6ca8
-  original: lts-15.3
+    size: 496112
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/15/15.yaml
+    sha256: 86169722ad0056ffc9eacc157ef80ee21d7024f92c0d2961c89ccf432db230a3
+  original: lts-15.15
