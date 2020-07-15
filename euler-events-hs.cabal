@@ -22,12 +22,13 @@ common common-lang
 
   build-depends:      base >=4.13 && <5
   default-extensions:
-    NoImplicitPrelude
     ConstraintKinds
     DataKinds
     DefaultSignatures
+    DeriveAnyClass
     DeriveFunctor
     DeriveGeneric
+    DerivingStrategies
     DuplicateRecordFields
     ExplicitNamespaces
     FlexibleContexts
@@ -54,44 +55,22 @@ common common-lang
 
 library
   import:   common-lang
-  exposed-modules: Euler.Event
+  exposed-modules: Euler.Class
   hs-source-dirs:      src
   other-modules:
-    Euler.Class
     Euler.Constants
-    Euler.Proto.Event
-    Euler.Proto.Event.Card
-    Euler.Proto.Event.Chargeback
-    Euler.Proto.Event.Customer
-    Euler.Proto.Event.Feature
-    Euler.Proto.Event.Mandate
-    Euler.Proto.Event.Order
-    Euler.Proto.Event.Refund
-    Euler.Proto.Event.ResellerAccount
-    Euler.Proto.Event.RiskManagementAccount
-    Euler.Proto.Event.SecondFactor
-    Euler.Proto.Event.TxnCardInfo
-    Euler.Proto.Event.TxnDetail
     Euler.Sink.Kafka
-    Euler.Types.Event.Card
-    Euler.Types.Event.Chargeback
-    Euler.Types.Event.Customer
-    Euler.Types.Event.Feature
-    Euler.Types.Event.Mandate
+    Euler.Sink.Stdout
     Euler.Types.Event.Order
-    Euler.Types.Event.Refund
-    Euler.Types.Event.ResellerAccount
-    Euler.Types.Event.RiskManagementAccount
-    Euler.Types.Event.SecondFactor
     Euler.Types.Event.TxnCardInfo
     Euler.Types.Event.TxnDetail
     Euler.Util
 
   build-depends:
-      bytestring
+      aeson
+    , bytestring
     , containers
     , deepseq
-    , euler-types
     , hw-kafka-client
     , proto3-suite >=0.4.0.0
     , proto3-wire

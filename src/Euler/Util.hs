@@ -1,7 +1,7 @@
 module Euler.Util where
 
 import           Data.Int              (Int64)
-import           Data.Text             (Text)
+import           Data.Text             (Text, pack)
 import           Data.Text.Lazy        (fromStrict)
 import qualified Data.Text.Lazy        as Text.Lazy
 import           Data.Time.Clock       (UTCTime, diffTimeToPicoseconds, diffUTCTime)
@@ -24,3 +24,6 @@ utcTimeToNanos :: UTCTime -> Integer
 utcTimeToNanos t =
   diffTimeToPicoseconds (realToFrac (diffUTCTime t (posixSecondsToUTCTime 0))) `div`
   1000
+
+tshow :: Show a => a -> Text
+tshow = pack . show

@@ -1,9 +1,18 @@
+-- is using this okay?
+{-# LANGUAGE AllowAmbiguousTypes #-}
+
 module Euler.Class where
 
-import qualified Euler.Proto.Event as Proto
+import           Data.Aeson (FromJSON, ToJSON)
+import           Data.Text  (Text)
 
--- import           Proto3.Suite      (Message)
-class Event a
-  -- TODO (if possible): toProtoMsg :: Message b => a -> b
-  where
-  toProtoEvent :: a -> Proto.Event
+type ErrorText = Text
+
+class (ToJSON a, FromJSON a) =>
+      Event a
+
+
+class Logger config logger | config -> logger where
+  initLogger :: config -> IO (Either ErrorText logger)
+  log :: Event e => config -> logger -> e -> IO (Maybe ErrorText)
+  closeLogger :: logger -> IO (Maybe ErrorText)

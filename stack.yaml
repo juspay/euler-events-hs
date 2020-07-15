@@ -4,29 +4,9 @@ packages:
 - .
 
 extra-deps:
-  - ../euler-db
-  - ../euler-types
   - git: https://github.com/awakesecurity/proto3-suite.git
     commit: 80cfadab05b96289d724dbda460a419f1dfb1496
   - git: https://github.com/awakesecurity/proto3-wire.git
     commit: 5df56fe1ad26a18b1dfbb2a5b8d35b4c1ad63f53
-  - git: https://github.com/juspay/beam-mysql
-    commit: 7960580e041188459cfafef9c49aa6535ef4243e
-  - git: https://github.com/juspay/beam
-    commit: b626c85f4d86b0960359d8b99613a9a0439667a2
-    # commit: 1d3d5961673839ee52e5b785ca7751ae04837e91
-    subdirs:
-      - beam-core
-      - beam-migrate
-      - beam-sqlite
-      - beam-postgres
   - parameterized-0.5.0.0@sha256:880717fbb958de1bac015f0a375ab6636f162a72483d987a11e305da6fac6c97,1969
   - hw-kafka-client-3.1.1@sha256:096d8701bdcede42a80ee9b7b97de8d335b6e19fadead4cd9d129e598c3c9e55,4736
-  - currency-codes-3.0.0.1@sha256:a4b24669dd91e805b11d9eb267becd0ba6d726927e535e03d5f3f368f44c1cf4,2902
-  - d10-0.2.1.6@sha256:09432c6d07f10336e34fc41d3df9282210d8efa9a6c4fadcebbfbd0f38def4ba,2797
-  - dependent-map-0.4.0.0@sha256:ca2b131046f4340a1c35d138c5a003fe4a5be96b14efc26291ed35fd08c62221,1657
-  - dependent-sum-0.7.1.0@sha256:5599aa89637db434431b1dd3fa7c34bc3d565ee44f0519bfbc877be1927c2531,2068
-  - sqlite-simple-0.4.18.0@sha256:3ceea56375c0a3590c814e411a4eb86943f8d31b93b110ca159c90689b6b39e5,3002
-  - constraints-extras-0.3.0.2@sha256:bf6884be65958e9188ae3c9e5547abfd6d201df021bff8a4704c2c4fe1e1ae5b,1784
-  - direct-sqlite-2.3.26@sha256:04e835402f1508abca383182023e4e2b9b86297b8533afbd4e57d1a5652e0c23,3718
-

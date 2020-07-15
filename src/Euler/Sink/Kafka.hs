@@ -1,12 +1,19 @@
 module Euler.Sink.Kafka where
 
-import           Data.ByteString (ByteString)
-import           Data.Text       (Text)
-import           Kafka.Producer  (BrokerAddress (BrokerAddress), KafkaLogLevel (KafkaLogDebug),
-                                  ProducePartition (UnassignedPartition), ProducerProperties,
-                                  ProducerRecord (ProducerRecord), Timeout (Timeout), TopicName (TopicName),
-                                  brokersList, closeProducer, deliveryCallback, logLevel, newProducer, prKey,
-                                  prPartition, prTopic, prValue, produceMessage, sendTimeout, setCallback)
+import           Data.Aeson           (encode)
+import           Data.ByteString      (ByteString)
+import           Data.ByteString.Lazy (toStrict)
+import           Data.Text            (Text)
+import           Euler.Class          (Logger (closeLogger, initLogger, log))
+import           Kafka.Producer       (BrokerAddress (BrokerAddress), KafkaLogLevel (KafkaLogDebug), KafkaProducer,
+                                       ProducePartition (UnassignedPartition), ProducerProperties,
+                                       ProducerRecord (ProducerRecord), Timeout (Timeout), TopicName (TopicName),
+                                       brokersList, closeProducer, deliveryCallback, logLevel, newProducer, prKey,
+                                       prPartition, prTopic, prValue, produceMessage, sendTimeout, setCallback)
+
+import           Data.Bifunctor       (first)
+import           Data.Functor         (($>))
+import           Euler.Util           (tshow)
 
 -- TODO: This is a very early stage code written just to test things out. Strengthen it
 data KafkaConfig =
@@ -32,11 +39,11 @@ mkMessage k v topicName =
     , prValue = v
     }
 
-sendToKafka :: KafkaConfig -> ByteString -> IO () --(Either KafkaError ())
-sendToKafka config msg = do
-  (Right prod) <- newProducer (producerProps config)
-  maybeError <-
-    produceMessage prod (mkMessage Nothing (Just msg) (topic config))
-  closeProducer prod
-  print maybeError
-  pure ()
+instance Logger KafkaConfig KafkaProducer where
+  initLogger config = first tshow <$> newProducer (producerProps config)
+  log config kafkaProducer event =
+    (fmap . fmap)
+      tshow
+      (produceMessage kafkaProducer $
+       mkMessage Nothing (Just . toStrict . encode $ event) (topic config))
+  closeLogger kafkaProducer = closeProducer kafkaProducer $> Nothing
