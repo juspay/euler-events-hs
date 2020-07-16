@@ -1,7 +1,7 @@
 -- is using this okay?
 {-# LANGUAGE AllowAmbiguousTypes #-}
 
-module Euler.Class where
+module Euler.Events.Class where
 
 import           Data.Aeson (FromJSON, ToJSON)
 import           Data.Text  (Text)

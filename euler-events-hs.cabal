@@ -55,16 +55,16 @@ common common-lang
 
 library
   import:   common-lang
-  exposed-modules: Euler.Class
+  exposed-modules: Euler.Events.Class
   hs-source-dirs:      src
   other-modules:
-    Euler.Constants
-    Euler.Sink.Kafka
-    Euler.Sink.Stdout
-    Euler.Types.Event.Order
-    Euler.Types.Event.TxnCardInfo
-    Euler.Types.Event.TxnDetail
-    Euler.Util
+    Euler.Events.Constants
+    Euler.Events.Sink.Kafka
+    Euler.Events.Sink.Stdout
+    Euler.Events.Types.Order
+    Euler.Events.Types.TxnCardInfo
+    Euler.Events.Types.TxnDetail
+    Euler.Events.Util
 
   build-depends:
       aeson

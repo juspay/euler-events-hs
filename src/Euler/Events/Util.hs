@@ -1,4 +1,4 @@
-module Euler.Util where
+module Euler.Events.Util where
 
 import           Data.Int              (Int64)
 import           Data.Text             (Text, pack)

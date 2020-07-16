@@ -1,10 +1,10 @@
-module Euler.Sink.Kafka where
+module Euler.Events.Sink.Kafka where
 
 import           Data.Aeson           (encode)
 import           Data.ByteString      (ByteString)
 import           Data.ByteString.Lazy (toStrict)
 import           Data.Text            (Text)
-import           Euler.Class          (Logger (closeLogger, initLogger, log))
+import           Euler.Events.Class   (Logger (closeLogger, initLogger, log))
 import           Kafka.Producer       (BrokerAddress (BrokerAddress), KafkaLogLevel (KafkaLogDebug), KafkaProducer,
                                        ProducePartition (UnassignedPartition), ProducerProperties,
                                        ProducerRecord (ProducerRecord), Timeout (Timeout), TopicName (TopicName),
@@ -13,7 +13,7 @@ import           Kafka.Producer       (BrokerAddress (BrokerAddress), KafkaLogLe
 
 import           Data.Bifunctor       (first)
 import           Data.Functor         (($>))
-import           Euler.Util           (tshow)
+import           Euler.Events.Util    (tshow)
 
 -- TODO: This is a very early stage code written just to test things out. Strengthen it
 data KafkaConfig =

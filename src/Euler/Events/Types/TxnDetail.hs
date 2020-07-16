@@ -1,10 +1,10 @@
-module Euler.Types.Event.TxnDetail where
+module Euler.Events.Types.TxnDetail where
 
-import           Data.Aeson   (FromJSON, ToJSON)
-import           Data.Text    (Text)
-import           Data.Time    (UTCTime)
-import           Euler.Class  (Event)
-import           GHC.Generics (Generic)
+import           Data.Aeson         (FromJSON, ToJSON)
+import           Data.Text          (Text)
+import           Data.Time          (UTCTime)
+import           Euler.Events.Class (Event)
+import           GHC.Generics       (Generic)
 
 data Txn =
   Txn

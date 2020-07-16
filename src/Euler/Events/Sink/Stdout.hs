@@ -1,9 +1,9 @@
-module Euler.Sink.Stdout where
+module Euler.Events.Sink.Stdout where
 
 import           Data.Aeson                 (encode)
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import           Data.Functor               (($>))
-import           Euler.Class                (Logger (closeLogger, initLogger, log))
+import           Euler.Events.Class         (Logger (closeLogger, initLogger, log))
 
 data StdoutConfig =
   StdoutConfig
