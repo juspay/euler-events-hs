@@ -20,7 +20,7 @@ data Txn =
     , dateCreated  :: Maybe UTCTime
     , lastModified :: Maybe UTCTime
     , merchantId   :: Maybe Text
-    , gateway      :: Maybe Gateway
+    , gateway      :: Maybe Text
     -- extra info
     , eventType    :: TxnEventType
     , timestamp    :: UTCTime -- can we use lastModified for this
@@ -45,81 +45,6 @@ data TxnStatus
   | CAPTURE_INITIATED
   | CAPTURE_FAILED
   | VOID_FAILED
-  deriving (Generic)
-  deriving anyclass (ToJSON, FromJSON)
-
-data Gateway
-  = AXIS
-  | HDFC
-  | ICICI
-  | CITI
-  | AMEX
-  | CYBERSOURCE
-  | IPG
-  | MIGS
-  | KOTAK
-  | EBS
-  | PAYU
-  | CCAVENUE
-  | CITRUS
-  | ATOM
-  | CCAVENUE_V2
-  | TPSL
-  | PAYTM
-  | PAYTM_V2
-  | PAYPAL
-  | HDFC_EBS_VAS
-  | PAYLATER
-  | RAZORPAY
-  | FSS_ATM_PIN
-  | EBS_V3
-  | ZAAKPAY
-  | BILLDESK
-  | SODEXO
-  | BLAZEPAY
-  | FSS_ATM_PIN_V2
-  | MOBIKWIK
-  | OLAMONEY
-  | FREECHARGE
-  | MPESA
-  | SBIBUDDY
-  | JIOMONEY
-  | AIRTELMONEY
-  | AMAZONPAY
-  | PHONEPE
-  | STRIPE
-  | DUMMY
-  | HDFC_IVR
-  | ZESTMONEY
-  | EPAYLATER
-  | AXISNB
-  | ICICINB
-  | TPSL_SI
-  | AXIS_UPI
-  | HDFC_UPI
-  | INDUS_UPI
-  | KOTAK_UPI
-  | SBI_UPI
-  | ICICI_UPI
-  | VIJAYA_UPI
-  | HSBC_UPI
-  | YESBANK_UPI
-  | PAYTM_UPI
-  | LINEPAY
-  | OLAPOSTPAID
-  | SIMPL
-  | GOOGLEPAY
-  | GOCASHFREE
-  | PAYFORT
-  | FSSPAY
-  | CASH
-  | MORPHEUS
-  | FREECHARGE_V2
-  | LAZYPAY
-  | ITZCASH
-  | AXIS_BIZ
-  | LOANTAP
-  | DEFAULT
   deriving (Generic)
   deriving anyclass (ToJSON, FromJSON)
 
