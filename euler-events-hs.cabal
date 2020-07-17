@@ -61,6 +61,7 @@ library
     Euler.Events.Constants
     Euler.Events.Sink.Kafka
     Euler.Events.Sink.Stdout
+    Euler.Events.Types.EventPS
     Euler.Events.Types.Order
     Euler.Events.Types.TxnCardInfo
     Euler.Events.Types.TxnDetail
@@ -76,4 +77,5 @@ library
     , proto3-wire
     , text
     , time
+    , unordered-containers
     , vector

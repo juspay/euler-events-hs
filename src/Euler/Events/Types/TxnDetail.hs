@@ -1,29 +1,30 @@
 module Euler.Events.Types.TxnDetail where
 
-import           Data.Aeson         (FromJSON, ToJSON)
-import           Data.Text          (Text)
-import           Data.Time          (UTCTime)
-import           Euler.Events.Class (Event)
-import           GHC.Generics       (Generic)
+import           Data.Aeson                 (FromJSON, ToJSON)
+import           Data.Text                  (Text, toUpper)
+import           Data.Time                  (UTCTime)
+import           Euler.Events.Class         (Event (toEventPS))
+import qualified Euler.Events.Types.EventPS as EventPS
+import           Euler.Events.Util          (tshow)
+import           GHC.Generics               (Generic)
 
-data Txn =
-  Txn
+data TxnDetail =
+  TxnDetail
     { version      :: Int
     , orderId      :: Text
     , txnUuid      :: Maybe Text
     , txnId        :: Text
     , txnAmount    :: Maybe Double
-    , currency     :: Maybe Text
     , status       :: TxnStatus
-    , hostname     :: Text
-    , errorMessage :: Maybe Text
     , dateCreated  :: Maybe UTCTime
     , lastModified :: Maybe UTCTime
     , merchantId   :: Maybe Text
     , gateway      :: Maybe Text
     -- extra info
     , eventType    :: TxnEventType
-    , timestamp    :: UTCTime -- can we use lastModified for this
+    , timestamp    :: UTCTime
+    , xRequestId   :: Text
+    , hostname     :: Text
     }
   deriving (Generic)
   deriving anyclass (ToJSON, FromJSON)
@@ -49,9 +50,26 @@ data TxnStatus
   deriving anyclass (ToJSON, FromJSON)
 
 data TxnEventType
-  = TxnCreate
-  | TxnUpdate
-  deriving (Generic)
+  = Create
+  | Update
+  deriving (Generic, Show)
   deriving anyclass (ToJSON, FromJSON)
 
-instance Event Txn
+instance Event TxnDetail where
+  toEventPS txnDetail@TxnDetail {..} =
+    let action' = toUpper . tshow $ eventType
+     in EventPS.EventPS
+          { EventPS.timestamp = timestamp
+          , EventPS.hostname = hostname
+          , EventPS.xRequestId = xRequestId
+          , EventPS.txnUuid = txnUuid
+          , EventPS.orderId = Just orderId
+          , EventPS.merchantId = merchantId
+          , EventPS.action = action'
+          , message =
+              EventPS.Message
+                { EventPS.model = "txn_detail"
+                , EventPS.action' = action'
+                , EventPS.data' = txnDetail
+                }
+          }
