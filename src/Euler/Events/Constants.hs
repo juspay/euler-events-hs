@@ -1,4 +1,4 @@
-module Euler.Constants where
+module Euler.Events.Constants where
 
 import           Data.Text (Text)
 
