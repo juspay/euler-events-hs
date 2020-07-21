@@ -1,11 +1,11 @@
 module Euler.Events.Sink.Kafka where
 
 import           Data.Aeson           (encode)
-import           Data.Bool            (bool)
 import           Data.ByteString      (ByteString)
 import           Data.ByteString.Lazy (toStrict)
 import           Data.Text            (Text)
-import           Euler.Events.Class   (Event (toEventPS), Logger (closeLogger, initLogger, logEvent))
+import           Euler.Events.Class   (EventPayload (toEvent),
+                                       Logger (closeLogger, initLogger, logEvent, toLazyByteString))
 import           Kafka.Producer       (BrokerAddress (BrokerAddress), KafkaLogLevel (KafkaLogDebug), KafkaProducer,
                                        ProducePartition (UnassignedPartition), ProducerProperties,
                                        ProducerRecord (ProducerRecord), Timeout (Timeout), TopicName (TopicName),
@@ -42,13 +42,14 @@ mkMessage k v topicName =
 
 instance Logger KafkaConfig KafkaProducer where
   initLogger config = first tshow <$> newProducer (producerProps config)
-  logEvent isEventPs config kafkaProducer event =
+  toLazyByteString _config _logger metadata = encode . toEvent metadata
+  logEvent config kafkaProducer metadata eventPayload =
     (fmap . fmap)
       tshow
       (produceMessage kafkaProducer $
        mkMessage
          Nothing
-         (Just . toStrict . bool (encode event) (encode . toEventPS $ event) $
-          isEventPs)
+         (Just . toStrict . toLazyByteString config kafkaProducer metadata $
+          eventPayload)
          (topic config))
   closeLogger kafkaProducer = closeProducer kafkaProducer $> Nothing

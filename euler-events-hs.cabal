@@ -58,13 +58,14 @@ library
   exposed-modules: Euler.Events.Class
   hs-source-dirs:      src
   other-modules:
+    Euler.Events.Class
     Euler.Events.Constants
     Euler.Events.Sink.Kafka
     Euler.Events.Sink.Stdout
-    Euler.Events.Types.EventPS
+    Euler.Events.Types.Event
     Euler.Events.Types.Order
+    Euler.Events.Types.Txn
     Euler.Events.Types.TxnCardInfo
-    Euler.Events.Types.TxnDetail
     Euler.Events.Util
 
   build-depends:
