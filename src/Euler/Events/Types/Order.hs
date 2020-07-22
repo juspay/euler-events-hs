@@ -19,7 +19,7 @@ data Order =
     -- extra info
     , eventType    :: OrderEventType
     }
-  deriving (Generic)
+  deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 data OrderStatus
@@ -41,13 +41,13 @@ data OrderStatus
   | CAPTURE_FAILED
   | VOID_FAILED
   | AUTO_REFUNDED
-  deriving (Generic)
+  deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 data OrderEventType
   = CREATE
   | UPDATE
-  deriving (Generic, Show)
+  deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 instance EventPayload Order where

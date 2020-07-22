@@ -22,7 +22,7 @@ data Txn =
     -- extra info
     , eventType    :: TxnEventType
     }
-  deriving (Generic)
+  deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 data TxnStatus
@@ -42,13 +42,13 @@ data TxnStatus
   | CAPTURE_INITIATED
   | CAPTURE_FAILED
   | VOID_FAILED
-  deriving (Generic)
+  deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 data TxnEventType
   = CREATE
   | UPDATE
-  deriving (Generic, Show)
+  deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 instance EventPayload Txn where

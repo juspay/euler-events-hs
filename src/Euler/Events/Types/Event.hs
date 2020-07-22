@@ -12,7 +12,7 @@ data Event a =
     , event          :: EventType
     , message        :: a
     }
-  deriving (Generic)
+  deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 data EventMetadata =
@@ -24,12 +24,12 @@ data EventMetadata =
     , orderId    :: Maybe Text
     , merchantId :: Maybe Text
     }
-  deriving (Generic)
+  deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 data EventType
   = OrderEvent
   | TxnEvent
   | TxnCardInfoEvent
-  deriving (Generic)
+  deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)

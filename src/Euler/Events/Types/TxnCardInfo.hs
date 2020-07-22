@@ -19,7 +19,7 @@ data TxnCardInfo =
     -- extra info
     , eventType          :: TxnCardInfoEventType
     }
-  deriving (Generic)
+  deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 data PaymentMethodType
@@ -32,13 +32,13 @@ data PaymentMethodType
   | REWARD
   | CASH
   | UNKNOWN
-  deriving (Generic)
+  deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 data TxnCardInfoEventType
   = CREATE
   | UPDATE
-  deriving (Generic, Show)
+  deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 instance EventPayload TxnCardInfo where

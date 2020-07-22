@@ -55,9 +55,7 @@ common common-lang
 
 library
   import:   common-lang
-  exposed-modules: Euler.Events.Class
-  hs-source-dirs:      src
-  other-modules:
+  exposed-modules:
     Euler.Events.Class
     Euler.Events.Constants
     Euler.Events.Sink.Kafka
@@ -66,12 +64,17 @@ library
     Euler.Events.Types.Order
     Euler.Events.Types.Txn
     Euler.Events.Types.TxnCardInfo
+
+  other-modules:
     Euler.Events.Util
+
+  hs-source-dirs:      src
 
   build-depends:
       aeson
     , bytestring
     , containers
+    , hspec
     , deepseq
     , hw-kafka-client
     , proto3-suite >=0.4.0.0
@@ -80,3 +83,20 @@ library
     , time
     , unordered-containers
     , vector
+
+
+test-suite tests
+  import:         common-lang
+  type:           exitcode-stdio-1.0
+  main-is:        Spec.hs
+  other-modules:
+    EventSpec
+
+  build-depends:
+    , hspec
+    , euler-events-hs
+    , time
+    , aeson
+    , bytestring
+
+  hs-source-dirs: test
