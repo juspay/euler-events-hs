@@ -1,5 +1,6 @@
 {
-  haskellCompiler ? "ghc883"
+  remoteDeps ? false
+, haskellCompiler ? "ghc883"
 }:
 let
   inherit (import <nixpkgs> {}) fetchFromGitHub;
@@ -11,17 +12,24 @@ let
     sha256 = "0nkk492aa7pr0d30vv1aw192wc16wpa1j02925pldc09s9m9i0r3";
   };
 
-  # To avoid importing nixpkgs here
-  makeOverridable = f: origArgs:
-    let
-      origRes = f origArgs;
-    in
-      origRes // { override = newArgs: f (origArgs // newArgs); };
-
-  eulerBuild = makeOverridable (import ./nix/euler-build) {
-    inherit nixpkgs;
-    inherit haskellCompiler;
+  euler-hs-repo = fetchGit {
+    url = "git@bitbucket.org:juspay/euler-hs.git";
+    ref = "EulerHS-1.11.1.0";
+    # we take the last commit from the unannotated tag
+    # rev = "4d939c18aef36f65e3afe1a80026c10555d95380";
   };
+  euler-hs-path =
+    if remoteDeps
+    then euler-hs-repo
+    else ../euler-hs;
+
+ euler-hs-drv = import euler-hs-path {
+    # Uncomment if you want to change haskellCompiler
+    # that is used by euler-hs by default:
+    # inherit haskellCompiler;
+  };
+
+  inherit (euler-hs-drv) eulerBuild;
 
   euler-events-hs-src = eulerBuild.allowedPaths {
     root =  ./.;
@@ -35,13 +43,8 @@ let
     src = euler-events-hs-src;
   };
 
-  # for both dev and CI
-  code-tools-overlay = eulerBuild.importOverlay ./nix/overlays/code-tools.nix { };
-  # for dev only
-  devtools-overlay = import ./nix/overlays/devtools.nix { };
-
   allUsedOverlays = [
-    code-tools-overlay
+    euler-hs-drv.code-tools-overlay
     euler-events-hs-overlay
   ];
 
@@ -72,10 +75,5 @@ in {
   inherit euler-events-hs-overlay;
   overlay = eulerBuild.composeOverlays allUsedOverlays;
 
-  inherit code-tools-overlay;
-  inherit devtools-overlay;
   inherit mkShell;
-
-  # TODO: (?) put in a separate repo together with ./nix/euler-build
-  inherit eulerBuild;
 }
