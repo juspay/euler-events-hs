@@ -1,0 +1,14 @@
+resolver: lts-15.15
+
+packages:
+- .
+
+extra-deps:
+  # - git: https://github.com/awakesecurity/proto3-suite.git
+  #   commit: 80cfadab05b96289d724dbda460a419f1dfb1496
+  # - git: https://github.com/awakesecurity/proto3-wire.git
+  #   commit: 5df56fe1ad26a18b1dfbb2a5b8d35b4c1ad63f53
+  # - parameterized-0.5.0.0@sha256:880717fbb958de1bac015f0a375ab6636f162a72483d987a11e305da6fac6c97,1969
+  # - hw-kafka-client-3.1.1@sha256:096d8701bdcede42a80ee9b7b97de8d335b6e19fadead4cd9d129e598c3c9e55,4736
+
+# add librdkafka as a dependency
