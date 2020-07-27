@@ -7,10 +7,10 @@ import           GHC.Generics (Generic)
 
 data Event a =
   Event
-    { metadata       :: EventMetadata
-    , libraryVersion :: Text
-    , event          :: EventType
-    , message        :: a
+    { metadata            :: EventMetadata
+    , eventLibraryVersion :: Text
+    , event               :: EventType
+    , message             :: a
     }
   deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)

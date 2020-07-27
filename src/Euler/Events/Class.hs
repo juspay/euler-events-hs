@@ -6,7 +6,7 @@ module Euler.Events.Class where
 import           Data.Aeson               (FromJSON, ToJSON)
 import           Data.ByteString.Lazy     (ByteString)
 import           Data.Text                (Text)
-import           Euler.Events.Constants   (libraryVersion)
+import           Euler.Events.Constants   (eventLibraryVersion)
 import           Euler.Events.Types.Event (Event (Event), EventMetadata, EventType)
 import qualified Euler.Events.Types.Event as Event
 
@@ -20,7 +20,7 @@ class (ToJSON a, FromJSON a) =>
   toEvent' eventType metadata eventPayload =
     Event
       { Event.metadata = metadata
-      , Event.libraryVersion = libraryVersion
+      , Event.eventLibraryVersion = eventLibraryVersion
       , Event.event = eventType
       , Event.message = eventPayload
       }

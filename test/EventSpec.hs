@@ -42,7 +42,7 @@ spec = do
   let orderEvent =
         Event
           { Event.metadata = metadata
-          , Event.libraryVersion = Constants.libraryVersion
+          , Event.eventLibraryVersion = Constants.eventLibraryVersion
           , Event.event = Event.OrderEvent
           , Event.message = orderPayload
           }
@@ -71,7 +71,7 @@ spec = do
   let txnEvent =
         Event
           { Event.metadata = metadata
-          , Event.libraryVersion = Constants.libraryVersion
+          , Event.eventLibraryVersion = Constants.eventLibraryVersion
           , Event.event = Event.TxnEvent
           , Event.message = txnPayload
           }
@@ -97,7 +97,7 @@ spec = do
   let txnCardInfoEvent =
         Event
           { Event.metadata = metadata
-          , Event.libraryVersion = Constants.libraryVersion
+          , Event.eventLibraryVersion = Constants.eventLibraryVersion
           , Event.event = Event.TxnCardInfoEvent
           , Event.message = txnCardInfoPayload
           }
