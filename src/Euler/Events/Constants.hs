@@ -10,3 +10,6 @@ kafkaTimeout = 10000
 
 kafkaTargetTopic :: Text
 kafkaTargetTopic = "test"
+
+eventLibraryVersion :: Text
+eventLibraryVersion = "0.0.0.1"

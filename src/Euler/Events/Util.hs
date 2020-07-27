@@ -6,13 +6,13 @@ import           Data.Text.Lazy        (fromStrict)
 import qualified Data.Text.Lazy        as Text.Lazy
 import           Data.Time.Clock       (UTCTime, diffTimeToPicoseconds, diffUTCTime)
 import           Data.Time.Clock.POSIX (posixSecondsToUTCTime)
-import           Proto3.Suite          (Enumerated (Enumerated))
+-- import           Proto3.Suite          (Enumerated (Enumerated))
 
 fromInt :: Integral a => a -> Int64
 fromInt = fromIntegral
 
-fromSumType :: a -> Enumerated a
-fromSumType = Enumerated . Right
+-- fromSumType :: a -> Enumerated a
+-- fromSumType = Enumerated . Right
 
 fromText :: Text -> Text.Lazy.Text
 fromText = fromStrict

@@ -1,54 +1,55 @@
-module Euler.Events.Types.Order where
+module Euler.Events.Types.Txn where
 
 import           Data.Aeson               (FromJSON, ToJSON)
 import           Data.Text                (Text)
 import           Data.Time                (UTCTime)
 import           Euler.Events.Class       (EventPayload (toEvent, toEvent'))
-import           Euler.Events.Types.Event (EventType (OrderEvent))
+import           Euler.Events.Types.Event (EventType (TxnEvent))
 import           GHC.Generics             (Generic)
 
-data Order =
-  Order
-    { orderId      :: Text
-    , version      :: Int
-    , amount       :: Double
-    , status       :: OrderStatus
-    , merchantId   :: Text
-    , dateCreated  :: UTCTime
-    , lastModified :: UTCTime
+data Txn =
+  Txn
+    { version      :: Int
+    , orderId      :: Text
+    , txnUuid      :: Maybe Text
+    , txnId        :: Text
+    , txnAmount    :: Maybe Double
+    , status       :: TxnStatus
+    , dateCreated  :: Maybe UTCTime
+    , lastModified :: Maybe UTCTime
+    , merchantId   :: Maybe Text
+    , gateway      :: Maybe Text
     -- extra info
-    , eventType    :: OrderEventType
+    , eventType    :: TxnEventType
     }
   deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
-data OrderStatus
-  = NEW
-  | SUCCESS
-  | NOT_FOUND
-  | ERROR
-  | JUSPAY_DECLINED
-  | PENDING_AUTHENTICATION
+data TxnStatus
+  = STARTED
   | AUTHENTICATION_FAILED
-  | AUTHORIZATION_FAILED
-  | AUTHORIZING
+  | JUSPAY_DECLINED
+  | PENDING_VBV
+  | VBV_SUCCESSFUL
   | AUTHORIZED
-  | CREATED
+  | AUTHORIZATION_FAILED
+  | CHARGED
+  | AUTHORIZING
   | COD_INITIATED
   | VOIDED
   | VOID_INITIATED
+  | NOP
   | CAPTURE_INITIATED
   | CAPTURE_FAILED
   | VOID_FAILED
-  | AUTO_REFUNDED
   deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
-data OrderEventType
+data TxnEventType
   = CREATE
   | UPDATE
   deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
-instance EventPayload Order where
-  toEvent = toEvent' OrderEvent
+instance EventPayload Txn where
+  toEvent = toEvent' TxnEvent

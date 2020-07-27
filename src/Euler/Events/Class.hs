@@ -3,18 +3,37 @@
 
 module Euler.Events.Class where
 
-import           Data.Aeson                 (FromJSON, ToJSON)
-import           Data.Text                  (Text)
-import           Euler.Events.Types.EventPS (EventPS)
+import           Data.Aeson               (FromJSON, ToJSON)
+import           Data.ByteString.Lazy     (ByteString)
+import           Data.Text                (Text)
+import           Euler.Events.Constants   (eventLibraryVersion)
+import           Euler.Events.Types.Event (Event (Event), EventMetadata, EventType)
+import qualified Euler.Events.Types.Event as Event
 
 type ErrorText = Text
 
 class (ToJSON a, FromJSON a) =>
-      Event a
+      EventPayload a
   where
-  toEventPS :: a -> EventPS a
+  toEvent :: EventMetadata -> a -> Event a
+  toEvent' :: EventType -> EventMetadata -> a -> Event a
+  toEvent' eventType metadata eventPayload =
+    Event
+      { Event.metadata = metadata
+      , Event.eventLibraryVersion = eventLibraryVersion
+      , Event.event = eventType
+      , Event.message = eventPayload
+      }
 
-class Logger config logger | config -> logger where
+class Logger config logger where
   initLogger :: config -> IO (Either ErrorText logger)
-  logEvent :: Event e => Bool -> config -> logger -> e -> IO (Maybe ErrorText)
+  toLazyByteString ::
+       EventPayload a => config -> logger -> EventMetadata -> a -> ByteString
+  logEvent ::
+       EventPayload a
+    => config
+    -> logger
+    -> EventMetadata
+    -> a
+    -> IO (Maybe ErrorText)
   closeLogger :: logger -> IO (Maybe ErrorText)

@@ -1,17 +1,18 @@
 module Euler.Events.Sink.Stdout where
 
 import           Data.Aeson                 (encode)
-import           Data.Bool                  (bool)
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import           Data.Functor               (($>))
-import           Euler.Events.Class         (Event (toEventPS), Logger (closeLogger, initLogger, logEvent))
+import           Euler.Events.Class         (EventPayload (toEvent),
+                                             Logger (closeLogger, initLogger, logEvent, toLazyByteString))
 
 data StdoutConfig =
   StdoutConfig
 
 instance Logger StdoutConfig () where
-  initLogger _ = pure . Right $ ()
-  logEvent isEventPs _ () event =
-    (BSL.putStrLn . bool (encode event) (encode . toEventPS $ event) $ isEventPs) $>
+  initLogger _config = pure . Right $ ()
+  toLazyByteString _config _logger metadata = encode . toEvent metadata
+  logEvent config logger metadata eventPayload =
+    (BSL.putStrLn . toLazyByteString config logger metadata $ eventPayload) $>
     Nothing
   closeLogger () = pure Nothing

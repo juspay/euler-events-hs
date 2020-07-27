@@ -1,12 +1,11 @@
 module Euler.Events.Types.TxnCardInfo where
 
-import           Data.Aeson                 (FromJSON, ToJSON)
-import           Data.Text                  (Text, toUpper)
-import           Data.Time                  (UTCTime)
-import           Euler.Events.Class         (Event (toEventPS))
-import qualified Euler.Events.Types.EventPS as EventPS
-import           Euler.Events.Util          (tshow)
-import           GHC.Generics               (Generic)
+import           Data.Aeson               (FromJSON, ToJSON)
+import           Data.Text                (Text)
+import           Data.Time                (UTCTime)
+import           Euler.Events.Class       (EventPayload (toEvent, toEvent'))
+import           Euler.Events.Types.Event (EventType (TxnCardInfoEvent))
+import           GHC.Generics             (Generic)
 
 data TxnCardInfo =
   TxnCardInfo
@@ -19,12 +18,8 @@ data TxnCardInfo =
     , paymentMethod      :: Maybe Text
     -- extra info
     , eventType          :: TxnCardInfoEventType
-    , timestamp          :: UTCTime
-    , xRequestId         :: Text
-    , merchantId         :: Maybe Text
-    , hostname           :: Text
     }
-  deriving (Generic)
+  deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 data PaymentMethodType
@@ -37,30 +32,14 @@ data PaymentMethodType
   | REWARD
   | CASH
   | UNKNOWN
-  deriving (Generic)
+  deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 data TxnCardInfoEventType
-  = Create
-  | Update
-  deriving (Generic, Show)
+  = CREATE
+  | UPDATE
+  deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
-instance Event TxnCardInfo where
-  toEventPS txnCardInfo@TxnCardInfo {..} =
-    let action' = toUpper . tshow $ eventType
-     in EventPS.EventPS
-          { EventPS.timestamp = timestamp
-          , EventPS.hostname = hostname
-          , EventPS.xRequestId = xRequestId
-          , EventPS.txnUuid = Just txnUuid
-          , EventPS.orderId = Just orderId
-          , EventPS.merchantId = merchantId
-          , EventPS.action = action'
-          , message =
-              EventPS.Message
-                { EventPS.model = "txn_card_info"
-                , EventPS.action' = action'
-                , EventPS.data' = txnCardInfo
-                }
-          }
+instance EventPayload TxnCardInfo where
+  toEvent = toEvent' TxnCardInfoEvent
