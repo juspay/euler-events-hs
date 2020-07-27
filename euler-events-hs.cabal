@@ -58,7 +58,7 @@ library
   exposed-modules:
     Euler.Events.Class
     Euler.Events.Constants
-    Euler.Events.Sink.Kafka
+    -- Euler.Events.Sink.Kafka
     Euler.Events.Sink.Stdout
     Euler.Events.Types.Event
     Euler.Events.Types.Order
@@ -75,10 +75,10 @@ library
     , bytestring
     , containers
     , hspec
-    , deepseq
-    , hw-kafka-client
-    , proto3-suite >=0.4.0.0
-    , proto3-wire
+    -- , deepseq
+    -- , hw-kafka-client
+    -- , proto3-suite >=0.4.0.0
+    -- , proto3-wire
     , text
     , time
     , unordered-containers
