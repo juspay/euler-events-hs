@@ -3,21 +3,10 @@
 , haskellCompiler ? "ghc883"
 }:
 let
-  inherit (import <nixpkgs> {}) fetchFromGitHub;
-  # Date:   Mon May 18 19:30:42 2020 -0500
-  nixpkgs = fetchFromGitHub {
-    owner = "NixOS";
-    repo = "nixpkgs-channels";
-    rev = "0f5ce2fac0c726036ca69a5524c59a49e2973dd4";
-    sha256 = "0nkk492aa7pr0d30vv1aw192wc16wpa1j02925pldc09s9m9i0r3";
-  };
+  inherit (builtins) fromJSON readFile;
+  sources = fromJSON (readFile ./nix/sources.json);
 
-  euler-hs-repo = fetchGit {
-    url = "git@bitbucket.org:juspay/euler-hs.git";
-    ref = "EulerHS-1.11.1.0";
-    # we take the last commit from the unannotated tag
-    # rev = "4d939c18aef36f65e3afe1a80026c10555d95380";
-  };
+  euler-hs-repo = fetchGit sources.euler-hs;
   euler-hs-path =
     if remoteDeps
     then euler-hs-repo
@@ -29,7 +18,7 @@ let
     # inherit haskellCompiler;
   };
 
-  inherit (euler-hs-drv) eulerBuild;
+  inherit (euler-hs-drv) eulerBuild nixpkgs;
 
   euler-events-hs-src = eulerBuild.allowedPaths {
     root =  ./.;
@@ -44,7 +33,7 @@ let
   };
 
   allUsedOverlays = [
-    euler-hs-drv.code-tools-overlay
+    euler-hs-drv.overlay
     euler-events-hs-overlay
   ];
 
