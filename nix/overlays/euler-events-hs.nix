@@ -8,12 +8,4 @@ eulerBuild.mkEulerHaskellOverlay
       eulerBuild.fastBuild {
         drv = hself.callCabal2nix "euler-events-hs" src { };
       };
-
-    euler-events-hs-with-tests =
-      eulerBuild.fastBuild {
-        drv = hself.callCabal2nix "euler-events-hs" src { };
-        overrides = {
-          runTests = true;
-        };
-      };
   })
