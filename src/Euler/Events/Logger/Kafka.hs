@@ -1,4 +1,4 @@
-module Euler.Events.Sink.Kafka where
+module Euler.Events.Logger.Kafka where
 
 import           Data.Aeson           (encode)
 import           Data.ByteString      (ByteString)

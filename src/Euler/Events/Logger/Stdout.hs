@@ -1,4 +1,4 @@
-module Euler.Events.Sink.Stdout where
+module Euler.Events.Logger.Stdout where
 
 import           Data.Aeson                 (encode)
 import qualified Data.ByteString.Lazy.Char8 as BSL

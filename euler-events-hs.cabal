@@ -29,6 +29,7 @@ common common-lang
     MultiWayIf
     NamedFieldPuns
     OverloadedStrings
+    FunctionalDependencies
     RecordWildCards
 
   default-language:   Haskell2010
@@ -38,21 +39,28 @@ library
   exposed-modules:
     Euler.Events.Class
     Euler.Events.Constants
-    Euler.Events.Sink.Stdout
+    Euler.Events.Logger.Stdout
+    Euler.Events.MetricsLogger.Prometheus
     Euler.Events.Types.Event
     Euler.Events.Types.Order
+    Euler.Events.Types.PrometheusMetric
     Euler.Events.Types.Txn
     Euler.Events.Types.TxnCardInfo
 
-  -- Euler.Events.Sink.Kafka
+  -- Euler.Events.Logger.Kafka
   other-modules:   Euler.Events.Util
   hs-source-dirs:  src
   build-depends:
     , aeson
     , bytestring
     , hspec
+    , prometheus-client
+    , prometheus-metrics-ghc
+    , prometheus-proc
     , text
     , time
+    , wai-middleware-prometheus
+    , warp
 
 -- , deepseq
 -- , hw-kafka-client

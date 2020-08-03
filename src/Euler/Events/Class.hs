@@ -37,3 +37,14 @@ class Logger config logger where
     -> a
     -> IO (Maybe ErrorText)
   closeLogger :: logger -> IO (Maybe ErrorText)
+
+class MetricsLogger config logger operation result
+  | config -> logger
+  , config -> operation
+  , config -> result
+  , logger -> config
+  , logger -> operation
+  , logger -> result
+  where
+  initMetricsLogger :: config -> IO (Either ErrorText logger)
+  metricsEvent :: logger -> operation -> IO result
