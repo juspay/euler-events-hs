@@ -1,20 +1,20 @@
-module Euler.Events.Types.Metrics where
+module Euler.Events.Types.Metric where
 
 import           Data.Text (Text)
 
-data MetricsOperation a
+data MetricOperation a
   = ReadyUp
-  | ReadyDown (MetricsResult a)
+  | ReadyDown (MetricResult a)
   | IncrementClientAuthTokenGenerated Text
   | IncrementOrderStatusCacheAdd Text
   | IncrementOrderStatusCacheHit Text
   | IncrementOrderStatusCacheMiss Text
 
-data MetricsResult a
+data MetricResult a
   = ReadyUpResult a
   | ReadyDownResult
   | IncrementedClientAuthTokenGenerated
   | IncrementedOrderStatusCacheAdd
   | IncrementedOrderStatusCacheHit
   | IncrementedOrderStatusCacheMiss
-  | MetricsError Text
+  | MetricError Text

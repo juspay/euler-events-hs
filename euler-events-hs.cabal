@@ -40,15 +40,15 @@ library
   exposed-modules:
     Euler.Events.Class
     Euler.Events.Constants
-    -- Euler.Events.Logger.Kafka
     Euler.Events.Logger.Stdout
-    Euler.Events.MetricsLogger.Prometheus
+    Euler.Events.MetricLogger.Prometheus
     Euler.Events.Types.Event
-    Euler.Events.Types.Metrics
+    Euler.Events.Types.Metric
     Euler.Events.Types.Order
     Euler.Events.Types.Txn
     Euler.Events.Types.TxnCardInfo
 
+  -- Euler.Events.Logger.Kafka
   other-modules:   Euler.Events.Util
   hs-source-dirs:  src
   build-depends:
