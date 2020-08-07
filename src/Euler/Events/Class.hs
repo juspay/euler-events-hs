@@ -42,4 +42,6 @@ class Logger config logger where
 class MetricsLogger config metric | config -> metric, metric -> config where
   initMetricsLogger :: config -> IO ()
   metricsEvent :: MetricsOperation metric -> IO (MetricsResult metric)
+  emitMetricIO :: MetricOperation metric -> IO ()
+  emitMetricIO = void . metricEvent
   instrumentApp :: metric -> (Text -> Text) -> Middleware
