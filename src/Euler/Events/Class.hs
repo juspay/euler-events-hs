@@ -1,14 +1,15 @@
--- is using this okay?
 {-# LANGUAGE AllowAmbiguousTypes #-}
 
 module Euler.Events.Class where
 
-import           Data.Aeson               (FromJSON, ToJSON)
-import           Data.ByteString.Lazy     (ByteString)
-import           Data.Text                (Text)
-import           Euler.Events.Constants   (eventLibraryVersion)
-import           Euler.Events.Types.Event (Event (Event), EventMetadata, EventType)
-import qualified Euler.Events.Types.Event as Event
+import           Data.Aeson                 (FromJSON, ToJSON)
+import           Data.ByteString.Lazy       (ByteString)
+import           Data.Text                  (Text)
+import           Euler.Events.Constants     (eventLibraryVersion)
+import           Euler.Events.Types.Event   (Event (Event), EventMetadata, EventType)
+import qualified Euler.Events.Types.Event   as Event
+import           Euler.Events.Types.Metrics (MetricsOperation, MetricsResult)
+import           Network.Wai                (Middleware)
 
 type ErrorText = Text
 
@@ -38,13 +39,7 @@ class Logger config logger where
     -> IO (Maybe ErrorText)
   closeLogger :: logger -> IO (Maybe ErrorText)
 
-class MetricsLogger config logger operation result
-  | config -> logger
-  , config -> operation
-  , config -> result
-  , logger -> config
-  , logger -> operation
-  , logger -> result
-  where
-  initMetricsLogger :: config -> IO (Either ErrorText logger)
-  metricsEvent :: logger -> operation -> IO result
+class MetricsLogger config metric | config -> metric, metric -> config where
+  initMetricsLogger :: config -> IO ()
+  metricsEvent :: MetricsOperation metric -> IO (MetricsResult metric)
+  instrumentApp :: metric -> (Text -> Text) -> Middleware

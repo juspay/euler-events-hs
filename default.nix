@@ -66,3 +66,5 @@ in {
 
   inherit mkShell;
 }
+
+# add librdkafka as a dependency for hw-kafka-client
