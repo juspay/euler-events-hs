@@ -39,6 +39,7 @@ library
   import:          common-lang
   exposed-modules:
     Euler.Events.Class
+    Euler.Events.Util.Prometheus
     Euler.Events.Constants
     Euler.Events.Logger.Stdout
     Euler.Events.MetricLogger.Prometheus
