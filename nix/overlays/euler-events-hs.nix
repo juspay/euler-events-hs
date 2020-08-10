@@ -3,12 +3,13 @@
 , src
 }:
 let inherit (eulerBuild) fetchFromGitHub;
-    inherit (builtins) fromJSON readFile;
-
-  sources = fromJSON (readFile ../sources.json);
-
-  prometheus-haskell-repo = fetchGit sources.prometheus-haskell;
-
+ prometheus-haskell-repo = fetchFromGitHub {
+    owner = "juspay";
+    repo = "prometheus-haskell";
+    # more-proc-metrics branch
+    rev = "7bf933ad3e0059020273ab9d7fc799c582d663ae";
+    sha256 = "1a00yb7258gk73idwffd2c1fvw6jci71mal143q81pgxaq9ivf78";
+  };
   prometheus-client-path = "${prometheus-haskell-repo}/prometheus-client";
   prometheus-proc-path = "${prometheus-haskell-repo}/prometheus-proc";
   prometheus-metrics-ghc-path = "${prometheus-haskell-repo}/prometheus-metrics-ghc";
