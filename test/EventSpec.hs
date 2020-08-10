@@ -5,7 +5,7 @@ import           Data.ByteString.Lazy           (ByteString)
 import           Data.Time.Clock.POSIX          (posixDayLength, posixSecondsToUTCTime)
 import           Euler.Events.Class             (logEvent, toLazyByteString)
 import qualified Euler.Events.Constants         as Constants
-import           Euler.Events.Sink.Stdout       (StdoutConfig (StdoutConfig))
+import           Euler.Events.Logger.Stdout     (StdoutConfig (StdoutConfig))
 import           Euler.Events.Types.Event       (Event (Event), EventMetadata (EventMetadata))
 import qualified Euler.Events.Types.Event       as Event
 import           Euler.Events.Types.Order       (Order (Order))

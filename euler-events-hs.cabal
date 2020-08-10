@@ -25,6 +25,8 @@ common common-lang
     DeriveAnyClass
     DeriveGeneric
     DerivingStrategies
+    FunctionalDependencies
+    InstanceSigs
     MultiParamTypeClasses
     MultiWayIf
     NamedFieldPuns
@@ -38,22 +40,38 @@ library
   exposed-modules:
     Euler.Events.Class
     Euler.Events.Constants
-    Euler.Events.Sink.Stdout
+    Euler.Events.Logger.Stdout
+    Euler.Events.MetricLogger.Prometheus
     Euler.Events.Types.Event
+    Euler.Events.Types.Metric
     Euler.Events.Types.Order
     Euler.Events.Types.Txn
     Euler.Events.Types.TxnCardInfo
+    Euler.Events.Util.Prometheus
 
-  -- Euler.Events.Sink.Kafka
+  -- Euler.Events.Logger.Kafka
   other-modules:   Euler.Events.Util
   hs-source-dirs:  src
   build-depends:
     , aeson
     , bytestring
-    , hspec
+    , clock
+    , containers
+    , http-types
+    , prometheus-client
+    , prometheus-metrics-ghc
+    , prometheus-proc
     , text
     , time
+    , unix
+    , wai
+    , wai-middleware-prometheus
+    , warp
 
+-- , either
+-- , hspec
+-- , http-conduit
+--needed for tests hspec http-conduit either
 -- , deepseq
 -- , hw-kafka-client
 -- , proto3-suite >=0.4.0.0
@@ -62,12 +80,17 @@ test-suite tests
   import:         common-lang
   type:           exitcode-stdio-1.0
   main-is:        Spec.hs
-  other-modules:  EventSpec
+  other-modules:
+    EventSpec
+    PrometheusSpec
+
   build-depends:
     , aeson
     , bytestring
+    , either
     , euler-events-hs
     , hspec
+    , http-conduit
     , time
 
   hs-source-dirs: test
