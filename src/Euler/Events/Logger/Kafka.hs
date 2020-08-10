@@ -1,20 +1,21 @@
 module Euler.Events.Logger.Kafka where
 
-import           Data.Aeson           (encode)
-import           Data.ByteString      (ByteString)
-import           Data.ByteString.Lazy (toStrict)
-import           Data.Text            (Text)
-import           Euler.Events.Class   (EventPayload (toEvent),
-                                       Logger (closeLogger, initLogger, logEvent, toLazyByteString))
-import           Kafka.Producer       (BrokerAddress (BrokerAddress), KafkaLogLevel (KafkaLogDebug), KafkaProducer,
-                                       ProducePartition (UnassignedPartition), ProducerProperties,
-                                       ProducerRecord (ProducerRecord), Timeout (Timeout), TopicName (TopicName),
-                                       brokersList, closeProducer, deliveryCallback, logLevel, newProducer, prKey,
-                                       prPartition, prTopic, prValue, produceMessage, sendTimeout, setCallback)
+import           Data.Aeson               (encode)
+import           Data.ByteString          (ByteString)
+import           Data.ByteString.Lazy     (toStrict)
+import           Data.Text                (Text)
+import           Euler.Events.Class       (ErrorText, EventPayload (toEvent),
+                                           Logger (closeLogger, initLogger, logEvent, toLazyByteString))
+import           Euler.Events.Types.Event (EventMetadata)
+import           Kafka.Producer           (BrokerAddress (BrokerAddress), KafkaLogLevel (KafkaLogDebug), KafkaProducer,
+                                           ProducePartition (UnassignedPartition), ProducerProperties,
+                                           ProducerRecord (ProducerRecord), Timeout (Timeout), TopicName (TopicName),
+                                           brokersList, closeProducer, deliveryCallback, logLevel, newProducer, prKey,
+                                           prPartition, prTopic, prValue, produceMessage, sendTimeout, setCallback)
 
-import           Data.Bifunctor       (first)
-import           Data.Functor         (($>))
-import           Euler.Events.Util    (tshow)
+import           Data.Bifunctor           (first)
+import           Data.Functor             (($>))
+import           Euler.Events.Util        (tshow)
 
 -- TODO: This is a very early stage code written just to test things out. Strengthen it
 data KafkaConfig =
@@ -41,8 +42,23 @@ mkMessage k v topicName =
     }
 
 instance Logger KafkaConfig KafkaProducer where
+  initLogger :: KafkaConfig -> IO (Either ErrorText KafkaProducer)
   initLogger config = first tshow <$> newProducer (producerProps config)
+  toLazyByteString ::
+       (EventPayload a)
+    => KafkaConfig
+    -> KafkaProducer
+    -> EventMetadata
+    -> a
+    -> ByteString
   toLazyByteString _config _logger metadata = encode . toEvent metadata
+  logEvent ::
+       EventPayload a
+    => KafkaConfig
+    -> KafkaProducer
+    -> EventMetadata
+    -> a
+    -> IO (Maybe ErrorText)
   logEvent config kafkaProducer metadata eventPayload =
     (fmap . fmap)
       tshow
@@ -52,4 +68,5 @@ instance Logger KafkaConfig KafkaProducer where
          (Just . toStrict . toLazyByteString config kafkaProducer metadata $
           eventPayload)
          (topic config))
+  closeLogger :: KafkaProducer -> IO (Maybe ErrorText)
   closeLogger kafkaProducer = closeProducer kafkaProducer $> Nothing
