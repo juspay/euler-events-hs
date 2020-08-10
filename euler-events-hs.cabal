@@ -39,7 +39,6 @@ library
   import:          common-lang
   exposed-modules:
     Euler.Events.Class
-    Euler.Events.Util.Prometheus
     Euler.Events.Constants
     Euler.Events.Logger.Stdout
     Euler.Events.MetricLogger.Prometheus
@@ -48,6 +47,7 @@ library
     Euler.Events.Types.Order
     Euler.Events.Types.Txn
     Euler.Events.Types.TxnCardInfo
+    Euler.Events.Util.Prometheus
 
   -- Euler.Events.Logger.Kafka
   other-modules:   Euler.Events.Util
@@ -57,7 +57,6 @@ library
     , bytestring
     , clock
     , containers
-    , hspec
     , http-types
     , prometheus-client
     , prometheus-metrics-ghc
@@ -69,6 +68,10 @@ library
     , wai-middleware-prometheus
     , warp
 
+-- , either
+-- , hspec
+-- , http-conduit
+--needed for tests hspec http-conduit either
 -- , deepseq
 -- , hw-kafka-client
 -- , proto3-suite >=0.4.0.0
@@ -77,12 +80,17 @@ test-suite tests
   import:         common-lang
   type:           exitcode-stdio-1.0
   main-is:        Spec.hs
-  other-modules:  EventSpec
+  other-modules:
+    EventSpec
+    PrometheusSpec
+
   build-depends:
     , aeson
     , bytestring
+    , either
     , euler-events-hs
     , hspec
+    , http-conduit
     , time
 
   hs-source-dirs: test
