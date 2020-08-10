@@ -9,4 +9,6 @@ Logs events at `stdout` in `json` format.
 * Loggers added
   1. `Stdout`
 
+## 0.0.2 -- 2020-08-10
+Adds Prometheus Metrics support
 
