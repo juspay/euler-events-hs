@@ -13,6 +13,7 @@ let
     else ../euler-hs;
 
  euler-hs-drv = import euler-hs-path {
+   inherit remoteDeps;
     # Uncomment if you want to change haskellCompiler
     # that is used by euler-hs by default:
     # inherit haskellCompiler;
