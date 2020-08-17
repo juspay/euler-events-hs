@@ -61,6 +61,7 @@ library
     , prometheus-client
     , prometheus-metrics-ghc
     , prometheus-proc
+    , stm-containers
     , text
     , time
     , unix

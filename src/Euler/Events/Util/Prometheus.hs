@@ -1,69 +1,85 @@
 module Euler.Events.Util.Prometheus where
 
-import qualified Data.Map             as Map
-import           Data.Maybe           (fromMaybe)
-import           Data.Ratio           ((%))
-import           Data.Text            (Text)
-import qualified Data.Text            as T
-import           Euler.Events.Util    (tshow)
+import           Data.Functor              (($>))
+import qualified Data.Map                  as Map
+import           Data.Maybe                (fromMaybe)
+import           Data.Ratio                ((%))
+import           Data.Text                 (Text)
+import qualified Data.Text                 as T
+import           Euler.Events.Class        (ErrorText)
+import           Euler.Events.Types.Metric (MetricResult)
+import           Euler.Events.Types.Metric as M
+import           Euler.Events.Util         (tshow)
+import           GHC.Conc                  (atomically)
 import qualified Prometheus
-import           System.Clock         (TimeSpec, diffTimeSpec, toNanoSecs)
-import           System.Environment   (getEnvironment)
-import           System.Posix.Process (getProcessID)
+import qualified StmContainers.Map         as StmMap
+import           System.Clock              (TimeSpec, diffTimeSpec, toNanoSecs)
+import           System.Environment        (getEnvironment)
+import           System.Posix.Process      (getProcessID)
 
-withPrefix :: Text -> Text
-withPrefix = ("euler_" <>)
+data PrometheusMetric
+  = Counter Prometheus.Counter
+  | Gauge Prometheus.Gauge
+  | Vector1Counter (Prometheus.Vector Prometheus.Label1 Prometheus.Counter)
+  | PrometheusMiddleware
 
-clientAuthTokenGeneratedCounter :: Prometheus.Vector Text Prometheus.Counter
-clientAuthTokenGeneratedCounter =
+withPrefix :: Text -> Text -> Text
+withPrefix prefix name = prefix <> "_" <> name
+
+clientAuthTokenGeneratedCounter ::
+     Text -> Prometheus.Vector Text Prometheus.Counter
+clientAuthTokenGeneratedCounter prefix =
   Prometheus.unsafeRegister $
   Prometheus.vector "merchant_id" $
   Prometheus.counter $
-  Prometheus.Info (withPrefix "client_auth_token_generated") ""
+  Prometheus.Info (withPrefix prefix "client_auth_token_generated") ""
 
-orderStatusCacheHitCounter :: Prometheus.Vector Text Prometheus.Counter
-orderStatusCacheHitCounter =
+orderStatusCacheHitCounter :: Text -> Prometheus.Vector Text Prometheus.Counter
+orderStatusCacheHitCounter prefix =
   Prometheus.unsafeRegister $
   Prometheus.vector "merchant_id" $
-  Prometheus.counter $ Prometheus.Info (withPrefix "order_status_cache_hit") ""
+  Prometheus.counter $
+  Prometheus.Info (withPrefix prefix "order_status_cache_hit") ""
 
-orderStatusCacheMissCounter :: Prometheus.Vector Text Prometheus.Counter
-orderStatusCacheMissCounter =
+orderStatusCacheMissCounter :: Text -> Prometheus.Vector Text Prometheus.Counter
+orderStatusCacheMissCounter prefix =
   Prometheus.unsafeRegister $
   Prometheus.vector "merchant_id" $
-  Prometheus.counter $ Prometheus.Info (withPrefix "order_status_cache_miss") ""
+  Prometheus.counter $
+  Prometheus.Info (withPrefix prefix "order_status_cache_miss") ""
 
-orderStatusCacheAddCounter :: Prometheus.Vector Text Prometheus.Counter
-orderStatusCacheAddCounter =
+orderStatusCacheAddCounter :: Text -> Prometheus.Vector Text Prometheus.Counter
+orderStatusCacheAddCounter prefix =
   Prometheus.unsafeRegister $
   Prometheus.vector "merchant_id" $
-  Prometheus.counter $ Prometheus.Info (withPrefix "order_status_cache_add") ""
+  Prometheus.counter $
+  Prometheus.Info (withPrefix prefix "order_status_cache_add") ""
 
-incrementClientAuthTokenGenerated :: Text -> IO ()
-incrementClientAuthTokenGenerated merchantId =
+incrementClientAuthTokenGenerated :: Text -> Text -> IO ()
+incrementClientAuthTokenGenerated prefix merchantId =
   Prometheus.withLabel
-    clientAuthTokenGeneratedCounter
+    (clientAuthTokenGeneratedCounter prefix)
     merchantId
     Prometheus.incCounter
 
-incrementOrderStatusCacheHit :: Text -> IO ()
-incrementOrderStatusCacheHit merchantId =
+incrementOrderStatusCacheHit :: Text -> Text -> IO ()
+incrementOrderStatusCacheHit prefix merchantId =
   Prometheus.withLabel
-    orderStatusCacheHitCounter
+    (orderStatusCacheHitCounter prefix)
     merchantId
     Prometheus.incCounter
 
-incrementOrderStatusCacheMiss :: Text -> IO ()
-incrementOrderStatusCacheMiss merchantId =
+incrementOrderStatusCacheMiss :: Text -> Text -> IO ()
+incrementOrderStatusCacheMiss prefix merchantId =
   Prometheus.withLabel
-    orderStatusCacheMissCounter
+    (orderStatusCacheMissCounter prefix)
     merchantId
     Prometheus.incCounter
 
-incrementOrderStatusCacheAdd :: Text -> IO ()
-incrementOrderStatusCacheAdd merchantId =
+incrementOrderStatusCacheAdd :: Text -> Text -> IO ()
+incrementOrderStatusCacheAdd prefix merchantId =
   Prometheus.withLabel
-    orderStatusCacheAddCounter
+    (orderStatusCacheAddCounter prefix)
     merchantId
     Prometheus.incCounter
 
@@ -114,3 +130,84 @@ observeSeconds status method path merchantId start end = do
     , fromMaybe "" pid
     , fromMaybe "" merchantId)
     (flip Prometheus.observe latency)
+
+increment ::
+     Text
+  -> Text
+  -> StmMap.Map Text PrometheusMetric
+  -> IO (Either ErrorText (MetricResult PrometheusMetric))
+increment prefix counterName metricMap = do
+  let fullName = withPrefix prefix counterName
+  mCounter <- atomically . StmMap.lookup fullName $ metricMap
+  case mCounter of
+    Nothing -> do
+      counter <-
+        Prometheus.register . Prometheus.counter $ Prometheus.Info fullName ""
+      atomically $ StmMap.insert (Counter counter) fullName metricMap
+      Prometheus.incCounter counter $> Right M.Incremented
+    Just (Counter counter) ->
+      Prometheus.incCounter counter $> Right M.Incremented
+    _ -> pure . Left . alreadyRegistered $ "non-counter"
+
+set ::
+     Text
+  -> Text
+  -> Double
+  -> StmMap.Map Text PrometheusMetric
+  -> IO (Either ErrorText (MetricResult PrometheusMetric))
+set prefix gaugeName val metricMap = do
+  let fullName = withPrefix prefix gaugeName
+  mGauge <- atomically . StmMap.lookup fullName $ metricMap
+  case mGauge of
+    Nothing -> do
+      gauge <-
+        Prometheus.register . Prometheus.gauge $ Prometheus.Info fullName ""
+      atomically $ StmMap.insert (Gauge gauge) fullName metricMap
+      Prometheus.setGauge gauge val $> Right M.Setted
+    Just (Gauge gauge) -> Prometheus.setGauge gauge val $> Right M.Setted
+    _ -> pure . Left . alreadyRegistered $ "non-gauge"
+
+registerVector1Counter ::
+     Text
+  -> Text
+  -> Text
+  -> StmMap.Map Text PrometheusMetric
+  -> IO (Either ErrorText (MetricResult PrometheusMetric))
+registerVector1Counter prefix vectorName labelName metricMap = do
+  let fullName = withPrefix prefix vectorName
+  mVector <- atomically . StmMap.lookup fullName $ metricMap
+  case mVector of
+    Nothing -> do
+      vector <-
+        Prometheus.register $
+        Prometheus.vector labelName $
+        Prometheus.counter $ Prometheus.Info (withPrefix prefix vectorName) ""
+      atomically $
+        StmMap.insert (Vector1Counter vector) fullName metricMap $>
+        Right M.RegisteredVector1Counter
+    Just (Vector1Counter _) ->
+      pure . Left . alreadyRegistered $ "vector1Counter"
+    _ -> pure . Left . alreadyRegistered $ "non-vector1Counter"
+
+incrementVector1Counter ::
+     Text
+  -> Text
+  -> Text
+  -> StmMap.Map Text PrometheusMetric
+  -> IO (Either ErrorText (MetricResult PrometheusMetric))
+incrementVector1Counter prefix vectorName labelValue metricMap = do
+  let fullName = withPrefix prefix vectorName
+  mVector <- atomically . StmMap.lookup fullName $ metricMap
+  case mVector of
+    Just (Vector1Counter vector) ->
+      Prometheus.withLabel vector labelValue Prometheus.incCounter $>
+      Right M.IncrementedVector1Counter
+    Nothing -> pure $ Left notRegistered
+    _ -> pure . Left . alreadyRegistered $ "non-vector1Counter"
+
+alreadyRegistered :: Text -> Text
+alreadyRegistered metricType =
+  "A " <> metricType <> " metric is already registered with this name"
+
+notRegistered :: Text
+notRegistered = "No metric is registered with this name"
