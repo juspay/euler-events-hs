@@ -4,7 +4,7 @@ import           Data.Aeson               (FromJSON, ToJSON)
 import           Data.Text                (Text)
 import           Data.Time                (UTCTime)
 import           Euler.Events.Class       (EventPayload (toEvent, toEvent'))
-import           Euler.Events.Types.Event (EventType (TxnEvent))
+import           Euler.Events.Types.Event (Event, EventMetadata, EventType (TxnEvent))
 import           GHC.Generics             (Generic)
 
 data Txn =
@@ -52,4 +52,5 @@ data TxnEventType
   deriving anyclass (ToJSON, FromJSON)
 
 instance EventPayload Txn where
+  toEvent :: EventMetadata -> Txn -> Event Txn
   toEvent = toEvent' TxnEvent

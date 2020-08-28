@@ -1,6 +1,7 @@
 module Euler.Events.Types.Event where
 
-import           Data.Aeson            (FromJSON, ToJSON, object, parseJSON, toJSON, withObject, (.:), (.=))
+import           Data.Aeson            (FromJSON, ToJSON, Value, object, parseJSON, toJSON, withObject, (.:), (.=))
+import           Data.Aeson.Types      (Parser)
 import           Data.Maybe            (fromMaybe)
 import           Data.Text             (Text)
 import           Data.Time             (UTCTime)
@@ -38,6 +39,7 @@ data EventType
   deriving anyclass (ToJSON, FromJSON)
 
 instance (ToJSON a) => ToJSON (Event a) where
+  toJSON :: Event a -> Value
   toJSON Event {..} =
     let EventMetadata {..} = metadata
      in object
@@ -57,6 +59,7 @@ instance (ToJSON a) => ToJSON (Event a) where
           ]
 
 instance (FromJSON a) => FromJSON (Event a) where
+  parseJSON :: Value -> Parser (Event a)
   parseJSON =
     withObject "event" $ \e -> do
       timestampIST <- e .: "timestamp"

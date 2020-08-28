@@ -4,7 +4,7 @@ import           Data.Aeson               (FromJSON, ToJSON)
 import           Data.Text                (Text)
 import           Data.Time                (UTCTime)
 import           Euler.Events.Class       (EventPayload (toEvent, toEvent'))
-import           Euler.Events.Types.Event (EventType (OrderEvent))
+import           Euler.Events.Types.Event (Event, EventMetadata, EventType (OrderEvent))
 import           GHC.Generics             (Generic)
 
 data Order =
@@ -51,4 +51,5 @@ data OrderEventType
   deriving anyclass (ToJSON, FromJSON)
 
 instance EventPayload Order where
+  toEvent :: EventMetadata -> Order -> Event Order
   toEvent = toEvent' OrderEvent
