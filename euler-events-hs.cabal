@@ -26,6 +26,7 @@ common common-lang
     DeriveGeneric
     DerivingStrategies
     FunctionalDependencies
+    FlexibleInstances
     InstanceSigs
     MultiParamTypeClasses
     MultiWayIf

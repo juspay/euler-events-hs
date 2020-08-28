@@ -9,9 +9,7 @@ import           Data.Text.Encoding                (decodeUtf8)
 import           Euler.Events.Class                (ErrorText, MetricLogger (..))
 import           Euler.Events.Types.Metric         (MetricOperation, MetricResult)
 import qualified Euler.Events.Types.Metric         as M
-import           Euler.Events.Util.Prometheus      (PrometheusMetric (..), increment, incrementClientAuthTokenGenerated,
-                                                    incrementOrderStatusCacheAdd, incrementOrderStatusCacheHit,
-                                                    incrementOrderStatusCacheMiss, incrementVector1Counter,
+import           Euler.Events.Util.Prometheus      (PrometheusMetric (..), increment, incrementVector1Counter,
                                                     observeSeconds, registerVector1Counter, set)
 
 import           GHC.Conc                          (atomically)
@@ -62,18 +60,6 @@ instance MetricLogger PrometheusConfig PrometheusLogger PrometheusMetric where
           M.ReadyUpResult (Gauge gauge) ->
             Prometheus.setGauge gauge 0 $> Right M.ReadyDownResult
           _ -> pure $ Left "Cannot set any metric other that Gauge"
-      M.IncrementClientAuthTokenGenerated merchantId ->
-        incrementClientAuthTokenGenerated prefix merchantId $>
-        Right M.IncrementedClientAuthTokenGenerated
-      M.IncrementOrderStatusCacheAdd merchantId ->
-        incrementOrderStatusCacheAdd prefix merchantId $>
-        Right M.IncrementedOrderStatusCacheAdd
-      M.IncrementOrderStatusCacheHit merchantId ->
-        incrementOrderStatusCacheHit prefix merchantId $>
-        Right M.IncrementedOrderStatusCacheHit
-      M.IncrementOrderStatusCacheMiss merchantId ->
-        incrementOrderStatusCacheMiss prefix merchantId $>
-        Right M.IncrementedOrderStatusCacheMiss
       M.Increment counterName -> increment prefix counterName metricMap
       M.Set gaugeName value -> set prefix gaugeName value metricMap
       M.RegisterVector1Counter vectorName labelName ->

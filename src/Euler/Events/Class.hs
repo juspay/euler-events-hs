@@ -42,7 +42,8 @@ class Logger config logger where
 
 class MetricLogger config logger metric
   | config -> metric
-  , metric -> config
+  , metric -> logger
+  , logger -> config
   where
   initMetricLogger :: config -> IO logger
   metricEvent ::

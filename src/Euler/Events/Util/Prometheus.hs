@@ -8,7 +8,7 @@ import           Data.Text                 (Text)
 import qualified Data.Text                 as T
 import           Euler.Events.Class        (ErrorText)
 import           Euler.Events.Types.Metric (MetricResult)
-import           Euler.Events.Types.Metric as M
+import qualified Euler.Events.Types.Metric as M
 import           Euler.Events.Util         (tshow)
 import           GHC.Conc                  (atomically)
 import qualified Prometheus
@@ -25,63 +25,6 @@ data PrometheusMetric
 
 withPrefix :: Text -> Text -> Text
 withPrefix prefix name = prefix <> "_" <> name
-
-clientAuthTokenGeneratedCounter ::
-     Text -> Prometheus.Vector Text Prometheus.Counter
-clientAuthTokenGeneratedCounter prefix =
-  Prometheus.unsafeRegister $
-  Prometheus.vector "merchant_id" $
-  Prometheus.counter $
-  Prometheus.Info (withPrefix prefix "client_auth_token_generated") ""
-
-orderStatusCacheHitCounter :: Text -> Prometheus.Vector Text Prometheus.Counter
-orderStatusCacheHitCounter prefix =
-  Prometheus.unsafeRegister $
-  Prometheus.vector "merchant_id" $
-  Prometheus.counter $
-  Prometheus.Info (withPrefix prefix "order_status_cache_hit") ""
-
-orderStatusCacheMissCounter :: Text -> Prometheus.Vector Text Prometheus.Counter
-orderStatusCacheMissCounter prefix =
-  Prometheus.unsafeRegister $
-  Prometheus.vector "merchant_id" $
-  Prometheus.counter $
-  Prometheus.Info (withPrefix prefix "order_status_cache_miss") ""
-
-orderStatusCacheAddCounter :: Text -> Prometheus.Vector Text Prometheus.Counter
-orderStatusCacheAddCounter prefix =
-  Prometheus.unsafeRegister $
-  Prometheus.vector "merchant_id" $
-  Prometheus.counter $
-  Prometheus.Info (withPrefix prefix "order_status_cache_add") ""
-
-incrementClientAuthTokenGenerated :: Text -> Text -> IO ()
-incrementClientAuthTokenGenerated prefix merchantId =
-  Prometheus.withLabel
-    (clientAuthTokenGeneratedCounter prefix)
-    merchantId
-    Prometheus.incCounter
-
-incrementOrderStatusCacheHit :: Text -> Text -> IO ()
-incrementOrderStatusCacheHit prefix merchantId =
-  Prometheus.withLabel
-    (orderStatusCacheHitCounter prefix)
-    merchantId
-    Prometheus.incCounter
-
-incrementOrderStatusCacheMiss :: Text -> Text -> IO ()
-incrementOrderStatusCacheMiss prefix merchantId =
-  Prometheus.withLabel
-    (orderStatusCacheMissCounter prefix)
-    merchantId
-    Prometheus.incCounter
-
-incrementOrderStatusCacheAdd :: Text -> Text -> IO ()
-incrementOrderStatusCacheAdd prefix merchantId =
-  Prometheus.withLabel
-    (orderStatusCacheAddCounter prefix)
-    merchantId
-    Prometheus.incCounter
 
 {-# NOINLINE requestLatency #-}
 requestLatency :: Prometheus.Vector Prometheus.Label7 Prometheus.Histogram
