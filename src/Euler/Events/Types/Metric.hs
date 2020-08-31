@@ -17,3 +17,4 @@ data MetricResult a
   | Setted
   | RegisteredVector1Counter
   | IncrementedVector1Counter
+  | MetricResultError
