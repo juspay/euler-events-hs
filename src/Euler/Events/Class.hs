@@ -40,9 +40,16 @@ class Logger config logger where
     -> IO (Maybe ErrorText)
   closeLogger :: logger -> IO (Maybe ErrorText)
 
-class MetricLogger config metric | config -> metric, metric -> config where
-  initMetricLogger :: config -> IO ()
-  metricEvent :: MetricOperation metric -> IO (MetricResult metric)
-  emitMetricIO :: MetricOperation metric -> IO ()
-  emitMetricIO = void . metricEvent
+class MetricLogger config logger metric
+  | config -> metric
+  , metric -> logger
+  , logger -> config
+  where
+  initMetricLogger :: config -> IO logger
+  metricEvent ::
+       logger
+    -> MetricOperation metric
+    -> IO (Either ErrorText (MetricResult metric))
+  emitMetricIO :: logger -> MetricOperation metric -> IO ()
+  emitMetricIO logger = void . metricEvent logger
   instrumentApp :: metric -> (Text -> Text) -> Middleware

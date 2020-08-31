@@ -26,6 +26,7 @@ common common-lang
     DeriveGeneric
     DerivingStrategies
     FunctionalDependencies
+    FlexibleInstances
     InstanceSigs
     MultiParamTypeClasses
     MultiWayIf
@@ -61,6 +62,7 @@ library
     , prometheus-client
     , prometheus-metrics-ghc
     , prometheus-proc
+    , stm-containers
     , text
     , time
     , unix

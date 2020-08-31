@@ -7,8 +7,8 @@ import qualified Data.ByteString                      as BS
 import           Data.Either                          (isLeft)
 import           Data.Either.Combinators              (fromRight')
 import           Euler.Events.Class                   (emitMetricIO, initMetricLogger)
-import           Euler.Events.MetricLogger.Prometheus (PrometheusConfig (PrometheusConfig), PrometheusMetric)
-import           Euler.Events.Types.Metric            (MetricOperation (IncrementClientAuthTokenGenerated))
+import           Euler.Events.MetricLogger.Prometheus (PrometheusConfig (PrometheusConfig))
+import           Euler.Events.Types.Metric            (MetricOperation (Increment, IncrementVector1Counter, RegisterVector1Counter))
 import           Network.HTTP.Simple                  (Request, Response, defaultRequest, getResponseBody, httpBS,
                                                        setRequestPort)
 import           Test.Hspec                           (Spec, describe, it, shouldBe)
@@ -67,25 +67,51 @@ spec = do
     it "mimics a simple Prometheus metrics flow" $ do
       eResp <- makeReq req
       isLeft eResp `shouldBe` True
-      emitMetric (IncrementClientAuthTokenGenerated "a")
-      initMetricLogger (PrometheusConfig port)
+      logger <- initMetricLogger (PrometheusConfig port "prefix")
+      let emitMetric = emitMetricIO logger
+      emitMetric (Increment "counter")
       respBody <- getRespBody req
       checkInfixes procMetrics respBody `shouldBe` True
-      "euler_client_auth_token_generated{merchant_id=\"a\"} 1.0" `BS.isInfixOf`
-        respBody `shouldBe`
-        True
-      emitMetric (IncrementClientAuthTokenGenerated "a")
+      "prefix_counter 1.0" `BS.isInfixOf` respBody `shouldBe` True
+      emitMetric (IncrementVector1Counter "vector" "a")
       respBody2 <- getRespBody req
-      "euler_client_auth_token_generated{merchant_id=\"a\"} 2.0" `BS.isInfixOf`
-        respBody2 `shouldBe`
-        True
-      "euler_client_auth_token_generated{merchant_id=\"b\"}" `BS.isInfixOf`
-        respBody2 `shouldBe`
+      "prefix_counter 1.0" `BS.isInfixOf` respBody2 `shouldBe` True
+      "prefix_vector{merchant_id=\"a\"}" `BS.isInfixOf` respBody2 `shouldBe`
         False
-      emitMetric (IncrementClientAuthTokenGenerated "b")
+      emitMetric (RegisterVector1Counter "vector" "merchant_id")
+      emitMetric (IncrementVector1Counter "vector" "a")
       respBody3 <- getRespBody req
-      "euler_client_auth_token_generated{merchant_id=\"b\"} 1.0" `BS.isInfixOf`
-        respBody3 `shouldBe`
+      "prefix_vector{merchant_id=\"a\"} 1.0" `BS.isInfixOf` respBody3 `shouldBe`
+        True
+      emitMetric (Increment "counter")
+      emitMetric (Increment "counter")
+      emitMetric (Increment "counter")
+      emitMetric (Increment "counter2")
+      emitMetric (Increment "counter2")
+      emitMetric (Increment "counter2")
+      emitMetric (IncrementVector1Counter "vector" "a")
+      emitMetric (IncrementVector1Counter "vector" "b")
+      emitMetric (IncrementVector1Counter "vector" "a")
+      emitMetric (IncrementVector1Counter "vector" "c")
+      emitMetric (IncrementVector1Counter "vector" "b")
+      emitMetric (RegisterVector1Counter "vector2" "merchant_id")
+      emitMetric (IncrementVector1Counter "vector2" "a")
+      emitMetric (IncrementVector1Counter "vector2" "b")
+      emitMetric (IncrementVector1Counter "vector2" "b")
+      emitMetric (IncrementVector1Counter "vector2" "a")
+      emitMetric (IncrementVector1Counter "vector2" "b")
+      respBody4 <- getRespBody req
+      "prefix_counter 4.0" `BS.isInfixOf` respBody4 `shouldBe` True
+      "prefix_counter2 3.0" `BS.isInfixOf` respBody4 `shouldBe` True
+      "prefix_vector{merchant_id=\"a\"} 3.0" `BS.isInfixOf` respBody4 `shouldBe`
+        True
+      "prefix_vector{merchant_id=\"b\"} 2.0" `BS.isInfixOf` respBody4 `shouldBe`
+        True
+      "prefix_vector{merchant_id=\"c\"} 1.0" `BS.isInfixOf` respBody4 `shouldBe`
+        True
+      "prefix_vector2{merchant_id=\"a\"} 2.0" `BS.isInfixOf` respBody4 `shouldBe`
+        True
+      "prefix_vector2{merchant_id=\"b\"} 3.0" `BS.isInfixOf` respBody4 `shouldBe`
         True
 
 makeReq :: Request -> IO (Either SomeException (Response BS.ByteString))
@@ -93,9 +119,6 @@ makeReq req = try $ httpBS req
 
 checkInfixes :: [BS.ByteString] -> BS.ByteString -> Bool
 checkInfixes subStrs str = and ((`BS.isInfixOf` str) <$> subStrs)
-
-emitMetric :: MetricOperation PrometheusMetric -> IO ()
-emitMetric = emitMetricIO
 
 getRespBody :: Request -> IO BS.ByteString
 getRespBody req = getResponseBody . fromRight' <$> makeReq req
