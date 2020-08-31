@@ -42,4 +42,16 @@ eulerBuild.mkEulerHaskellOverlay
       eulerBuild.fastBuild {
         drv = hself.callCabal2nix "euler-events-hs" src { };
       };
+    stm-containers = eulerBuild.fastBuildExternal {
+       drv = super.haskell.lib.unmarkBroken hsuper.stm-containers;
+    };
+    list-t = eulerBuild.fastBuildExternal {
+       drv = super.haskell.lib.unmarkBroken hsuper.list-t;
+    };
+    stm-hamt = eulerBuild.fastBuildExternal {
+       drv = super.haskell.lib.unmarkBroken hsuper.stm-hamt;
+    };
+    primitive-extras = eulerBuild.fastBuildExternal {
+       drv = super.haskell.lib.unmarkBroken hsuper.primitive-extras;
+    };
   })
