@@ -23,6 +23,12 @@ data PrometheusMetric
   | Vector1Counter (Prometheus.Vector Prometheus.Label1 Prometheus.Counter)
   | PrometheusMiddleware
 
+instance Eq PrometheusMetric where
+  (==) = undefined
+
+instance Show PrometheusMetric where
+  show = undefined
+
 withPrefix :: Text -> Text -> Text
 withPrefix prefix name = prefix <> "_" <> name
 

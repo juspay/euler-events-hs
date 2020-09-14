@@ -38,7 +38,11 @@ data PrometheusLogger = PrometheusLogger
   { prefix :: Text,
     metricMap :: StmMap.Map Text PrometheusMetric
   }
+instance Eq PrometheusLogger where
+  (==) = undefined
 
+instance Show PrometheusLogger where
+  show = undefined
 instance MetricLogger PrometheusConfig PrometheusLogger PrometheusMetric where
   initMetricLogger :: PrometheusConfig -> IO PrometheusLogger
   initMetricLogger (PrometheusConfig port prefix) = do
