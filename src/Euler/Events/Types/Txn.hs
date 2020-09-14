@@ -1,27 +1,26 @@
 module Euler.Events.Types.Txn where
 
-import           Data.Aeson               (FromJSON, ToJSON)
-import           Data.Text                (Text)
-import           Data.Time                (UTCTime)
-import           Euler.Events.Class       (EventPayload (toEvent, toEvent'))
-import           Euler.Events.Types.Event (Event, EventMetadata, EventType (TxnEvent))
-import           GHC.Generics             (Generic)
+import Data.Aeson (FromJSON, ToJSON)
+import Data.Text (Text)
+import Data.Time (UTCTime)
+import Euler.Events.Class (EventPayload (toEvent, toEvent'))
+import Euler.Events.Types.Event (Event, EventMetadata, EventType (TxnEvent))
+import GHC.Generics (Generic)
 
-data Txn =
-  Txn
-    { version      :: Int
-    , orderId      :: Text
-    , txnUuid      :: Maybe Text
-    , txnId        :: Text
-    , txnAmount    :: Maybe Double
-    , status       :: TxnStatus
-    , dateCreated  :: Maybe UTCTime
-    , lastModified :: Maybe UTCTime
-    , merchantId   :: Maybe Text
-    , gateway      :: Maybe Text
+data Txn = Txn
+  { version :: Int,
+    orderId :: Text,
+    txnUuid :: Maybe Text,
+    txnId :: Text,
+    txnAmount :: Maybe Double,
+    status :: TxnStatus,
+    dateCreated :: Maybe UTCTime,
+    lastModified :: Maybe UTCTime,
+    merchantId :: Maybe Text,
+    gateway :: Maybe Text,
     -- extra info
-    , eventType    :: TxnEventType
-    }
+    eventType :: TxnEventType
+  }
   deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 

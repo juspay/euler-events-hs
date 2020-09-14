@@ -1,24 +1,23 @@
 module Euler.Events.Types.Order where
 
-import           Data.Aeson               (FromJSON, ToJSON)
-import           Data.Text                (Text)
-import           Data.Time                (UTCTime)
-import           Euler.Events.Class       (EventPayload (toEvent, toEvent'))
-import           Euler.Events.Types.Event (Event, EventMetadata, EventType (OrderEvent))
-import           GHC.Generics             (Generic)
+import Data.Aeson (FromJSON, ToJSON)
+import Data.Text (Text)
+import Data.Time (UTCTime)
+import Euler.Events.Class (EventPayload (toEvent, toEvent'))
+import Euler.Events.Types.Event (Event, EventMetadata, EventType (OrderEvent))
+import GHC.Generics (Generic)
 
-data Order =
-  Order
-    { orderId      :: Text
-    , version      :: Int
-    , amount       :: Double
-    , status       :: OrderStatus
-    , merchantId   :: Text
-    , dateCreated  :: UTCTime
-    , lastModified :: UTCTime
+data Order = Order
+  { orderId :: Text,
+    version :: Int,
+    amount :: Double,
+    status :: OrderStatus,
+    merchantId :: Text,
+    dateCreated :: UTCTime,
+    lastModified :: UTCTime,
     -- extra info
-    , eventType    :: OrderEventType
-    }
+    eventType :: OrderEventType
+  }
   deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 

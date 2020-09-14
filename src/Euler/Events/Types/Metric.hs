@@ -1,6 +1,6 @@
 module Euler.Events.Types.Metric where
 
-import           Data.Text (Text)
+import Data.Text (Text)
 
 data MetricOperation a
   = ReadyUp

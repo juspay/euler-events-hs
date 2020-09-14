@@ -1,6 +1,6 @@
 module Euler.Events.Constants where
 
-import           Data.Text (Text)
+import Data.Text (Text)
 
 kafkaBrokerAddress :: Text
 kafkaBrokerAddress = "localhost:9092"

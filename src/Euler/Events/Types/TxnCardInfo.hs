@@ -1,24 +1,23 @@
 module Euler.Events.Types.TxnCardInfo where
 
-import           Data.Aeson               (FromJSON, ToJSON)
-import           Data.Text                (Text)
-import           Data.Time                (UTCTime)
-import           Euler.Events.Class       (EventPayload (toEvent, toEvent'))
-import           Euler.Events.Types.Event (Event, EventMetadata, EventType (TxnCardInfoEvent))
-import           GHC.Generics             (Generic)
+import Data.Aeson (FromJSON, ToJSON)
+import Data.Text (Text)
+import Data.Time (UTCTime)
+import Euler.Events.Class (EventPayload (toEvent, toEvent'))
+import Euler.Events.Types.Event (Event, EventMetadata, EventType (TxnCardInfoEvent))
+import GHC.Generics (Generic)
 
-data TxnCardInfo =
-  TxnCardInfo
-    { orderId            :: Text
-    , txnUuid            :: Text
-    , dateCreated        :: Maybe UTCTime
-    , cardType           :: Maybe Text
-    , cardIssuerBankName :: Maybe Text
-    , paymentMethodType  :: Maybe PaymentMethodType
-    , paymentMethod      :: Maybe Text
+data TxnCardInfo = TxnCardInfo
+  { orderId :: Text,
+    txnUuid :: Text,
+    dateCreated :: Maybe UTCTime,
+    cardType :: Maybe Text,
+    cardIssuerBankName :: Maybe Text,
+    paymentMethodType :: Maybe PaymentMethodType,
+    paymentMethod :: Maybe Text,
     -- extra info
-    , eventType          :: TxnCardInfoEventType
-    }
+    eventType :: TxnCardInfoEventType
+  }
   deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
