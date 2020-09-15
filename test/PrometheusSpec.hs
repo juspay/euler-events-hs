@@ -73,7 +73,7 @@ spec = do
     it "mimics a simple Prometheus metrics flow" $ do
       eResp <- makeReq req
       isLeft eResp `shouldBe` True
-      logger <- initMetricLogger (PrometheusConfig port "prefix")
+      logger <- initMetricLogger (PrometheusConfig port "prefix_")
       let emitMetric = emitMetricIO logger
       emitMetric (Increment "counter")
       respBody <- getRespBody req
