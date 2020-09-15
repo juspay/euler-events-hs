@@ -19,7 +19,6 @@ pipeline {
   "BccAddresses": []
 }
 EOF
-GIT_REV=$(git rev-parse --short HEAD)
 cat << EOF > ses_message.json
 {
    "Subject": {
