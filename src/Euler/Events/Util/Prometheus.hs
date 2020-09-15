@@ -24,13 +24,22 @@ data PrometheusMetric
   | PrometheusMiddleware
 
 instance Eq PrometheusMetric where
-  (==) = undefined
+  (==) :: PrometheusMetric -> PrometheusMetric -> Bool
+  Counter _ == Counter _ = True
+  Gauge _ == Gauge _ = True
+  Vector1Counter _ == Vector1Counter _ = True
+  PrometheusMiddleware == PrometheusMiddleware = True
+  _ == _ = False
 
 instance Show PrometheusMetric where
-  show = undefined
+  show :: PrometheusMetric -> String
+  show (Counter _) = "Counter"
+  show (Gauge _) = "Gauge"
+  show (Vector1Counter _) = "Vector1Counter"
+  show PrometheusMiddleware = "PrometheusMiddleware"
 
 withPrefix :: Text -> Text -> Text
-withPrefix prefix name = prefix <> "_" <> name
+withPrefix prefix name = prefix <> name
 
 {-# NOINLINE requestLatency #-}
 requestLatency :: Prometheus.Vector Prometheus.Label7 Prometheus.Histogram

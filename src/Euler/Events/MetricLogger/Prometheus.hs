@@ -38,11 +38,15 @@ data PrometheusLogger = PrometheusLogger
   { prefix :: Text,
     metricMap :: StmMap.Map Text PrometheusMetric
   }
+
 instance Eq PrometheusLogger where
-  (==) = undefined
+  (==) :: PrometheusLogger -> PrometheusLogger -> Bool
+  x == y = prefix x == prefix y
 
 instance Show PrometheusLogger where
-  show = undefined
+  show :: PrometheusLogger -> String
+  show x = "PrometheusLogger { prefix = " ++ (show . prefix $ x) ++ ", metricMap = <StmContainers.Map Text PrometheusMetric> }"
+
 instance MetricLogger PrometheusConfig PrometheusLogger PrometheusMetric where
   initMetricLogger :: PrometheusConfig -> IO PrometheusLogger
   initMetricLogger (PrometheusConfig port prefix) = do
