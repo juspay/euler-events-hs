@@ -7,7 +7,6 @@ pipeline {
     stage('Build and Test') {
       steps {
         sh 'nix-build -A euler-events-hs --option sandbox false --arg remoteDeps true'
-        sh 'nix-shell --run "cabal v2-test" --arg remoteDeps true'
       }
     }
     stage('Summary') {
