@@ -41,7 +41,11 @@ eulerBuild.mkEulerHaskellOverlay
     euler-events-hs =
       eulerBuild.fastBuild {
         drv = hself.callCabal2nix "euler-events-hs" src { };
+        overrides = {
+          runTests = true;
+        };
       };
+
     stm-containers = eulerBuild.fastBuildExternal {
        drv = super.haskell.lib.unmarkBroken hsuper.stm-containers;
     };

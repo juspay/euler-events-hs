@@ -25,8 +25,8 @@ common common-lang
     DeriveAnyClass
     DeriveGeneric
     DerivingStrategies
-    FunctionalDependencies
     FlexibleInstances
+    FunctionalDependencies
     InstanceSigs
     MultiParamTypeClasses
     MultiWayIf
@@ -81,7 +81,7 @@ library
 test-suite tests
   import:         common-lang
   type:           exitcode-stdio-1.0
-  main-is:        Spec.hs
+  main-is:        Main.hs
   other-modules:
     EventSpec
     PrometheusSpec
