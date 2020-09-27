@@ -1,8 +1,6 @@
-{
-  eulerBuild
-, src
-}:
-let inherit (eulerBuild) fetchFromGitHub;
+self: super:
+let
+  inherit (super) fetchFromGitHub eulerBuild;
  prometheus-haskell-repo = fetchFromGitHub {
     owner = "juspay";
     repo = "prometheus-haskell";
@@ -14,9 +12,18 @@ let inherit (eulerBuild) fetchFromGitHub;
   prometheus-proc-path = "${prometheus-haskell-repo}/prometheus-proc";
   prometheus-metrics-ghc-path = "${prometheus-haskell-repo}/prometheus-metrics-ghc";
   wai-middleware-prometheus-path = "${prometheus-haskell-repo}/wai-middleware-prometheus";
+
+  euler-events-hs-src = eulerBuild.allowedPaths {
+    root =  ../.;
+    paths = [
+      ../euler-events-hs.cabal
+      ../src
+      ../test
+    ];
+  };
 in
-eulerBuild.mkEulerHaskellOverlay
-  (self: super: hself: hsuper: {
+eulerBuild.mkEulerHaskellOverlay self super
+  (hself: hsuper: {
 
     prometheus-client =
       eulerBuild.fastBuildExternal {
@@ -40,7 +47,7 @@ eulerBuild.mkEulerHaskellOverlay
 
     euler-events-hs =
       eulerBuild.fastBuild {
-        drv = hself.callCabal2nix "euler-events-hs" src { };
+        drv = hself.callCabal2nix "euler-events-hs" euler-events-hs-src { };
         overrides = {
           runTests = true;
         };
