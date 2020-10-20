@@ -46,6 +46,7 @@ library
     Euler.Events.Types.Event
     Euler.Events.Types.Metric
     Euler.Events.Types.Order
+    Euler.Events.Types.Timer
     Euler.Events.Types.Txn
     Euler.Events.Types.TxnCardInfo
     Euler.Events.Util.Prometheus
