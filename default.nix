@@ -29,7 +29,7 @@ let
       ./test
     ];
   };
-  euler-events-hs-overlay = eulerBuild.importOverlay ./nix/overlays/euler-events-hs.nix {
+  euler-events-hs-overlay = eulerBuild.importOverlay ./nix/euler-events-hs-overlay.nix {
     src = euler-events-hs-src;
   };
 
