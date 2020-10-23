@@ -22,6 +22,7 @@ data EventMetadata = EventMetadata
   { timestamp :: UTCTime,
     hostname :: Text,
     xRequestId :: Text,
+    xGlobalRequestId :: Text,
     txnUuid :: Maybe Text,
     orderId :: Maybe Text,
     merchantId :: Maybe Text
@@ -48,6 +49,7 @@ instance (ToJSON a) => ToJSON (Event a) where
                 (utcToLocalTime (TimeZone 330 False "IST") timestamp),
             "hostname" .= hostname,
             "x-request-id" .= xRequestId,
+            "x-global-request-id" .= xGlobalRequestId,
             "txn_uuid" .= txnUuid,
             "order_id" .= orderId,
             "merchant_id" .= merchantId,
@@ -73,6 +75,7 @@ instance (FromJSON a) => FromJSON (Event a) where
               )
       hostname <- e .: "hostname"
       xRequestId <- e .: "x-request-id"
+      xGlobalRequestId <- e .: "x-global-request-id"
       txnUuid <- e .: "txn_uuid"
       orderId <- e .: "order_id"
       merchantId <- e .: "merchant_id"
