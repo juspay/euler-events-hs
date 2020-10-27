@@ -24,6 +24,7 @@ spec = do
           { Event.timestamp = time,
             Event.hostname = "euler-order",
             Event.xRequestId = "dummyXrequestId",
+            Event.xGlobalRequestId = "dummyXGlobalRequestId",
             Event.txnUuid = Just "txn123",
             Event.orderId = Just "order123",
             Event.merchantId = Nothing
