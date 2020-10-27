@@ -8,27 +8,26 @@ allowed-paths:
 
 dependencies:
   euler-build:
-    branch: wip
-    revision: a086c401bb812c73fabfc561d746fcf582a17799
+    branch: new-build
+    revision: e27a6b954748e5d9658c43f62322237065ca0616
 
 overrides:
   prometheus-haskell:
-    git: https://github.com/juspay/prometheus-haskell
+    owner: juspay
+    repo: prometheus-haskell
     commit: 7bf933ad3e0059020273ab9d7fc799c582d663ae
     sha256: 1a00yb7258gk73idwffd2c1fvw6jci71mal143q81pgxaq9ivf78
     source: github
+    packages:
+      prometheus-client: {}
+      prometheus-proc: {}
+      prometheus-metrics-ghc: {}
+      wai-middleware-prometheus: {}
 
-  stm-containers:
-    source: nixpkgs
+  stm-containers: {}
 
-  list-t:
-    source: nixpkgs
+  list-t: {}
 
-  stm-hamt:
-    source: nixpkgs
+  stm-hamt: {}
 
-  primitive-extras:
-    source: nixpkgs
-
-# nix-shell-tools:
-#   - haskellPackages.cabal-fmt
+  primitive-extras: {}
