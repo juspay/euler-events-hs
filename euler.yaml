@@ -8,8 +8,8 @@ allowed-paths:
 
 dependencies:
   euler-build:
-    branch: new-build
-    revision: e27a6b954748e5d9658c43f62322237065ca0616
+    branch: master
+    revision: a5ce0b6f56f900f962a5a3ac9f00d0bdfc3fa5f9
 
 overrides:
   prometheus-haskell:
