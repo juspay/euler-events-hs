@@ -13,4 +13,4 @@ let
     ];
   attr = if devShell then "devShell" else "defaultPackage";
 in
-(builtins.getFlake (toString (builtins.unsafeDiscardStringContext path))).${attr}.x86_64-linux
+(builtins.getFlake (toString (builtins.unsafeDiscardStringContext path))).${attr}.${builtins.currentSystem}
