@@ -1,31 +1,37 @@
 module Euler.Events.Types.Event where
 
-import Data.Aeson (FromJSON, ToJSON, Value, object, parseJSON, toJSON, withObject, (.:), (.=))
-import Data.Aeson.Types (Parser)
-import Data.Maybe (fromMaybe)
-import Data.Text (Text)
-import Data.Time (UTCTime)
-import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
-import Data.Time.Format (defaultTimeLocale, formatTime, parseTimeM)
-import Data.Time.LocalTime (TimeZone (TimeZone), localTimeToUTC, utcToLocalTime)
-import GHC.Generics (Generic)
+import           Data.Aeson            (FromJSON, ToJSON, Value, object,
+                                        parseJSON, toJSON, withObject, (.:),
+                                        (.=))
+import           Data.Aeson.Types      (Parser)
+import           Data.Maybe            (fromMaybe)
+import           Data.Text             (Text)
+import           Data.Time             (UTCTime)
+import           Data.Time.Clock.POSIX (posixSecondsToUTCTime)
+import           Data.Time.Format      (defaultTimeLocale, formatTime,
+                                        parseTimeM)
+import           Data.Time.LocalTime   (TimeZone (TimeZone), localTimeToUTC,
+                                        utcToLocalTime)
+import           GHC.Generics          (Generic)
 
 data Event a = Event
-  { metadata :: EventMetadata,
+  { metadata            :: EventMetadata,
     eventLibraryVersion :: Text,
-    event :: EventType,
-    message :: a
+    event               :: EventType,
+    message             :: a
   }
   deriving (Show, Eq, Generic)
 
 data EventMetadata = EventMetadata
-  { timestamp :: UTCTime,
-    hostname :: Text,
-    xRequestId :: Text,
+  { timestamp        :: UTCTime,
+    hostname         :: Text,
+    xRequestId       :: Text,
     xGlobalRequestId :: Text,
-    txnUuid :: Maybe Text,
-    orderId :: Maybe Text,
-    merchantId :: Maybe Text
+    txnUuid          :: Maybe Text,
+    orderId          :: Maybe Text,
+    merchantId       :: Maybe Text,
+    refundId         :: Maybe Text,
+    refundUniqueId   :: Maybe Text
   }
   deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
@@ -53,6 +59,8 @@ instance (ToJSON a) => ToJSON (Event a) where
             "txn_uuid" .= txnUuid,
             "order_id" .= orderId,
             "merchant_id" .= merchantId,
+            "refund_id" .= refundId,
+            "refund_unique_id" .= refundUniqueId,
             "event" .= event,
             "event_library_version" .= eventLibraryVersion,
             "message" .= message
@@ -79,6 +87,8 @@ instance (FromJSON a) => FromJSON (Event a) where
       txnUuid <- e .: "txn_uuid"
       orderId <- e .: "order_id"
       merchantId <- e .: "merchant_id"
+      refundId <- e .: "refund_id"
+      refundUniqueId <- e .: "refund_unique_id"
       event <- e .: "event"
       eventLibraryVersion <- e .: "event_library_version"
       message <- e .: "message"

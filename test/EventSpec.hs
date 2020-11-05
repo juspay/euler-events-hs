@@ -1,20 +1,23 @@
 module EventSpec where
 
-import Data.Aeson (decode)
-import Data.ByteString.Lazy (ByteString)
-import Data.Time.Clock.POSIX (posixDayLength, posixSecondsToUTCTime)
-import Euler.Events.Class (logEvent, toLazyByteString)
-import qualified Euler.Events.Constants as Constants
-import Euler.Events.Logger.Stdout (StdoutConfig (StdoutConfig))
-import Euler.Events.Types.Event (Event (Event), EventMetadata (EventMetadata))
-import qualified Euler.Events.Types.Event as Event
-import Euler.Events.Types.Order (Order (Order))
-import qualified Euler.Events.Types.Order as Order
-import Euler.Events.Types.Txn (Txn (Txn))
-import qualified Euler.Events.Types.Txn as Txn
-import Euler.Events.Types.TxnCardInfo (TxnCardInfo (TxnCardInfo))
+import           Data.Aeson                     (decode)
+import           Data.ByteString.Lazy           (ByteString)
+import           Data.Time.Clock.POSIX          (posixDayLength,
+                                                 posixSecondsToUTCTime)
+import           Euler.Events.Class             (logEvent, toLazyByteString)
+import qualified Euler.Events.Constants         as Constants
+import           Euler.Events.Logger.Stdout     (StdoutConfig (StdoutConfig))
+import           Euler.Events.Types.Event       (Event (Event),
+                                                 EventMetadata (EventMetadata))
+import qualified Euler.Events.Types.Event       as Event
+import           Euler.Events.Types.Order       (Order (Order))
+import qualified Euler.Events.Types.Order       as Order
+import           Euler.Events.Types.Txn         (Txn (Txn))
+import qualified Euler.Events.Types.Txn         as Txn
+import           Euler.Events.Types.TxnCardInfo (TxnCardInfo (TxnCardInfo))
 import qualified Euler.Events.Types.TxnCardInfo as TxnCardInfo
-import Test.Hspec (Spec, describe, it, shouldBe, shouldReturn)
+import           Test.Hspec                     (Spec, describe, it, shouldBe,
+                                                 shouldReturn)
 
 spec :: Spec
 spec = do
@@ -27,7 +30,9 @@ spec = do
             Event.xGlobalRequestId = "dummyXGlobalRequestId",
             Event.txnUuid = Just "txn123",
             Event.orderId = Just "order123",
-            Event.merchantId = Nothing
+            Event.merchantId = Nothing,
+            Event.refundId = Nothing,
+            Event.refundUniqueId = Nothing
           }
   let orderPayload =
         Order
