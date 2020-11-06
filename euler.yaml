@@ -9,7 +9,7 @@ allowed-paths:
 dependencies:
   euler-build:
     branch: master
-    revision: a5ce0b6f56f900f962a5a3ac9f00d0bdfc3fa5f9
+    revision: 811c9d69895f956a2fb281e1f9cd031548bd5867
 
 overrides:
   prometheus-haskell:
