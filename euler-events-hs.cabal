@@ -59,6 +59,7 @@ library
     , bytestring
     , clock
     , containers
+    , deepseq
     , http-types
     , prometheus-client
     , prometheus-metrics-ghc
