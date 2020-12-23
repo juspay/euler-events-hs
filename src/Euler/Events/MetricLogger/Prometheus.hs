@@ -1,3 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
+
 module Euler.Events.MetricLogger.Prometheus where
 
 import Control.Concurrent (forkIO)

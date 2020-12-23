@@ -1,3 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
+
 module Euler.Events.Util.Prometheus where
 
 import Data.Functor (($>))
@@ -16,6 +18,8 @@ import qualified StmContainers.Map as StmMap
 import System.Clock (TimeSpec, diffTimeSpec, toNanoSecs)
 import System.Environment (getEnvironment)
 import System.Posix.Process (getProcessID)
+import Control.DeepSeq (force)
+
 
 data PrometheusMetric
   = Counter Prometheus.Counter
@@ -81,13 +85,15 @@ observeSeconds status method path merchantId start end = do
   let pid = tshow <$> Just processId
   Prometheus.withLabel
     requestLatency
-    ( fromMaybe "" status,
-      fromMaybe "" method,
-      fromMaybe "" path,
-      fromMaybe "" host,
-      fromMaybe "" eulerInstance,
-      fromMaybe "" pid,
-      fromMaybe "" merchantId
+    ( force
+      ( fromMaybe "" status,
+        fromMaybe "" method,
+        fromMaybe "" path,
+        fromMaybe "" host,
+        fromMaybe "" eulerInstance,
+        fromMaybe "" pid,
+        fromMaybe "" merchantId
+      )
     )
     (flip Prometheus.observe latency)
 
