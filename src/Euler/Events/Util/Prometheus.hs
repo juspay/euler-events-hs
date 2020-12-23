@@ -18,7 +18,7 @@ import qualified StmContainers.Map as StmMap
 import System.Clock (TimeSpec, diffTimeSpec, toNanoSecs)
 import System.Environment (getEnvironment)
 import System.Posix.Process (getProcessID)
-import Control.DeepSeq
+import Control.DeepSeq (force)
 
 
 data PrometheusMetric
