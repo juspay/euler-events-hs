@@ -40,6 +40,7 @@ data EventType
   = OrderEvent
   | TxnEvent
   | TxnCardInfoEvent
+  | WorkflowEvent
   deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
