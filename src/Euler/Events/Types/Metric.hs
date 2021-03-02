@@ -106,3 +106,9 @@ data MetricKey
   | VIES_CYBS_PA_VALIDATE_SUCCESS
   | WALLET_FORWARDED_EC
   deriving (Show, Read, Eq, Ord)
+
+data CachingMetrics = CachingMetrics
+  { key :: String
+  , redis_name :: String
+  }
+  deriving (Show, Generic)
