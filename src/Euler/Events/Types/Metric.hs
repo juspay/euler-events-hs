@@ -1,6 +1,7 @@
 module Euler.Events.Types.Metric where
 
-import Data.Text (Text)
+import           Data.Text    (Text)
+import           GHC.Generics (Generic)
 
 data MetricOperation a
   = ReadyUp
@@ -108,7 +109,19 @@ data MetricKey
   deriving (Show, Read, Eq, Ord)
 
 data CachingMetrics = CachingMetrics
-  { key :: String
-  , redis_name :: String
+  { key        :: Text
+  , redis_name :: Text
+  }
+  deriving (Show, Generic)
+
+data LocksAcquiredLabel = LocksAcquiredLabel
+  { base_key    :: Text
+  , merchant_id :: Text
+  }
+  deriving (Show, Generic)
+
+data TotalRequestsRejected = TotalRequestsRejected
+  { base_key    :: Text
+  , merchant_id :: Text
   }
   deriving (Show, Generic)

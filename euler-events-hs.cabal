@@ -25,6 +25,7 @@ common common-lang
     DeriveAnyClass
     DeriveGeneric
     DerivingStrategies
+    DuplicateRecordFields
     FlexibleInstances
     FunctionalDependencies
     InstanceSigs
