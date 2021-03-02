@@ -16,9 +16,9 @@ let
     sha256 = "1a00yb7258gk73idwffd2c1fvw6jci71mal143q81pgxaq9ivf78";
   };
   prometheus-client-path = "${prometheus-haskell-repo}/prometheus-client";
-prometheus-proc-path = "${prometheus-haskell-repo}/prometheus-proc";
-prometheus-metrics-ghc-path = "${prometheus-haskell-repo}/prometheus-metrics-ghc";
-wai-middleware-prometheus-path = "${prometheus-haskell-repo}/wai-middleware-prometheus";
+  prometheus-proc-path = "${prometheus-haskell-repo}/prometheus-proc";
+  prometheus-metrics-ghc-path = "${prometheus-haskell-repo}/prometheus-metrics-ghc";
+  wai-middleware-prometheus-path = "${prometheus-haskell-repo}/wai-middleware-prometheus";
 
 in 
 super.eulerBuild.mkEulerHaskellOverlay self super
@@ -26,13 +26,13 @@ super.eulerBuild.mkEulerHaskellOverlay self super
     prometheus-client = self.eulerBuild.fastBuildExternal {
       drv = super.haskell.lib.unmarkBroken (hself.callCabal2nix "prometheus-client" prometheus-client-path { });
     };
-prometheus-proc = self.eulerBuild.fastBuildExternal {
+    prometheus-proc = self.eulerBuild.fastBuildExternal {
       drv = super.haskell.lib.unmarkBroken (hself.callCabal2nix "prometheus-proc" prometheus-proc-path { });
     };
-prometheus-metrics-ghc = self.eulerBuild.fastBuildExternal {
+    prometheus-metrics-ghc = self.eulerBuild.fastBuildExternal {
       drv = super.haskell.lib.unmarkBroken (hself.callCabal2nix "prometheus-metrics-ghc" prometheus-metrics-ghc-path { });
     };
-wai-middleware-prometheus = self.eulerBuild.fastBuildExternal {
+    wai-middleware-prometheus = self.eulerBuild.fastBuildExternal {
       drv = super.haskell.lib.unmarkBroken (hself.callCabal2nix "wai-middleware-prometheus" wai-middleware-prometheus-path { });
     };
     stm-containers = self.eulerBuild.fastBuildExternal {
