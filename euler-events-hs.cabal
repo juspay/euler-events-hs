@@ -1,6 +1,6 @@
 cabal-version: 2.2
 name:          euler-events-hs
-version:       0.0.2
+version:       0.0.3
 synopsis:      Events library for euler
 homepage:      https://bitbucket.org/juspay/euler-events-hs
 license:
