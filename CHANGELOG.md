@@ -1,5 +1,11 @@
 # Revision history for `euler-events-hs`
+
+## 0.0.3 -- 2021-03-03
+
+* Add new metric keys
+* Add new types for locker system
 ## 0.0.1 -- 2020-07-30
+
 Logs events at `stdout` in `json` format.
 
 * Events added
