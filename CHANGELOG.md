@@ -1,5 +1,11 @@
 # Revision history for `euler-events-hs`
 
+## 0.0.4 -- 2021-02-26
+
+* Event added
+  1. WorkflowEvent
+* Added new types for workflow logging.
+
 ## 0.0.3 -- 2021-03-03
 
 * Add new metric keys

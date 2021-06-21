@@ -1,6 +1,6 @@
 cabal-version: 2.2
 name:          euler-events-hs
-version:       0.0.3
+version:       0.0.4
 synopsis:      Events library for euler
 homepage:      https://bitbucket.org/juspay/euler-events-hs
 license:
@@ -51,6 +51,7 @@ library
     Euler.Events.Types.Txn
     Euler.Events.Types.TxnCardInfo
     Euler.Events.Util.Prometheus
+    Euler.Events.Types.MandateWorkflow
 
   -- Euler.Events.Logger.Kafka
   other-modules:   Euler.Events.Util
