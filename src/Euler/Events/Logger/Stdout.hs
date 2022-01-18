@@ -33,10 +33,7 @@ instance Logger StdoutConfig () where
     a ->
     IO (Maybe ErrorText)
   logEvent config logger metadata eventPayload =
-    ( BSL.putStrLn . toLazyByteString config logger metadata $ eventPayload)
+    (BS.putStr . BSL.toStrict . (<> "\n") . toLazyByteString config logger metadata $ eventPayload)
       $> Nothing
   closeLogger :: () -> IO (Maybe ErrorText)
   closeLogger () = pure Nothing
-
-
--- BS.putStr . BSL.toStrict . (<> "\n")
