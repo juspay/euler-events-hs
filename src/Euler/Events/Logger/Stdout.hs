@@ -9,6 +9,7 @@ import Euler.Events.Class
     Logger (closeLogger, initLogger, logEvent, toLazyByteString),
   )
 import Euler.Events.Types.Event (EventMetadata)
+import qualified Data.ByteString as BS
 
 data StdoutConfig
   = StdoutConfig
@@ -32,7 +33,7 @@ instance Logger StdoutConfig () where
     a ->
     IO (Maybe ErrorText)
   logEvent config logger metadata eventPayload =
-    (BSL.putStrLn . toLazyByteString config logger metadata $ eventPayload)
+    (BS.putStr . BSL.toStrict . (<> "\n") . toLazyByteString config logger metadata $ eventPayload)
       $> Nothing
   closeLogger :: () -> IO (Maybe ErrorText)
   closeLogger () = pure Nothing
