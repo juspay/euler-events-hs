@@ -1,5 +1,9 @@
 # Revision history for `euler-events-hs`
 
+## 0.0.6 -- 2022-02-01
+
+* Add `LOG_CLASSIFICATION_COUNT` metric key.
+
 ## 0.0.5 -- 2022-01-18
 
 * Fixed OrderEvent concat logs.
@@ -14,6 +18,7 @@
 
 * Add new metric keys
 * Add new types for locker system
+
 ## 0.0.1 -- 2020-07-30
 
 Logs events at `stdout` in `json` format.
