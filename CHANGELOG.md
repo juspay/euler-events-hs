@@ -1,5 +1,9 @@
 # Revision history for `euler-events-hs`
 
+## 0.0.5 -- 2022-01-18
+
+* Fixed OrderEvent concat logs.
+
 ## 0.0.4 -- 2021-02-26
 
 * Event added
