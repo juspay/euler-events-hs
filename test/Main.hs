@@ -9,6 +9,6 @@ main = hspec spec
 
 spec :: Spec
 spec = do
-  describe "Event"
-      EventSpec.spec
+  -- describe "Event"
+  --     EventSpec.spec
   describe "Prometheus" PrometheusSpec.spec
