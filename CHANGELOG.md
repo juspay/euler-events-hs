@@ -1,5 +1,9 @@
 # Revision history for `euler-events-hs`
 
+## 0.0.7 -- 2022-02-16
+
+* Add `LogType` type.
+
 ## 0.0.6 -- 2022-02-01
 
 * Add `LOG_CLASSIFICATION_COUNT` metric key.
