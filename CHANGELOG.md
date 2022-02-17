@@ -1,5 +1,9 @@
 # Revision history for `euler-events-hs`
 
+## 0.0.8 -- 2022-02-17
+
+* Remove `LogType` type.
+
 ## 0.0.7 -- 2022-02-16
 
 * Add `LogType` type.
