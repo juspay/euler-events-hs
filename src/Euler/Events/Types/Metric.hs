@@ -126,6 +126,3 @@ data TotalRequestsRejected = TotalRequestsRejected
   , merchant_id :: Text
   }
   deriving (Show, Generic)
-
-newtype LogType = LogType {log_type :: Text}
-  deriving stock (Show, Generic)
