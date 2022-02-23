@@ -19,25 +19,41 @@ module Euler.Events.MetricAPI where
 
 import Data.Coerce (coerce)
 import Data.Kind
-import Data.Proxy
+-- import Data.Proxy
 import GHC.Exts (proxy#)
 -- import GHC.Generics
 -- import GHC.OverloadedLabels (IsLabel (..))
 import GHC.TypeLits
 
--- (?) you don't have to register a metric before use
--- (?) you cannot register metrics twice
--- you cannot perform operations on unregistered metrics
+{-
+API safety:
+ - (?) you don't have to register a metric before use
+ - (?) you cannot register metrics twice
+ - you cannot perform operations on unregistered metrics
 
--- API "features":
--- you don't have to maintain references locally
--- operations validity is guaranteed by types (no inc on gauge, no Eithers in return types)
--- typed label arguments
+API features:
+ - you don't have to maintain references locally (hhm, original lib uses the global state)
+ - operations validity is guaranteed by types (no inc on gauge, no Eithers in return types)
+ - typed label arguments
 
+TODOs
+ * unique label names?
+-}
 
--- -- | This family extracts name of the type from Generic 'Rep'.
--- type family GetTypeName (a :: k -> Type) :: Symbol where
---   GetTypeName (D1 ('MetaData name _ _ _) _) = name
+type family CanAddLabel (types ::[(Symbol,Type)]) :: Constraint where
+  CanAddLabel types = If ( Length types <=? 8) () (TypeError ('Text "You cannot use more than 9 labels."))
+
+type family AddLabel (types :: [(Symbol, Type)]) (label :: Symbol) (typ :: Type) :: [(Symbol, Type)] where
+  AddLabel types label typ = '(label, typ) ': types
+
+type If :: Bool -> Constraint -> Constraint -> Constraint
+type family If cond the els where
+  If 'True  the els = the
+  If 'False the els = els
+
+type family Length (ls :: [k]) :: Nat where
+  Length '[] = 0
+  Length (l:ls) = 1 + Length ls
 
 data MetricSort = Counter | Gauge
 
@@ -54,58 +70,92 @@ counter name = Metric name []
 gauge :: String -> Metric 'Gauge '[]
 gauge name = Metric name []
 
--- type MetricLike :: forall k. (k -> Type) -> Constraint
-class MetricLike (a :: k -> Type) where
-  type CanAddLabel (types :: k) :: Constraint
-  type AddLabel (types :: k) (label :: Symbol) (typ :: Type) = (result :: k) | result -> types label typ
-  withLabel
-    :: KnownSymbol label
-    => CanAddLabel types
-    => a types
-    -> a (AddLabel types label typ)
-
-type If :: Bool -> Constraint -> Constraint -> Constraint
-type family If cond the els where
-  If True  the els = the
-  If False the els = els
-
-instance MetricLike (Metric sort) where
-  type CanAddLabel types = If ( (Length types) <=? 0) () (TypeError (Text "NahT!!!"))
-  type AddLabel (types :: [(Symbol, Type)]) (label :: Symbol) (typ :: Type) = '(label, typ) ': types
-  withLabel
-    :: forall (label :: Symbol) (typ :: Type) (types :: [(Symbol, Type)])
-    .  KnownSymbol label
-    => CanAddLabel types
-    => Metric sort types -> Metric sort ( '(label, typ) ': types)
-  withLabel metric = coerce $ metric {labels = (symbolVal' @label proxy#) : labels metric }
-
--- | Synonym for 'withLabel' with label type variable as first one, enabling @lbl \@Foo@ type
--- application syntax.
 lbl
-  :: forall (label :: Symbol) (typ :: Type) k (types :: k) (a :: k -> Type)
-  .  MetricLike a
-  => KnownSymbol label
+  :: forall (label :: Symbol) (typ :: Type) (types :: [(Symbol, Type)]) sort
+  .  KnownSymbol label
+  -- => Length types <= 1
   => CanAddLabel types
-  => a types
-  -> a (AddLabel types label typ)
-lbl = withLabel
+  => Metric sort types -> Metric sort ( '(label, typ) ': types)
+lbl metric = coerce $ metric {labels = (symbolVal' @label proxy#) : labels metric }
 
-{-
--- instance (KnownSymbol x, types ~ '[]) => IsLabel x (Metric types) where
---   fromLabel = defM (symbolVal' @x proxy#)
 
--- m1 :: Metric '[]
--- m1 = #metric_name
+c1 = counter "metricName"
+      .& lbl @"foo" @Int
 
--- m2 = m1 .& lbl @"foo" @Int .& lbl @"bar" @Bool
--}
+c2 = counter "metricName"
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
 
-c1 = counter "metricName" .& lbl @"foo" @Int .& lbl @"bar" @Bool
+c3 = counter "metricName"
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
 
-c2 = counter "metricName" .& lbl @"foo" @Int
+c4 = counter "metricName"
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+
+c5 = counter "metricName"
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+
+c6 = counter "metricName"
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+
+c7 = counter "metricName"
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+
+c8 = counter "metricName"
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+
+c9 = counter "metricName"
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+      .& lbl @"bar" @Bool
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+
+-- c10 = counter "metricName"
+--       .& lbl @"foo" @Int
+--       .& lbl @"bar" @Bool
+--       .& lbl @"bar" @Bool
+--       .& lbl @"bar" @Bool
+--       .& lbl @"foo" @Int
+--       .& lbl @"bar" @Bool
+--       .& lbl @"bar" @Bool
+--       .& lbl @"bar" @Bool
+--       .& lbl @"foo" @Int
+--       .& lbl @"bar" @Bool
+--       .& lbl @"bar" @Bool
 
 -- g1 = gauge "metricName" .& lbl @"foo" @Int
-
 
 
 infixl 3 .&
@@ -121,58 +171,53 @@ class PrometheusThing (ls :: [(Symbol, Type)]) where
   type PromRep ls :: Type
   execute :: PromRep ls
 
-instance (Show t1, Show t2, Show t3) => PrometheusThing ['(_l1,t1), '(_l2,t2), '(_l3,t3)] where
-  type PromRep ['(_l1,t1), '(_l2,t2), '(_l3,t3)] = t1 -> t2 -> t3 -> IO (String, String, String)
-  execute v1 v2 v3 = pure (show v1, show v2, show v3)
+instance (Show t1) => PrometheusThing ( '(l1,t1) ': '[] ) where
+  type PromRep ( '(l1,t1) ': '[] ) = t1 -> IO String
+  execute v1 = pure $ show v1
 
 instance (Show t1, Show t2) => PrometheusThing ['(_l1,t1), '(_l2,t2)] where
   type PromRep ['(_l1,t1), '(_l2,t2)] = t1 -> t2 -> IO (String, String)
   execute v1 v2 = pure (show v1, show v2)
 
-instance (Show t1) => PrometheusThing ( '(l1,t1) ': '[] ) where
-  type PromRep ( '(l1,t1) ': '[] ) = t1 -> IO String
-  execute v1 = pure $ show v1
+instance (Show t1, Show t2, Show t3) => PrometheusThing ['(_l1,t1), '(_l2,t2), '(_l3,t3)] where
+  type PromRep ['(_l1,t1), '(_l2,t2), '(_l3,t3)] = t1 -> t2 -> t3 -> IO (String, String, String)
+  execute v1 v2 v3 = pure (show v1, show v2, show v3)
 
--- instance (PrometheusThing ls all, Show typ) => PrometheusThing ( '(label, typ) ': ls) all where
---   type PromRep ( '(label, typ) ': ls) all = typ -> PromRep ls all
---   execute acc _ _ val = execute (acc <> [show val]) (Proxy @ls) (Proxy @all)
+instance (Show t1, Show t2, Show t3, Show t4)
+  => PrometheusThing ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4)] where
+  type PromRep ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4)] =
+    t1 -> t2 -> t3 -> t4 -> IO (String, String, String, String)
+  execute v1 v2 v3 v4 = pure (show v1, show v2, show v3, show v4)
 
--- instance PrometheusThing '[] all where
---   type PromRep '[] all = IO (Tuple (Length all))
---   execute acc _ _ = do
---     -- pure $ list2tuple' @all acc
---     -- pure $ list2Tuple @(Tuple (Length all)) acc
---     -- TODO
---     undefined
+instance (Show t1, Show t2, Show t3, Show t4, Show t5)
+  => PrometheusThing ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5)] where
+  type PromRep ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5)] =
+    t1 -> t2 -> t3 -> t4 -> t5 -> IO (String, String, String, String, String)
+  execute v1 v2 v3 v4 v5 = pure (show v1, show v2, show v3, show v4, show v5)
 
-type family Tuple (size :: Nat) where
-  Tuple 1 = String
-  Tuple 2 = (String, String)
-  Tuple 3 = (String, String, String)
-  Tuple any = ()
-  -- ...
+instance (Show t1, Show t2, Show t3, Show t4, Show t5, Show t6)
+  => PrometheusThing ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6)] where
+  type PromRep ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6)] =
+    t1 -> t2 -> t3 -> t4 -> t5 -> t6 -> IO (String, String, String, String, String, String)
+  execute v1 v2 v3 v4 v5 v6 = pure (show v1, show v2, show v3, show v4, show v5, show v6)
 
+instance (Show t1, Show t2, Show t3, Show t4, Show t5, Show t6, Show t7)
+  => PrometheusThing ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6), '(_l7,t7)] where
+  type PromRep ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6), '(_l7,t7)] =
+    t1 -> t2 -> t3 -> t4 -> t5 -> t6 -> t7 -> IO (String, String, String, String, String, String, String)
+  execute v1 v2 v3 v4 v5 v6 v7 = pure (show v1, show v2, show v3, show v4, show v5, show v6, show v7)
 
-list2tuple' :: forall ts src. (Show src) => src -> Tuple (Length ts)
-list2tuple' = undefined
+instance (Show t1, Show t2, Show t3, Show t4, Show t5, Show t6, Show t7, Show t8)
+  => PrometheusThing ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6), '(_l7,t7), '(_l8,t8)] where
+  type PromRep ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6), '(_l7,t7), '(_l8,t8)] =
+    t1 -> t2 -> t3 -> t4 -> t5 -> t6 -> t7 -> t8 -> IO (String, String, String, String, String, String, String, String)
+  execute v1 v2 v3 v4 v5 v6 v7 v8 = pure (show v1, show v2, show v3, show v4, show v5, show v6, show v7, show v8)
 
--- | shit!
-list2Tuple :: (Read a1, Show a2) => a2 -> a1
-list2Tuple lst = read $ "(" ++ ( init . tail . show ) lst ++ ")"
-
-
-
-type family Length (ls :: [k]) :: Nat where
-  Length '[] = 0
-  Length (l:ls) = 1 + Length ls
-
-
--- type Tupable :: [Type] -> Constraint
--- class Tupable ts where
---   type TupleF ts
---   tuplify :: []
-
-
+instance (Show t1, Show t2, Show t3, Show t4, Show t5, Show t6, Show t7, Show t8, Show t9)
+  => PrometheusThing ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6), '(_l7,t7), '(_l8,t8), '(_l9,t9)] where
+  type PromRep ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6), '(_l7,t7), '(_l8,t8), '(_l9,t9)] =
+    t1 -> t2 -> t3 -> t4 -> t5 -> t6 -> t7 -> t8 -> t9 -> IO (String, String, String, String, String, String, String, String, String)
+  execute v1 v2 v3 v4 v5 v6 v7 v8 v9 = pure (show v1, show v2, show v3, show v4, show v5, show v6, show v7, show v8, show v9)
 
 
 ---
