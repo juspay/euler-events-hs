@@ -37,7 +37,24 @@ API features:
  - typed label arguments
 
 TODOs
- * unique label names?
+ * unique metrics/labels names?
+ * untill the first operation a metric doesn't make it to the report
+
+Both issues can be illustrated by the following code:
+
+λ> myVector1 <- register $ vector ("name", "name") $ Prometheus.counter (Info "http_requests" "")
+λ> myVector2 <- register $ vector ("name", "name") $ Prometheus.counter (Info "http_requests" "")
+λ> withLabel myVector1 ("GET", "200") incCounter
+λ> withLabel myVector2 ("GET", "200") incCounter
+λ> myVector3 <- register $ vector ("name", "name") $ Prometheus.counter (Info "http_requests_" "")
+λ> exportMetricsAsText >>= Data.ByteString.Lazy.putStr
+# HELP http_requests 
+# TYPE http_requests counter
+http_requests{name="GET",name="200"} 1.0
+# HELP http_requests 
+# TYPE http_requests counter
+http_requests{name="GET",name="200"} 1.0
+
 -}
 
 type family CanAddLabel (types ::[(Symbol,Type)]) :: Constraint where
