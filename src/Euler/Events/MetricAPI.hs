@@ -37,7 +37,6 @@ API features:
  - typed label arguments
 
 TODOs
- * unique metrics/labels names?
  * untill the first operation a metric doesn't make it to the report
 
 Both issues can be illustrated by the following code:
@@ -48,20 +47,27 @@ Both issues can be illustrated by the following code:
 λ> withLabel myVector2 ("GET", "200") incCounter
 λ> myVector3 <- register $ vector ("name", "name") $ Prometheus.counter (Info "http_requests_" "")
 λ> exportMetricsAsText >>= Data.ByteString.Lazy.putStr
-# HELP http_requests 
+# HELP http_requests
 # TYPE http_requests counter
 http_requests{name="GET",name="200"} 1.0
-# HELP http_requests 
+# HELP http_requests
 # TYPE http_requests counter
 http_requests{name="GET",name="200"} 1.0
 
 -}
 
-type family CanAddLabel (types ::[(Symbol,Type)]) :: Constraint where
+type CanAddLabel :: [(Symbol,Type)] -> Constraint
+type family CanAddLabel types where
   CanAddLabel types = If ( Length types <=? 8) () (TypeError ('Text "You cannot use more than 9 labels."))
 
-type family AddLabel (types :: [(Symbol, Type)]) (label :: Symbol) (typ :: Type) :: [(Symbol, Type)] where
-  AddLabel types label typ = '(label, typ) ': types
+type CheckLabelUniqueness :: Symbol -> [(Symbol, Type)] -> Constraint
+type family CheckLabelUniqueness name labels where
+  CheckLabelUniqueness name    ( '(name, _typ) ': tail) = TypeError ('Text "Label names must be unique across a metric.")
+  CheckLabelUniqueness another ( '(name, _typ) ': tail) = CheckLabelUniqueness another tail
+  CheckLabelUniqueness another '[] = ()
+
+-- type family AddLabel (types :: [(Symbol, Type)]) (label :: Symbol) (typ :: Type) :: [(Symbol, Type)] where
+--   AddLabel types label typ = '(label, typ) ': types
 
 type If :: Bool -> Constraint -> Constraint -> Constraint
 type family If cond the els where
@@ -92,9 +98,11 @@ lbl
   .  KnownSymbol label
   -- => Length types <= 1
   => CanAddLabel types
+  => CheckLabelUniqueness label types
   => Metric sort types -> Metric sort ( '(label, typ) ': types)
 lbl metric = coerce $ metric {labels = (symbolVal' @label proxy#) : labels metric }
 
+c0 = counter "noLabels"
 
 c1 = counter "metricName"
       .& lbl @"foo" @Int
@@ -106,71 +114,70 @@ c2 = counter "metricName"
 c3 = counter "metricName"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
+      .& lbl @"baz" @Bool
 
 c4 = counter "metricName"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
+      .& lbl @"baz" @Bool
+      .& lbl @"qux" @Bool
 
 c5 = counter "metricName"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
+      .& lbl @"baz" @Bool
+      .& lbl @"qux" @Bool
+      .& lbl @"foo1" @Bool
 
 c6 = counter "metricName"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
+      .& lbl @"baz" @Bool
+      .& lbl @"qux" @Bool
+      .& lbl @"foo1" @Bool
+      .& lbl @"bar1" @Bool
 
 c7 = counter "metricName"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
-      .& lbl @"foo" @Int
-      .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
+      .& lbl @"baz" @Bool
+      .& lbl @"qux" @Bool
+      .& lbl @"foo1" @Bool
+      .& lbl @"bar1" @Bool
+      .& lbl @"baz1" @Bool
 
 c8 = counter "metricName"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
-      .& lbl @"foo" @Int
-      .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
+      .& lbl @"baz" @Bool
+      .& lbl @"qux" @Bool
+      .& lbl @"foo1" @Bool
+      .& lbl @"bar1" @Bool
+      .& lbl @"baz1" @Bool
+      .& lbl @"qux1" @Bool
 
 c9 = counter "metricName"
-      .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
-      .& lbl @"bar" @Bool
-      .& lbl @"foo" @Int
-      .& lbl @"bar" @Bool
+      .& lbl @"baz" @Bool
+      .& lbl @"qux" @Bool
+      .& lbl @"foo1" @Bool
+      .& lbl @"bar1" @Bool
+      .& lbl @"baz1" @Bool
+      .& lbl @"qux1" @Bool
+      .& lbl @"foo2" @Bool
 
 -- c10 = counter "metricName"
 --       .& lbl @"foo" @Int
 --       .& lbl @"bar" @Bool
---       .& lbl @"bar" @Bool
---       .& lbl @"bar" @Bool
---       .& lbl @"foo" @Int
---       .& lbl @"bar" @Bool
---       .& lbl @"bar" @Bool
---       .& lbl @"bar" @Bool
---       .& lbl @"foo" @Int
---       .& lbl @"bar" @Bool
---       .& lbl @"bar" @Bool
+--       .& lbl @"baz" @Bool
+--       .& lbl @"qux" @Bool
+--       .& lbl @"foo1" @Bool
+--       .& lbl @"bar1" @Bool
+--       .& lbl @"baz1" @Bool
+--       .& lbl @"qux1" @Bool
+--       .& lbl @"foo2" @Bool
+--       .& lbl @"bar2" @Bool
 
 -- g1 = gauge "metricName" .& lbl @"foo" @Int
 
@@ -181,12 +188,16 @@ infixl 3 .&
 a .& f = f a
 {-# INLINE (.&) #-}
 
-inc :: forall ls. PrometheusThing ls => Metric 'Counter ls -> PromRep ls
-inc _ = execute @ls
+inc :: forall types. PrometheusThing types => Metric 'Counter types -> PromRep types
+inc _ = execute @types
 
 class PrometheusThing (ls :: [(Symbol, Type)]) where
   type PromRep ls :: Type
   execute :: PromRep ls
+
+instance PrometheusThing '[] where
+  type PromRep '[] = IO ()
+  execute = pure ()
 
 instance (Show t1) => PrometheusThing ( '(l1,t1) ': '[] ) where
   type PromRep ( '(l1,t1) ': '[] ) = t1 -> IO String
