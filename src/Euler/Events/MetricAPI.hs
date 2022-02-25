@@ -13,6 +13,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE MagicHash #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedLabels #-}
 
 module Euler.Events.MetricAPI where
@@ -20,10 +21,12 @@ module Euler.Events.MetricAPI where
 import Data.Coerce (coerce)
 import Data.Kind
 -- import Data.Proxy
-import GHC.Exts (proxy#)
+-- import GHC.Exts (proxy#)
 -- import GHC.Generics
 -- import GHC.OverloadedLabels (IsLabel (..))
 import GHC.TypeLits
+import qualified Prometheus as P
+import Data.Text (pack)
 
 {-
 API safety:
@@ -79,57 +82,79 @@ type family Length (ls :: [k]) :: Nat where
   Length (l:ls) = 1 + Length ls
 
 data MetricSort = Counter | Gauge
-
-data Metric (sort :: MetricSort) (labels :: [(Symbol, Type)]) = Metric
-  { name :: String
-  , labels :: [String]
-  }
   deriving stock (Show, Eq)
 
--- | An empty 'Metric'
-counter :: String -> Metric 'Counter '[]
-counter name = Metric name []
+data MetricState = Created | Registered
+  deriving stock (Show, Eq)
 
-gauge :: String -> Metric 'Gauge '[]
-gauge name = Metric name []
+type MetricImpl :: MetricSort -> Type
+data family MetricImpl
+newtype instance MetricImpl 'Counter = MetricCounterImpl P.Counter
+newtype instance MetricImpl 'Gauge = MetricGaugeImpl P.Gauge
+
+type Metric :: MetricState -> MetricSort -> [(Symbol, Type)] -> Type
+data Metric state sort labels where
+  MkCounter :: String -> [String] -> Maybe (MetricImpl 'Counter) -> Metric state 'Counter labels
+  MkGauge :: String -> [String] -> Maybe (MetricImpl 'Gauge) -> Metric state 'Gauge labels
+
+attachRef :: MetricImpl sr -> Metric st sr ls -> Metric st sr ls
+attachRef r m = case m of
+  MkCounter name labels _ -> MkCounter name labels (Just r)
+  MkGauge name labels _ -> MkGauge name labels (Just r)
+
+  -- { name :: String
+  -- , labels :: [String]
+  -- , ref :: Maybe (MetricImpl sort)
+  -- }
+  -- deriving stock (Show, Eq)
+
+-- | An empty 'Metric'
+counter :: String -> Metric 'Created 'Counter '[]
+counter name = MkCounter name [] Nothing
+
+gauge :: String -> Metric 'Created 'Gauge '[]
+gauge name = MkGauge name [] Nothing
 
 lbl
-  :: forall (label :: Symbol) (typ :: Type) (types :: [(Symbol, Type)]) sort
+  :: forall
+      (label :: Symbol)
+      (typ :: Type)
+      (types :: [(Symbol, Type)])
+      (sort :: MetricSort)
   .  KnownSymbol label
-  -- => Length types <= 1
   => CanAddLabel types
   => CheckLabelUniqueness label types
-  => Metric sort types -> Metric sort ( '(label, typ) ': types)
-lbl metric = coerce $ metric {labels = (symbolVal' @label proxy#) : labels metric }
+  => Metric 'Created sort types -> Metric 'Created sort ( '(label, typ) ': types)
+lbl = coerce -- $ metric {labels = (symbolVal' @label proxy#) : labels metric }
 
 c0 = counter "noLabels"
 
-c1 = counter "metricName"
+c1 = counter "c1"
       .& lbl @"foo" @Int
 
-c2 = counter "metricName"
+c2 = counter "c2"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
 
-c3 = counter "metricName"
+c3 = counter "c3"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& lbl @"baz" @Bool
 
-c4 = counter "metricName"
+c4 = counter "c4"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& lbl @"baz" @Bool
       .& lbl @"qux" @Bool
 
-c5 = counter "metricName"
+c5 = counter "c5"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& lbl @"baz" @Bool
       .& lbl @"qux" @Bool
       .& lbl @"foo1" @Bool
 
-c6 = counter "metricName"
+c6 = counter "c6"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& lbl @"baz" @Bool
@@ -137,7 +162,7 @@ c6 = counter "metricName"
       .& lbl @"foo1" @Bool
       .& lbl @"bar1" @Bool
 
-c7 = counter "metricName"
+c7 = counter "c7"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& lbl @"baz" @Bool
@@ -146,7 +171,7 @@ c7 = counter "metricName"
       .& lbl @"bar1" @Bool
       .& lbl @"baz1" @Bool
 
-c8 = counter "metricName"
+c8 = counter "c8"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& lbl @"baz" @Bool
@@ -156,7 +181,7 @@ c8 = counter "metricName"
       .& lbl @"baz1" @Bool
       .& lbl @"qux1" @Bool
 
-c9 = counter "metricName"
+c9 = counter "c9"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& lbl @"baz" @Bool
@@ -167,7 +192,7 @@ c9 = counter "metricName"
       .& lbl @"qux1" @Bool
       .& lbl @"foo2" @Bool
 
--- c10 = counter "metricName"
+-- c10 = counter "c10"
 --       .& lbl @"foo" @Int
 --       .& lbl @"bar" @Bool
 --       .& lbl @"baz" @Bool
@@ -188,64 +213,79 @@ infixl 3 .&
 a .& f = f a
 {-# INLINE (.&) #-}
 
-inc :: forall types. PrometheusThing types => Metric 'Counter types -> PromRep types
-inc _ = execute @types
+register:: Metric 'Created sort types -> IO (Metric 'Registered sort types)
+register = \case
+  metric@(MkCounter name _ _) -> do
+    ref <- P.register $ P.counter (P.Info (pack name) (pack name))
+    (pure . coerce . attachRef (MetricCounterImpl ref)) metric
+  metric@(MkGauge name _ _) -> do
+    ref <- P.register $ P.gauge (P.Info (pack name) (pack name))
+    (pure . coerce. attachRef (MetricGaugeImpl ref)) metric
+
+-- inc' :: forall types. PrometheusThing types => Metric 'Registered 'Counter types -> IO ()
+-- inc' (MkCounter _ _ (Just (MetricCounterImpl ref))) = P.incCounter ref
+
+inc :: forall types. PrometheusThing types => Metric 'Registered 'Counter types -> PromRep types
+inc m = execute @types @_ @('Counter) m
 
 class PrometheusThing (ls :: [(Symbol, Type)]) where
   type PromRep ls :: Type
-  execute :: PromRep ls
+  execute :: Metric st sr ls -> PromRep ls
 
 instance PrometheusThing '[] where
   type PromRep '[] = IO ()
-  execute = pure ()
+  execute m = do
+    case m of
+      MkCounter _ _ (Just (MetricCounterImpl ref)) -> P.incCounter ref
+      _ -> pure ()
 
 instance (Show t1) => PrometheusThing ( '(l1,t1) ': '[] ) where
   type PromRep ( '(l1,t1) ': '[] ) = t1 -> IO String
-  execute v1 = pure $ show v1
+  execute _ v1 = pure $ show v1
 
 instance (Show t1, Show t2) => PrometheusThing ['(_l1,t1), '(_l2,t2)] where
   type PromRep ['(_l1,t1), '(_l2,t2)] = t1 -> t2 -> IO (String, String)
-  execute v1 v2 = pure (show v1, show v2)
+  execute _ v1 v2 = pure (show v1, show v2)
 
 instance (Show t1, Show t2, Show t3) => PrometheusThing ['(_l1,t1), '(_l2,t2), '(_l3,t3)] where
   type PromRep ['(_l1,t1), '(_l2,t2), '(_l3,t3)] = t1 -> t2 -> t3 -> IO (String, String, String)
-  execute v1 v2 v3 = pure (show v1, show v2, show v3)
+  execute _ v1 v2 v3 = pure (show v1, show v2, show v3)
 
 instance (Show t1, Show t2, Show t3, Show t4)
   => PrometheusThing ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4)] where
   type PromRep ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4)] =
     t1 -> t2 -> t3 -> t4 -> IO (String, String, String, String)
-  execute v1 v2 v3 v4 = pure (show v1, show v2, show v3, show v4)
+  execute _ v1 v2 v3 v4 = pure (show v1, show v2, show v3, show v4)
 
 instance (Show t1, Show t2, Show t3, Show t4, Show t5)
   => PrometheusThing ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5)] where
   type PromRep ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5)] =
     t1 -> t2 -> t3 -> t4 -> t5 -> IO (String, String, String, String, String)
-  execute v1 v2 v3 v4 v5 = pure (show v1, show v2, show v3, show v4, show v5)
+  execute _ v1 v2 v3 v4 v5 = pure (show v1, show v2, show v3, show v4, show v5)
 
 instance (Show t1, Show t2, Show t3, Show t4, Show t5, Show t6)
   => PrometheusThing ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6)] where
   type PromRep ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6)] =
     t1 -> t2 -> t3 -> t4 -> t5 -> t6 -> IO (String, String, String, String, String, String)
-  execute v1 v2 v3 v4 v5 v6 = pure (show v1, show v2, show v3, show v4, show v5, show v6)
+  execute _ v1 v2 v3 v4 v5 v6 = pure (show v1, show v2, show v3, show v4, show v5, show v6)
 
 instance (Show t1, Show t2, Show t3, Show t4, Show t5, Show t6, Show t7)
   => PrometheusThing ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6), '(_l7,t7)] where
   type PromRep ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6), '(_l7,t7)] =
     t1 -> t2 -> t3 -> t4 -> t5 -> t6 -> t7 -> IO (String, String, String, String, String, String, String)
-  execute v1 v2 v3 v4 v5 v6 v7 = pure (show v1, show v2, show v3, show v4, show v5, show v6, show v7)
+  execute _ v1 v2 v3 v4 v5 v6 v7 = pure (show v1, show v2, show v3, show v4, show v5, show v6, show v7)
 
 instance (Show t1, Show t2, Show t3, Show t4, Show t5, Show t6, Show t7, Show t8)
   => PrometheusThing ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6), '(_l7,t7), '(_l8,t8)] where
   type PromRep ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6), '(_l7,t7), '(_l8,t8)] =
     t1 -> t2 -> t3 -> t4 -> t5 -> t6 -> t7 -> t8 -> IO (String, String, String, String, String, String, String, String)
-  execute v1 v2 v3 v4 v5 v6 v7 v8 = pure (show v1, show v2, show v3, show v4, show v5, show v6, show v7, show v8)
+  execute _ v1 v2 v3 v4 v5 v6 v7 v8 = pure (show v1, show v2, show v3, show v4, show v5, show v6, show v7, show v8)
 
 instance (Show t1, Show t2, Show t3, Show t4, Show t5, Show t6, Show t7, Show t8, Show t9)
   => PrometheusThing ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6), '(_l7,t7), '(_l8,t8), '(_l9,t9)] where
   type PromRep ['(_l1,t1), '(_l2,t2), '(_l3,t3), '(_l4,t4), '(_l5,t5), '(_l6,t6), '(_l7,t7), '(_l8,t8), '(_l9,t9)] =
     t1 -> t2 -> t3 -> t4 -> t5 -> t6 -> t7 -> t8 -> t9 -> IO (String, String, String, String, String, String, String, String, String)
-  execute v1 v2 v3 v4 v5 v6 v7 v8 v9 = pure (show v1, show v2, show v3, show v4, show v5, show v6, show v7, show v8, show v9)
+  execute _ v1 v2 v3 v4 v5 v6 v7 v8 v9 = pure (show v1, show v2, show v3, show v4, show v5, show v6, show v7, show v8, show v9)
 
 
 ---
