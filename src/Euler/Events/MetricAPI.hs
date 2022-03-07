@@ -1,27 +1,31 @@
+-- {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE StandaloneKindSignatures #-}
-{-# LANGUAGE NoStarIsType #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE GADTs #-}
+-- {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MagicHash #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedLabels #-}
+{-# LANGUAGE NoStarIsType #-}
+-- {-# LANGUAGE OverloadedLabels #-}
+-- {-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+-- {-# LANGUAGE StandaloneKindSignatures #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilyDependencies #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -- | A type-safe wrapper around "Prometheus" API from @prometheus-client@
--- package. Provides more exporessive types to rule out potential runtime
+-- package. Provides more exporessive types to rule out some potential runtime
 -- errors.
 module Euler.Events.MetricAPI
   (
-    -- * Defining and register metrics
+    -- * Introduction
+    -- $intro
+
+    -- * Defining and registering metrics
     counter
   , gauge
   , (.&)
@@ -46,26 +50,16 @@ import GHC.TypeLits
 import qualified Data.Text as T
 import qualified Prometheus as P
 
-{-
-API safety:
- - (?) you don't have to register a metric before use
- - (?) you cannot register metrics twice
- - you cannot perform operations on unregistered metrics
+{- $intro
 
-API features:
- - you don't have to maintain references locally (hhm, original lib uses the global state)
- - operations validity is guaranteed by types (no inc on gauge, no Eithers in return types)
- - typed label arguments
+Let's consider a typical workflow based on bare "Prometheus" API:
 
-TODOs
- * untill the first operation a metric doesn't make it to the report
-
-Both issues can be illustrated by the following code:
-
+@
 λ> myVector1 <- register $ vector ("name", "name") $ Prometheus.counter (Info "http_requests" "")
 λ> myVector2 <- register $ vector ("name", "name") $ Prometheus.counter (Info "http_requests" "")
 λ> withLabel myVector1 ("GET", "200") incCounter
 λ> withLabel myVector2 ("GET", "200") incCounter
+λ> withLabel myVector2 ("200", "GET") incCounter
 λ> myVector3 <- register $ vector ("name", "name") $ Prometheus.counter (Info "http_requests_" "")
 λ> exportMetricsAsText >>= Data.ByteString.Lazy.putStr
 # HELP http_requests
@@ -74,15 +68,31 @@ http_requests{name="GET",name="200"} 1.0
 # HELP http_requests
 # TYPE http_requests counter
 http_requests{name="GET",name="200"} 1.0
+http_requests{name="200",name="GET"} 1.0
+@
+
+This snippet demonstrates several flaws of the API (plus denotes "fixed by this API" status)
+
+* one might register several metrics sharing the same ambigous name
+* you might give the same names to labels in vectors, making them ambigous (+)
+* since all label values are just 'Text', one may accidenatlly mess up their order when using a metric (+)
+* if there is no operations on a metric it won't make it to the exported data
+
+This module solves __some__ of the issues mentioned, namely:
+
+* compile-time checks that all labels have unique names
+* lables are well-typed, allowing using typed values when working over them
 
 Example of using well-typed API:
 
-c1 = counter (pack "c1")
-      .& lbl @"foo" @Int
-
-c1' <- reg c1
-inc c1' 42
-add c1' 10 42
+>>> -- creates a counter with one label
+>>> c1 = counter (pack "c1") .& lbl @"foo" @Int
+>>> -- registers a counter
+>>> c1' <- reg c1
+>>> -- incrementing a counter
+>>> inc c1' 42
+>>> -- adding up a value to a counter
+>>> add c1' 10 42
 
 -}
 
@@ -93,18 +103,18 @@ data MetricSort = Counter | Gauge
 -- | Synonym for a type-level list of associated pairs
 type Labels = [(Symbol, Type)]
 
-type CanAddLabel :: Labels -> Constraint
-type family CanAddLabel types where
+-- type CanAddLabel :: Labels -> Constraint
+type family CanAddLabel (types :: Labels) :: Constraint where
   CanAddLabel types = If ( Length types <=? 8) () (TypeError ('Text "You cannot use more than 9 labels."))
 
-type CheckLabelUniqueness :: Symbol -> Labels -> Constraint
-type family CheckLabelUniqueness name labels where
+-- type CheckLabelUniqueness :: Symbol -> Labels -> Constraint
+type family CheckLabelUniqueness (name :: Symbol) (labels :: Labels) :: Constraint where
   CheckLabelUniqueness name    ( '(name, _typ) ': tail) = TypeError ('Text "Label names must be unique across a metric.")
   CheckLabelUniqueness another ( '(name, _typ) ': tail) = CheckLabelUniqueness another tail
   CheckLabelUniqueness another '[] = ()
 
-type If :: Bool -> Constraint -> Constraint -> Constraint
-type family If cond the els where
+-- type If :: Bool -> Constraint -> Constraint -> Constraint
+type family If (cond :: Bool) (the :: Constraint) (els :: Constraint) :: Constraint where
   If 'True  the els = the
   If 'False the els = els
 
@@ -112,7 +122,7 @@ type family Length (ls :: [k]) :: Nat where
   Length '[] = 0
   Length (l:ls) = 1 + Length ls
 
-type MetricDef :: MetricSort -> Labels -> Type
+-- type MetricDef :: MetricSort -> Labels -> Type
 data MetricDef sort labels = MetricDef T.Text
 
 -- | An empty 'Metric'
@@ -140,12 +150,12 @@ infixl 3 .&
 a .& f = f a
 {-# INLINE (.&) #-}
 
-type PromPrim :: MetricSort -> Type
+-- type PromPrim :: MetricSort -> Type
 type family PromPrim s = r | r -> s where
   PromPrim 'Counter = P.Counter
   PromPrim 'Gauge = P.Gauge
 
-type PrometheusThing :: MetricSort -> Labels -> Constraint
+-- type PrometheusThing :: MetricSort -> Labels -> Constraint
 class PrometheusThing sort labels where
   data PromRep sort labels :: Type
   register :: (P.Info -> P.Metric (PromPrim sort)) -> MetricDef sort labels -> IO (PromRep sort labels)
@@ -196,7 +206,7 @@ instance (KnownSymbol l1, KnownSymbol l2, Show t1, Show t2)
 -- TODO implement for 3..9-ary
 
 -- | An aux typeclass to back one 'reg' for all sorts of metrics.
-type Registrable :: MetricSort -> Constraint
+-- type Registrable :: MetricSort -> Constraint
 class Registrable sort where
   cons :: P.Info -> P.Metric (PromPrim sort)
 
@@ -234,10 +244,14 @@ add rep value = runOperation @'Counter @labels
   Sample metrics (move to tests)
 -------------------------------------------------------------------------------}
 
-c0 = counter (pack "noLabels")
+c0 = counter (pack "c0")
 
 c1 = counter (pack "c1")
       .& lbl @"foo" @Int
+
+c2 = counter (pack "c2")
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
 
 c3 = counter (pack "c3")
       .& lbl @"foo" @Int
