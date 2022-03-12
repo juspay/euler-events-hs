@@ -42,6 +42,11 @@ module Euler.Events.MetricAPI
   )
 where
 
+{-
+TODO:
+ * add help to MetricDef
+-}
+
 import Data.Coerce (coerce)
 import Data.Kind
 import Data.Text (pack)
@@ -49,6 +54,7 @@ import GHC.Exts (proxy#)
 import GHC.TypeLits
 import qualified Data.Text as T
 import qualified Prometheus as P
+import Unsafe.Coerce (unsafeCoerce)
 
 {- $intro
 
@@ -85,6 +91,7 @@ This module solves __some__ of the issues mentioned, namely:
 
 Example of using well-typed API:
 
+-- TODO update and use inline 
 >>> -- creates a counter with one label
 >>> c1 = counter (pack "c1") .& lbl @"foo" @Int
 >>> -- registers a counter
@@ -115,21 +122,48 @@ type family CheckLabelUniqueness (name :: Symbol) (labels :: Labels) :: Constrai
 
 -- type If :: Bool -> Constraint -> Constraint -> Constraint
 type family If (cond :: Bool) (the :: Constraint) (els :: Constraint) :: Constraint where
-  If 'True  the els = the
-  If 'False the els = els
+  If 'True  the _ = the
+  If 'False _ els = els
 
 type family Length (ls :: [k]) :: Nat where
   Length '[] = 0
   Length (l:ls) = 1 + Length ls
 
--- type MetricDef :: MetricSort -> Labels -> Type
-data MetricDef sort labels = MetricDef T.Text
+-- type EqSymbol :: Symbol -> Symbol -> Bool
+type family EqSymbol (s1 :: Symbol) (s2 :: Symbol) where
+  EqSymbol s1 s2 = EqOrd (CmpSymbol s1 s2)
+
+-- type EqOrd :: Ordering -> Bool
+type family EqOrd (o :: Ordering) :: Bool where
+  EqOrd 'EQ = 'True
+  EqOrd _   = 'False
+
+-- type UniqName :: Symbol -> [Symbol] -> Constraint
+type family UniqName (n :: Symbol) (ns :: [Symbol]) :: Constraint where
+  UniqName n '[] = ()
+  UniqName n (h ': tail) = If (EqSymbol n h)
+                             (TypeError ('Text "Metrics name must be unique in a collection"))
+                             (UniqName n tail)
+
+-- type MetricDef :: MetricSort -> Symbol -> Labels -> Type
+data MetricDef (sort :: MetricSort) (name :: Symbol) (labels :: Labels) = MetricDef
+
+-- type MetricCollection :: [Symbol] -> Type
+data MetricCollection (ns :: [Symbol]) where
+  MNil  :: MetricCollection '[]
+  (:+:) :: forall sort name labels ns
+        .  ( UniqName name ns
+           , PrometheusThing sort name labels
+           , Registrable sort
+           )
+        => MetricDef sort name labels -> MetricCollection ns -> MetricCollection (name ': ns)
+infixr 4 :+:
 
 -- | An empty 'Metric'
-counter :: T.Text -> MetricDef 'Counter '[]
+counter :: forall name. MetricDef 'Counter name '[]
 counter = MetricDef
 
-gauge :: T.Text -> MetricDef 'Gauge '[]
+gauge :: forall name. MetricDef 'Gauge name '[]
 gauge = MetricDef
 
 lbl
@@ -138,10 +172,11 @@ lbl
       (typ :: Type)
       (types :: Labels)
       (sort :: MetricSort)
+      (name :: Symbol)
   .  KnownSymbol label
   => CanAddLabel types
   => CheckLabelUniqueness label types
-  => MetricDef sort types -> MetricDef sort ( '(label, typ) ': types)
+  => MetricDef sort name types -> MetricDef sort name ( '(label, typ) ': types)
 lbl = coerce
 
 infixl 3 .&
@@ -155,53 +190,57 @@ type family PromPrim s = r | r -> s where
   PromPrim 'Counter = P.Counter
   PromPrim 'Gauge = P.Gauge
 
--- type PrometheusThing :: MetricSort -> Labels -> Constraint
-class PrometheusThing sort labels where
-  data PromRep sort labels :: Type
-  register :: (P.Info -> P.Metric (PromPrim sort)) -> MetricDef sort labels -> IO (PromRep sort labels)
+-- type PrometheusThing :: MetricSort -> Symbol -> Labels -> Constraint
+class PrometheusThing sort (name :: Symbol) labels where
+  data PromRep sort name labels :: Type
+  register :: (P.Info -> P.Metric (PromPrim sort)) -> MetricDef sort name labels -> IO (PromRep sort name labels)
   type PromAction labels :: Type
-  runOperation :: (PromPrim sort -> IO ()) -> PromRep sort labels -> PromAction labels
+  runOperation :: (PromPrim sort -> IO ()) -> PromRep sort name labels -> PromAction labels
 
 -- | Bare metric, without any labels
-instance PrometheusThing sort '[] where
-  data instance PromRep sort '[] = PromRepBare (PromPrim sort)
-  register con (MetricDef name) =
-    (P.register $ con $ P.Info name name)
-    >>= pure . PromRepBare
+instance (KnownSymbol name) => PrometheusThing sort name '[] where
+  data instance PromRep sort name '[] = PromRepBare (PromPrim sort)
+  register con _ =
+    let
+      name = pack $ symbolVal' @name proxy#
+      help = name
+    in
+      (P.register $ con $ P.Info name help)
+        >>= pure . PromRepBare
   type PromAction '[] = IO ()
   runOperation op (PromRepBare ref) = op ref
 
--- | 1-ary vector
-instance (KnownSymbol l1, Show t1) => PrometheusThing sort '[ '(l1, t1)] where
-  data instance PromRep sort '[ '(l1, t1)] = PromRepVec1 (P.Vector (T.Text) (PromPrim sort))
-  register con (MetricDef name) =
-    (P.register
-      $ P.vector (pack $ symbolVal' @l1 proxy#)
-      $ con $ P.Info name name)
-    >>= pure . PromRepVec1
-  type PromAction '[ '(l1, t1)] = t1 -> IO ()
-  runOperation op (PromRepVec1 ref) v1 = P.withLabel ref (pack $ show v1) op
+-- -- | 1-ary vector
+-- instance (KnownSymbol l1, Show t1) => PrometheusThing sort '[ '(l1, t1)] where
+--   data instance PromRep sort '[ '(l1, t1)] = PromRepVec1 (P.Vector (T.Text) (PromPrim sort))
+--   register con (MetricDef name) =
+--     (P.register
+--       $ P.vector (pack $ symbolVal' @l1 proxy#)
+--       $ con $ P.Info name name)
+--     >>= pure . PromRepVec1
+--   type PromAction '[ '(l1, t1)] = t1 -> IO ()
+--   runOperation op (PromRepVec1 ref) v1 = P.withLabel ref (pack $ show v1) op
 
--- | 2-ary vector
-instance (KnownSymbol l1, KnownSymbol l2, Show t1, Show t2)
-  => PrometheusThing sort '[ '(l1, t1), '(l2, t2)] where
-  data instance PromRep sort '[ '(l1, t1), '(l2, t2)] =
-    PromRepVec2 (P.Vector (T.Text, T.Text) (PromPrim sort))
-  register con (MetricDef name) =
-      (P.register
-        $ P.vector ls
-        $ con $ P.Info name name)
-      >>= pure . PromRepVec2
-    where
-      ls = ( pack $ symbolVal' @l1 proxy#
-           , pack $ symbolVal' @l2 proxy#
-           )
-  type PromAction '[ '(l1, t1), '(l2, t2)] = t1 -> t2 -> IO ()
-  runOperation op (PromRepVec2 ref) v1 v2 = P.withLabel ref ls op
-    where
-      ls = ( pack $ show v1
-           , pack $ show v2
-           )
+-- -- | 2-ary vector
+-- instance (KnownSymbol l1, KnownSymbol l2, Show t1, Show t2)
+--   => PrometheusThing sort '[ '(l1, t1), '(l2, t2)] where
+--   data instance PromRep sort '[ '(l1, t1), '(l2, t2)] =
+--     PromRepVec2 (P.Vector (T.Text, T.Text) (PromPrim sort))
+--   register con (MetricDef name) =
+--       (P.register
+--         $ P.vector ls
+--         $ con $ P.Info name name)
+--       >>= pure . PromRepVec2
+--     where
+--       ls = ( pack $ symbolVal' @l1 proxy#
+--            , pack $ symbolVal' @l2 proxy#
+--            )
+--   type PromAction '[ '(l1, t1), '(l2, t2)] = t1 -> t2 -> IO ()
+--   runOperation op (PromRepVec2 ref) v1 v2 = P.withLabel ref ls op
+--     where
+--       ls = ( pack $ show v1
+--            , pack $ show v2
+--            )
 
 -- TODO implement for 3..9-ary
 
@@ -216,23 +255,44 @@ instance Registrable 'Counter where
 instance Registrable 'Gauge where
   cons = P.gauge
 
+-- regCollection ::MetricCollection names -> IO ()
+-- regCollection MNil = pure ()
+-- regCollection (metric :+: tail) = do
+--   reg metric
+--   regCollection tail
+
+-- type Elem :: Symbol -> [Symbol] -> Constraint
+type family Elem (s :: Symbol) (ss :: [Symbol]) :: Constraint where
+  Elem _ '[] = TypeError ('Text "Not an element!")
+  Elem s (s:t) = ()
+  Elem s (h:t) = Elem s t
+
+-- | The same as reg, but requires a collection, for solely purpose of
+-- checking metric name uniqueness
+reg' :: forall sort name labels names
+    .  PrometheusThing sort name labels
+    => Registrable sort
+    => Elem name names
+    => MetricCollection names -> MetricDef sort name labels -> IO (PromRep sort name labels)
+reg' _ def = register cons def
+
 -- | Registers a metric by its definition, returning a wrapper around the primitive which
 -- carries the sort and labels.
-reg :: forall sort labels
-    .  PrometheusThing sort labels
+reg :: forall sort name labels
+    .  PrometheusThing sort name labels
     => Registrable sort
-    => MetricDef sort labels -> IO (PromRep sort labels)
+    => MetricDef sort name labels -> IO (PromRep sort name labels)
 reg = register cons
 
 {-------------------------------------------------------------------------------
   Working with counters
 -------------------------------------------------------------------------------}
 
-inc :: forall labels. PrometheusThing 'Counter labels => PromRep 'Counter labels -> PromAction labels
-inc = runOperation @'Counter @labels P.incCounter
+inc :: forall name labels. PrometheusThing 'Counter name labels => PromRep 'Counter name labels -> PromAction labels
+inc = runOperation @'Counter @name @labels P.incCounter
 
-add :: forall labels. PrometheusThing 'Counter labels => PromRep 'Counter labels -> Word -> PromAction labels
-add rep value = runOperation @'Counter @labels
+add :: forall name labels. PrometheusThing 'Counter name labels => PromRep 'Counter name labels -> Word -> PromAction labels
+add rep value = runOperation @'Counter @name @labels
   (flip P.unsafeAddCounter $ fromIntegral value) rep
 
 
@@ -244,72 +304,63 @@ add rep value = runOperation @'Counter @labels
   Sample metrics (move to tests)
 -------------------------------------------------------------------------------}
 
-c0 = counter (pack "c0")
+c0 = counter @"c0"
 
-c1 = counter (pack "c1")
-      .& lbl @"foo" @Int
+cfoo = counter @"foo"
 
-c2 = counter (pack "c2")
-      .& lbl @"foo" @Int
-      .& lbl @"bar" @Bool
+-- c1 = counter @"c1"
+--       .& lbl @"foo" @Int
 
-c3 = counter (pack "c3")
-      .& lbl @"foo" @Int
-      .& lbl @"bar" @Bool
-      .& lbl @"baz" @Bool
+-- c2 = counter @"c2"
+--       .& lbl @"foo" @Int
+--       .& lbl @"bar" @Bool
 
-c4 = counter (pack "c4")
-      .& lbl @"foo" @Int
-      .& lbl @"bar" @Bool
-      .& lbl @"baz" @Bool
-      .& lbl @"qux" @Bool
+-- c3 = counter @"c3"
+--       .& lbl @"foo" @Int
+--       .& lbl @"bar" @Bool
+--       .& lbl @"baz" @Bool
 
-c5 = counter (pack "c5")
-      .& lbl @"foo" @Int
-      .& lbl @"bar" @Bool
-      .& lbl @"baz" @Bool
-      .& lbl @"qux" @Bool
-      .& lbl @"foo1" @Bool
+-- c4 = counter @"c4"
+--       .& lbl @"foo" @Int
+--       .& lbl @"bar" @Bool
+--       .& lbl @"baz" @Bool
+--       .& lbl @"qux" @Bool
 
-c6 = counter (pack "c6")
-      .& lbl @"foo" @Int
-      .& lbl @"bar" @Bool
-      .& lbl @"baz" @Bool
-      .& lbl @"qux" @Bool
-      .& lbl @"foo1" @Bool
-      .& lbl @"bar1" @Bool
+-- c5 = counter @"c5"
+--       .& lbl @"foo" @Int
+--       .& lbl @"bar" @Bool
+--       .& lbl @"baz" @Bool
+--       .& lbl @"qux" @Bool
+--       .& lbl @"foo1" @Bool
 
-c7 = counter (pack "c7")
-      .& lbl @"foo" @Int
-      .& lbl @"bar" @Bool
-      .& lbl @"baz" @Bool
-      .& lbl @"qux" @Bool
-      .& lbl @"foo1" @Bool
-      .& lbl @"bar1" @Bool
-      .& lbl @"baz1" @Bool
+-- c6 = counter @"c6"
+--       .& lbl @"foo" @Int
+--       .& lbl @"bar" @Bool
+--       .& lbl @"baz" @Bool
+--       .& lbl @"qux" @Bool
+--       .& lbl @"foo1" @Bool
+--       .& lbl @"bar1" @Bool
 
-c8 = counter (pack "c8")
-      .& lbl @"foo" @Int
-      .& lbl @"bar" @Bool
-      .& lbl @"baz" @Bool
-      .& lbl @"qux" @Bool
-      .& lbl @"foo1" @Bool
-      .& lbl @"bar1" @Bool
-      .& lbl @"baz1" @Bool
-      .& lbl @"qux1" @Bool
+-- c7 = counter @"c7"
+--       .& lbl @"foo" @Int
+--       .& lbl @"bar" @Bool
+--       .& lbl @"baz" @Bool
+--       .& lbl @"qux" @Bool
+--       .& lbl @"foo1" @Bool
+--       .& lbl @"bar1" @Bool
+--       .& lbl @"baz1" @Bool
 
-c9 = counter (pack "c9")
-      .& lbl @"foo" @Int
-      .& lbl @"bar" @Bool
-      .& lbl @"baz" @Bool
-      .& lbl @"qux" @Bool
-      .& lbl @"foo1" @Bool
-      .& lbl @"bar1" @Bool
-      .& lbl @"baz1" @Bool
-      .& lbl @"qux1" @Bool
-      .& lbl @"foo2" @Bool
+-- c8 = counter @"c8"
+--       .& lbl @"foo" @Int
+--       .& lbl @"bar" @Bool
+--       .& lbl @"baz" @Bool
+--       .& lbl @"qux" @Bool
+--       .& lbl @"foo1" @Bool
+--       .& lbl @"bar1" @Bool
+--       .& lbl @"baz1" @Bool
+--       .& lbl @"qux1" @Bool
 
--- c10 = counter (pack "c10")
+-- c9 = counter @"c9"
 --       .& lbl @"foo" @Int
 --       .& lbl @"bar" @Bool
 --       .& lbl @"baz" @Bool
@@ -319,6 +370,23 @@ c9 = counter (pack "c9")
 --       .& lbl @"baz1" @Bool
 --       .& lbl @"qux1" @Bool
 --       .& lbl @"foo2" @Bool
---       .& lbl @"bar2" @Bool
 
-g1 = gauge (pack "metricName") .& lbl @"foo" @Int
+-- -- c10 = counter @"c10"
+-- --       .& lbl @"foo" @Int
+-- --       .& lbl @"bar" @Bool
+-- --       .& lbl @"baz" @Bool
+-- --       .& lbl @"qux" @Bool
+-- --       .& lbl @"foo1" @Bool
+-- --       .& lbl @"bar1" @Bool
+-- --       .& lbl @"baz1" @Bool
+-- --       .& lbl @"qux1" @Bool
+-- --       .& lbl @"foo2" @Bool
+-- --       .& lbl @"bar2" @Bool
+
+g1 = gauge @"g1" .& lbl @"foo" @Int
+
+collection1 = c0 :+: MNil
+-- collection1 = c1 :+: c2 :+: MNil
+
+c0' = reg' collection1 c0
+cfoo' = reg' collection1 cfoo
