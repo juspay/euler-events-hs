@@ -2,6 +2,7 @@
 
 module Euler.Events.Util.Prometheus where
 
+import Control.DeepSeq (force)
 import Data.Functor (($>))
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
@@ -18,7 +19,6 @@ import qualified StmContainers.Map as StmMap
 import System.Clock (TimeSpec, diffTimeSpec, toNanoSecs)
 import System.Environment (getEnvironment)
 import System.Posix.Process (getProcessID)
-import Control.DeepSeq (force)
 
 
 data PrometheusMetric
@@ -37,9 +37,9 @@ instance Eq PrometheusMetric where
 
 instance Show PrometheusMetric where
   show :: PrometheusMetric -> String
-  show (Counter _) = "Counter"
-  show (Gauge _) = "Gauge"
-  show (Vector1Counter _) = "Vector1Counter"
+  show (Counter _)          = "Counter"
+  show (Gauge _)            = "Gauge"
+  show (Vector1Counter _)   = "Vector1Counter"
   show PrometheusMiddleware = "PrometheusMiddleware"
 
 withPrefix :: Text -> Text -> Text

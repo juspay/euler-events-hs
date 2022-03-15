@@ -34,7 +34,7 @@ module Euler.Events.MetricAPI
   , inc
   , add
     -- ** Gauges
-
+  , incG
     -- ** Histograms
 
   )
@@ -235,6 +235,9 @@ reg _ = register cons
 {-------------------------------------------------------------------------------
   Working with counters
 -------------------------------------------------------------------------------}
+
+incG :: forall name labels. PrometheusThing 'Gauge name labels => PromRep 'Gauge name labels -> PromAction labels
+incG = runOperation @'Gauge @name @labels P.incGauge
 
 inc :: forall name labels. PrometheusThing 'Counter name labels => PromRep 'Counter name labels -> PromAction labels
 inc = runOperation @'Counter @name @labels P.incCounter

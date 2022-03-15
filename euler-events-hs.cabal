@@ -88,16 +88,23 @@ test-suite tests
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
   other-modules:
+    Common
     EventSpec
+    MetricApiSpec
     PrometheusSpec
 
   build-depends:
     , aeson
+    , async
     , bytestring
     , either
     , euler-events-hs
     , hspec
     , http-conduit
     , time
+    , prometheus-client
+    , wai
+    , wai-middleware-prometheus
+    , warp
 
   hs-source-dirs: test

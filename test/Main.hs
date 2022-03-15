@@ -2,13 +2,12 @@ module Main where
 
 import qualified EventSpec
 import qualified PrometheusSpec
-import Test.Hspec (Spec, describe, hspec)
+import qualified MetricApiSpec
+import Test.Hspec (describe, hspec)
+
 
 main :: IO ()
-main = hspec spec
-
-spec :: Spec
-spec = do
-  describe "Event"
-      EventSpec.spec
+main = hspec $ do
+  describe "Event" EventSpec.spec
+  describe "MetricApi" MetricApiSpec.spec
   describe "Prometheus" PrometheusSpec.spec
