@@ -36,9 +36,16 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
       c2 <- reg coll c2def
       add c2 2 True 3
       respBody <- getRespBody requestMetric
-      putStrLn "c2 --------------"
+      putStrLn "c2 add --------------"
       BS.putStrLn respBody
       "c2{bar=\"True\",foo=\"3\"} 2.0" `BS.isInfixOf` respBody `shouldBe` True
+    it "Inc two vector metrics" $ do
+      c3 <- reg coll c3def
+      inc c3 True 3
+      respBody <- getRespBody requestMetric
+      putStrLn "c3 inc --------------"
+      BS.putStrLn respBody
+      "c3{barn=\"True\",foom=\"3\"} 1.0" `BS.isInfixOf` respBody `shouldBe` True
     it "Inc gauge metrics" $ do
       g1 <- reg coll g1def
       incG g1
@@ -46,7 +53,41 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
       putStrLn "g1 --------------"
       BS.putStrLn respBody
       "g1 1.0" `BS.isInfixOf` respBody `shouldBe` True
-
+    it "Inc two vector metrics 2 times" $ do
+      c4 <- reg coll c4def
+      inc c4 True 3
+      inc c4 True 3
+      respBody <- getRespBody requestMetric
+      putStrLn "c4 inc --------------"
+      BS.putStrLn respBody
+      "c4{barn=\"True\",foom=\"3\"} 2.0" `BS.isInfixOf` respBody `shouldBe` True
+    it "Inc two vector metrics 2 times with different values" $ do
+      c5 <- reg coll c5def
+      inc c5 True 3
+      inc c5 False 3
+      respBody <- getRespBody requestMetric
+      putStrLn "c5 inc --------------"
+      BS.putStrLn respBody
+      ("c5{barn=\"True\",foom=\"3\"} 1.0" `BS.isInfixOf` respBody)
+        && ("c5{barn=\"False\",foom=\"3\"} 1.0" `BS.isInfixOf` respBody) `shouldBe` True
+    it "Reg two vector metrics 2 times" $ do
+      c6 <- reg coll c6def
+      inc c6 True 3
+      c6 <- reg coll c6def
+      inc c6 True 3
+      respBody <- getRespBody requestMetric
+      putStrLn "c6 inc --------------"
+      BS.putStrLn respBody
+      "c6{bar=\"True\",foo=\"3\"} 2.0" `BS.isInfixOf` respBody `shouldBe` True
+{-
+c6 inc --------------
+# HELP c6 c6
+# TYPE c6 counter
+c6{bar="True",foo="3"} 1.0
+# HELP c6 c6
+# TYPE c6 counter
+c6{bar="True",foo="3"} 1.0
+-}
 
 
 -- creates a counter @c1@ with one label @foo@ of type 'Int'
@@ -58,5 +99,29 @@ c2def = counter @"c2"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
 
+c3def = counter @"c3"
+      .& lbl @"foom" @Int
+      .& lbl @"barn" @Bool
+
+c4def = counter @"c4"
+      .& lbl @"foom" @Int
+      .& lbl @"barn" @Bool
+
+c5def = counter @"c5"
+      .& lbl @"foom" @Int
+      .& lbl @"barn" @Bool
+
+c6def = counter @"c6"
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+
 -- collection of metrics, prevents from ambiguos metric names
-coll = g1def :+: c1def :+: c2def :+: MNil
+coll =
+      g1def
+  :+: c1def
+  :+: c2def
+  :+: c3def
+  :+: c4def
+  :+: c5def
+  :+: c6def
+  :+: MNil
