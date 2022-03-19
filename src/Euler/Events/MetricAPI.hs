@@ -22,14 +22,14 @@ module Euler.Events.MetricAPI
     -- * Introduction
     -- $intro
 
-    -- * Defining and registering metrics
+    -- * Building metrics
     counter
   , gauge
   , (.&)
   , lbl
-  , MetricCollection (..)
-  , reg
+  , build
     -- * Using metrics
+  , useMetric
     -- ** Counters
   , inc
   , add
@@ -50,10 +50,12 @@ TODO:
 import Data.Coerce (coerce)
 import Data.Kind
 import Data.Text (pack)
+import Type.Reflection
 import GHC.Exts (proxy#)
 import GHC.TypeLits
 import qualified Data.Text as T
 import qualified Prometheus as P
+import System.IO.Unsafe (unsafePerformIO)
 
 {- $intro
 
@@ -156,24 +158,15 @@ type family NotEmpty (s :: Symbol) where
 -- type MetricDef :: MetricSort -> Symbol -> Labels -> Type
 data MetricDef (sort :: MetricSort) (name :: Symbol) (labels :: Labels) = MetricDef
 
--- type MetricCollection :: [Symbol] -> Type
-data MetricCollection (ns :: [Symbol]) where
-  MNil  :: MetricCollection '[]
-  (:+:) :: forall sort name labels ns
-        .  ( UniqName name ns
-           , PrometheusThing sort name labels
-           , Registrable sort
-           )
-        => MetricDef sort name labels -> MetricCollection ns -> MetricCollection (name ': ns)
-infixr 4 :+:
-
--- | An empty 'Metric'
+-- | Basic counter
 counter :: forall name. NotEmpty name => MetricDef 'Counter name '[]
 counter = MetricDef
 
+-- Basic gauge
 gauge :: forall name. NotEmpty name => MetricDef 'Gauge name '[]
 gauge = MetricDef
 
+-- | Attaches a label
 lbl
   :: forall
       (label :: Symbol)
@@ -193,6 +186,7 @@ infixl 3 .&
 (.&) :: a -> (a -> b) -> b
 a .& f = f a
 {-# INLINE (.&) #-}
+
 
 -- type PromPrim :: MetricSort -> Type
 type family PromPrim s = r | r -> s where
@@ -217,34 +211,35 @@ instance Registrable 'Counter where
 instance Registrable 'Gauge where
   cons = P.gauge
 
--- type Elem :: Symbol -> [Symbol] -> Constraint
-type family Elem (s :: Symbol) (ss :: [Symbol]) :: Constraint where
-  Elem _ '[] = TypeError ('Text "Not an element!")
-  Elem s (s:t) = ()
-  Elem s (h:t) = Elem s t
-
--- | The same as reg, but requires a collection, for solely purpose of
--- checking metric name uniqueness
-reg :: forall sort name labels names
-    .  PrometheusThing sort name labels
-    => Registrable sort
-    => Elem name names
-    => MetricCollection names -> MetricDef sort name labels -> IO (PromRep sort name labels)
-reg _ = register cons
+build :: forall sort name labels
+       . PrometheusThing sort name labels
+      => Registrable sort
+      => MetricDef sort name labels -> PromRep sort name labels
+build def = unsafePerformIO $ register cons def
 
 {-------------------------------------------------------------------------------
   Working with counters
 -------------------------------------------------------------------------------}
 
-incG :: forall name labels. PrometheusThing 'Gauge name labels => PromRep 'Gauge name labels -> PromAction labels
-incG = runOperation @'Gauge @name @labels P.incGauge
+inc :: forall name labels
+     . PrometheusThing 'Counter name labels
+    => SafetyBox (PromRep 'Counter name labels) -> PromAction labels
+inc (SafetyBox m) = runOperation @'Counter @name @labels P.incCounter m
 
-inc :: forall name labels. PrometheusThing 'Counter name labels => PromRep 'Counter name labels -> PromAction labels
-inc = runOperation @'Counter @name @labels P.incCounter
-
-add :: forall name labels. PrometheusThing 'Counter name labels => PromRep 'Counter name labels -> Word -> PromAction labels
-add rep value = runOperation @'Counter @name @labels
+add :: forall name labels
+     . PrometheusThing 'Counter name labels
+    => SafetyBox (PromRep 'Counter name labels) -> Word -> PromAction labels
+add (SafetyBox rep) value = runOperation @'Counter @name @labels
   (flip P.unsafeAddCounter $ fromIntegral value) rep
+
+{-------------------------------------------------------------------------------
+  Working with gauge
+-------------------------------------------------------------------------------}
+
+incGauge :: forall name labels
+          . PrometheusThing 'Gauge name labels
+         => SafetyBox (PromRep 'Gauge name labels) -> PromAction labels
+incG (SafetyBox m)= runOperation @'Gauge @name @labels P.incGauge m
 
 {-------------------------------------------------------------------------------
   PrometheusThing instances, just repetative boilerplate
@@ -375,21 +370,61 @@ instance ( KnownSymbol name
       op
 
 
+data Metrics (ts :: [Type]) (names :: [Symbol]) where
+  MNil  :: Metrics '[] '[]
+  (:+:) :: ( Typeable (PromRep sort name labels)
+           , UniqName name names
+           )
+        => (PromRep sort name labels)
+        -> Metrics ts names
+        -> Metrics ((PromRep sort name labels) ': ts) ( name ': names)
+infixr 4 :+:
 
+type family ElemT (s :: Type) (ss :: [Type]) :: Constraint where
+  ElemT _ '[] = TypeError ('Text "Not an element!")
+  ElemT s (s:t) = ()
+  ElemT s (h:t) = ElemT s t
 
+-- | An opaque wrapper for metrics
+newtype SafetyBox a = SafetyBox a
 
-
+useMetric :: forall t ts names. (Typeable t, ElemT t ts) => Metrics ts names -> SafetyBox t
+useMetric = go
+  where
+    -- Inner helper goes without recurring ElemT constraint
+    go :: forall t ts names. (Typeable t) => Metrics ts names -> SafetyBox t
+    -- This won't happen, guaranteed by top-level ElemT constraint
+    go MNil = undefined
+    go (h :+: rest) = case eqTypeRep (typeRep @t) (typeOf h) of
+      Just HRefl -> SafetyBox h
+      _ -> go rest
 
 {-------------------------------------------------------------------------------
   Sample metrics (move to tests)
 -------------------------------------------------------------------------------}
 
--- c0 = counter @"c0"
+type C0 = PromRep 'Counter "c0" '[]
+c0 :: C0
+c0 = counter @"c0" .& build
 
--- cfoo = counter @"foo"
+type C1 = PromRep 'Counter "c1" '[ '("foo", Int)]
+c1 :: C1
+c1 =  counter @"c1"
+      .& lbl @"foo" @Int
+      .& build
 
--- c1 = counter @"c1"
---       .& lbl @"foo" @Int
+coll = c0 :+: c1 :+: MNil
+
+data MyRuntime ts names = MyRuntime
+  { foo     :: Int
+  , metrics :: Metrics ts names
+  }
+
+myRuntime = MyRuntime 42 (coll)
+
+c1w = useMetric @C1 (metrics myRuntime)
+-- won't compile
+-- int11 = useMetric @Int (metrics myRuntime)
 
 -- c2 = counter @"c2"
 --       .& lbl @"foo" @Int
@@ -464,9 +499,3 @@ instance ( KnownSymbol name
 -- --       .& lbl @"bar2" @Bool
 
 -- g1 = gauge @"g1" .& lbl @"foo" @Int
-
--- collection1 = c0 :+: MNil
--- collection1 = c1 :+: c2 :+: MNil
-
--- c0' = reg' collection1 c0
--- cfoo' = reg' collection1 cfoo
