@@ -32,6 +32,11 @@ requestMetric = setRequestPort port defaultRequest
 runMetricServer :: IO ()
 runMetricServer = run port Prometheus.metricsApp
 
+traceTest :: BS.ByteString -> String -> IO ()
+traceTest resp str = do
+  putStrLn str
+  BS.putStrLn resp
+
 _ghcMetrics :: [BS.ByteString]
 _ghcMetrics =
   [ "ghc_gcs_total",

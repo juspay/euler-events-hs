@@ -19,28 +19,32 @@
 -- package. Provides more expressive types to rule out some potential runtime
 -- errors for cases when your metrics are known in advance.
 module Euler.Events.MetricAPI
-  (
-    -- * Introduction
-    -- $intro
+  -- (
+  --   -- * Introduction
+  --   -- $intro
 
-    -- * Building metrics
-    counter
-  , gauge
-  , (.&)
-  , lbl
-  , build
+  --   -- * Building metrics
+  --   PromRep (..)
+  -- , PromPrim (..)
+  -- , counter
+  -- , gauge
+  -- , (.&)
   -- , lbl
   -- , build
-    -- * Using metrics
-  , useMetric
-    -- ** Counters
-  , inc
-  , add
-    -- ** Gauges
-  , incGauge
-    -- ** Histograms
+  -- -- , lbl
+  -- -- , build
+  --   -- * Using metrics
+  -- , Metrics (..)
+  -- , (</>)
+  -- , useMetric
+  --   -- ** Counters
+  -- , inc
+  -- , add
+  --   -- ** Gauges
+  -- , incGauge
+  --   -- ** Histograms
 
-  )
+  -- )
 where
 
 {-
@@ -480,32 +484,33 @@ instance ( KnownSymbol name
 
 {-------------------------------------------------------------------------------
   Sample metrics (move to tests)
+  See test/MetricApiSpec.hs
 -------------------------------------------------------------------------------}
 
-type C0 = PromRep 'Counter "c0" '[]
-c0 :: C0
-c0 = counter @"c0" .& build
+-- type C0 = PromRep 'Counter "c0" '[]
+-- c0 :: C0
+-- c0 = counter @"c0" .& build
 
-type C1 = PromRep 'Counter "c1" '[ '("foo", Int)]
-c1 :: C1
-c1 =  counter @"c1"
-      .& lbl @"foo" @Int
-      .& build
+-- type C1 = PromRep 'Counter "c1" '[ '("foo", Int)]
+-- c1 :: C1
+-- c1 =  counter @"c1"
+--       .& lbl @"foo" @Int
+--       .& build
 
-type C2 = PromRep 'Counter "c2" '[ '("foo", Int), '("bar", Bool)]
-c2 :: C2
-c2 =  counter @"c2"
-      .& lbl @"foo" @Int
-      .& lbl @"bar" @Bool
-      .& build
+-- type C2 = PromRep 'Counter "c2" '[ '("foo", Int), '("bar", Bool)]
+-- c2 :: C2
+-- c2 =  counter @"c2"
+--       .& lbl @"foo" @Int
+--       .& lbl @"bar" @Bool
+--       .& build
 
-type G1 = PromRep 'Gauge "g1" '[ '("foo", Int)]
-g1 ::G1
-g1 = gauge @"g1"
-      .& lbl @"foo" @Int
-      .& build
+-- type G1 = PromRep 'Gauge "g1" '[ '("foo", Int)]
+-- g1 ::G1
+-- g1 = gauge @"g1"
+--       .& lbl @"foo" @Int
+--       .& build
 
-coll = c2 </> g1 </> c0 </> c1 </> MNil
+-- coll = c2 </> g1 </> c0 </> c1 </> MNil
 
 -- coll' = unsafePerformIO $ register coll
 
