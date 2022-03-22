@@ -20,11 +20,11 @@ spec :: Spec
 spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
  beforeAll (register collection) $
 
-  describe "Test a MetricApi." $ do
-    -- it "Check metrics are empty" $ \_ -> do
-    --   respBody <- getRespBody requestMetric
-    --   traceTest respBody "isEmpty ---------"
-    --   BS.null respBody `shouldBe` True
+  describe "Test the MetricApi." $ do
+    it "Check metrics are empty" $ \_ -> do
+      respBody <- getRespBody requestMetric
+      traceTest respBody "isEmpty ---------"
+      "g1 0.0" `BS.isInfixOf` respBody `shouldBe` True
 
     it "Inc one vector metrics" $ \coll -> do
       inc (useMetric @C1 coll) 42
