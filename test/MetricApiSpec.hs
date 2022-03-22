@@ -90,8 +90,8 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
       inc (useMetric @C10 coll) 10 False
       coll2 <- register collection2
       inc (useMetric @C11 coll2) 11 False
-      respBody <- getRespBody requestMetric
       inc (useMetric @C10 coll) 10 False
+      respBody <- getRespBody requestMetric
       traceTest respBody "c7 inc --------------"
       and [ "c10{foo=\"10\",bar=\"False\"} 2.0" `BS.isInfixOf` respBody
           , "c11{foo=\"11\",bar=\"False\"} 1.0" `BS.isInfixOf` respBody
@@ -208,3 +208,5 @@ collection =
 collection2 =
       c11
   </> MNil
+
+-- collection3 = collection <> collection2

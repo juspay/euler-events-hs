@@ -168,6 +168,14 @@ type family UniqName (n :: Symbol) (ns :: [Symbol]) :: Constraint where
                              (TypeError ('Text "Metrics name must be unique in a collection"))
                              (UniqName n tail)
 
+-- type UniqNames :: [Symbol] -> [Symbol] -> Constraint
+type family UniqNames (ms :: [Symbol]) (ns :: [Symbol]) :: Constraint where
+  UniqNames ms '[] = ()
+  UniqNames '[] ns = ()
+  UniqNames (n ': tail1) ns = If (NotElemT n ns)
+                             (TypeError ('Text "Two metrics have similar elements!"))
+                             (UniqNames tail1 ns)
+
 -- type NotEmpty :: Symbol -> Constraint
 type family NotEmpty (s :: Symbol) where
   NotEmpty s = If (EqSymbol "" s) (TypeError ('Text "Empty names/labels are prohibited")) ()
@@ -266,10 +274,29 @@ data Metrics (state :: MetricsState) (ts :: [Type]) (names :: [Symbol]) where
            , PrometheusThing sort name labels
            , UniqName name names
            )
-        => (PromRep sort name labels)
+        => PromRep sort name labels
         -> Metrics state ts names
         -> Metrics state ((PromRep sort name labels) ': ts) ( name ': names)
 infixr 4 :+:
+
+type family Concat (l :: [k]) (r :: [k]) where
+   Concat '[] a = a
+   Concat (x ': xs) a = x ': Concat xs a
+
+-- | A concat operator for metric collections.
+type family ConcatT m1 m2 where
+  ConcatT (Metrics state '[] '[]) (Metrics state ts2 names2) = Metrics state ts2 names2
+  -- ConcatT (Metrics state ts1 names1) (Metrics state '[] '[]) = Metrics state ts1 names1
+  ConcatT (Metrics state ts1 names1) (Metrics state ts2 names2) =
+    Metrics state (Concat ts1 ts2) (Concat names1 names2)
+
+concatT :: UniqNames names1 names2
+  => Metrics 'Built ts1 names1
+  -> Metrics 'Built ts2 names2
+  -> ConcatT (Metrics 'Built ts1 names1) (Metrics 'Built ts2 names2)
+-- concatT m1 MNil = m1
+concatT MNil m2 = m2
+concatT (x1 :+: xs1) m2 = concatT xs1 (x1 </> m2)
 
 -- | A cons operator for metric collections.
 infixr 4 </>
@@ -277,7 +304,7 @@ infixr 4 </>
       , PrometheusThing sort name labels
       , UniqName name names
       )
-      => (PromRep sort name labels)
+      => PromRep sort name labels
       -> Metrics 'Built ts names
       -> Metrics 'Built ((PromRep sort name labels) ': ts) ( name ': names)
 (</>) = (:+:)
@@ -286,6 +313,11 @@ type family ElemT (s :: Type) (ss :: [Type]) :: Constraint where
   ElemT _ '[] = TypeError ('Text "Not an element!")
   ElemT s (s:t) = ()
   ElemT s (h:t) = ElemT s t
+
+type family NotElemT (s :: Symbol) (ss :: [Symbol]) :: Bool where
+  NotElemT _ '[] = 'True
+  NotElemT s (s:t) = 'False
+  NotElemT s (h:t) = NotElemT s t
 
 mMap :: forall state ts names r
       . (   forall sort name labels
