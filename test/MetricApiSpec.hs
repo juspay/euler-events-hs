@@ -86,6 +86,27 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
           , "c9{foo=\"9\",bar=\"False\"} 1.0" `BS.isInfixOf` respBody
           ] `shouldBe` True
 
+    it "Register metrics sequentually" $ \coll -> do
+      inc (useMetric @C10 coll) 10 False
+      coll2 <- register collection2
+      inc (useMetric @C11 coll2) 11 False
+      respBody <- getRespBody requestMetric
+      inc (useMetric @C10 coll) 10 False
+      traceTest respBody "c7 inc --------------"
+      and [ "c10{foo=\"10\",bar=\"False\"} 2.0" `BS.isInfixOf` respBody
+          , "c11{foo=\"11\",bar=\"False\"} 1.0" `BS.isInfixOf` respBody
+          ] `shouldBe` True
+
+{-
+# HELP c11 c11
+# TYPE c11 counter
+c11{foo="11",bar="False"} 1.0
+# HELP c10 c10
+# TYPE c10 counter
+c10{foo="10",bar="False"} 1.0
+-}
+
+
 
 type C1 = PromRep 'Counter "c1" '[ '("foo", Int)]
 c1 :: C1
@@ -155,6 +176,20 @@ c9 = counter @"c9"
       .& lbl @"bar" @Bool
       .& build
 
+type C10 = PromRep 'Counter "c10" '[ '("foo", Int), '("bar", Bool)]
+c10 :: C10
+c10 = counter @"c10"
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+      .& build
+
+type C11 = PromRep 'Counter "c11" '[ '("foo", Int), '("bar", Bool)]
+c11 :: C11
+c11 = counter @"c11"
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+      .& build
+
 -- collection of metrics, prevents from ambiguos metric names
 collection =
       c1
@@ -167,4 +202,9 @@ collection =
   </> c7
   </> c8
   </> c9
+  </> c10
+  </> MNil
+
+collection2 =
+      c11
   </> MNil
