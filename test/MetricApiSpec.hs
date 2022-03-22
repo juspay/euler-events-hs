@@ -13,6 +13,7 @@ import Control.Exception (SomeException, bracket, try)
 import qualified Data.ByteString as BS
 import Data.Either (isLeft)
 import Test.Hspec (Spec, describe, it, runIO, shouldBe, hspec)
+-- import qualified Prometheus as P
 
 
 
@@ -88,6 +89,17 @@ c6{bar="True",foo="3"} 1.0
 # TYPE c6 counter
 c6{bar="True",foo="3"} 1.0
 -}
+    it "Map reg of metrics and increment them" $ do
+      c7 <- reg coll c7def
+      c8 <- reg coll c8def
+      c9 <- reg coll c9def
+      -- mapM (reg col) [c7def,]
+      inc c7 True 3
+      -- inc c4 True 3
+      respBody <- getRespBody requestMetric
+      putStrLn "c7 inc --------------"
+      BS.putStrLn respBody
+      "c7{bar=\"True\",foo=\"3\"} 1.0" `BS.isInfixOf` respBody `shouldBe` True
 
 
 -- creates a counter @c1@ with one label @foo@ of type 'Int'
@@ -115,6 +127,18 @@ c6def = counter @"c6"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
 
+c7def = counter @"c7"
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+
+c8def = counter @"c8"
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+
+c9def = counter @"c9"
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
+
 -- collection of metrics, prevents from ambiguos metric names
 coll =
       g1def
@@ -124,4 +148,7 @@ coll =
   :+: c4def
   :+: c5def
   :+: c6def
+  :+: c7def
+  :+: c8def
+  :+: c9def
   :+: MNil
