@@ -31,10 +31,10 @@ module Euler.Events.MetricAPI
   , (.&)
   , lbl
   , build
-  -- , lbl
-  -- , build
+  , (.>)
+  , register
     -- * Using metrics
-  , useMetric
+  , (</>)
     -- ** Counters
   , inc
   , add
@@ -50,6 +50,7 @@ TODO:
  * add help to MetricDef (easy)
  * add histograms support (easy)
  * implement instances for 5..9-arity
+ * fix orphan instance: instance (KnownSymbol s, l ~ s) => IsLabel s (Proxy l)
 -}
 
 import Data.Coerce (coerce)
@@ -101,11 +102,11 @@ This module solves all issues mentioned.
 
 Example of using well-typed API:
 
->>> c1def = counter @"c1" .& lbl @"foo" @Int .& build
->>> g1def = gauge @"g1" .& build
->>> coll = g1def </> c1def </> MNil
+>>> c1def = counter #c1 .& lbl @"foo" @Int .& build
+>>> g1def = gauge #g1 .& build
+>>> coll = g1def .> c1def .> MNil
 >>> coll' <- reg coll
->>> inc (useMetric @(PromRep Counter "c1" '[("foo", Int)])) 42
+>>> inc (coll' </> #c1) 42
 
 == On difference between labelled/bare metrics
 
@@ -118,7 +119,8 @@ of their label values, otherwise it won't make sense. Keep in mind this discrepa
 
 {-
 * add support for histograms
-* use symbols instead of types (Kyrylo's map should work here well)
+* CanAddLabel -> CheckLabelsLimit
+* 5-9-ary instances
 -}
 
 -- TODO add histograms
@@ -157,12 +159,12 @@ type family EqOrd (o :: Ordering) :: Bool where
   EqOrd 'EQ = 'True
   EqOrd _   = 'False
 
--- type UniqName :: Symbol -> [Symbol] -> Constraint
-type family UniqName (n :: Symbol) (ns :: [Symbol]) :: Constraint where
+-- type UniqName :: Symbol -> STAssoc -> Constraint
+type family UniqName (n :: Symbol) (ns :: STAssoc) :: Constraint where
   UniqName n '[] = ()
-  UniqName n (h ': tail) = If (EqSymbol n h)
-                             (TypeError ('Text "Metrics name must be unique in a collection"))
-                             (UniqName n tail)
+  UniqName n ( '(h, _) ': tail) = If (EqSymbol n h)
+                                  (TypeError ('Text "Metrics name must be unique in a collection"))
+                                  (UniqName n tail)
 
 -- type NotEmpty :: Symbol -> Constraint
 type family NotEmpty (s :: Symbol) where
@@ -178,7 +180,7 @@ type family PromPrim s = r | r -> s where
   PromPrim 'Gauge = P.Gauge
 
 -- type PrometheusThing :: MetricSort -> Symbol -> STAssoc -> Constraint
-class PrometheusThing sort (name :: Symbol) labels where
+class PrometheusThing (sort :: MetricSort) (name :: Symbol) (labels :: STAssoc) where
   data PromRep sort name labels :: Type
   registerMetric :: (P.Info -> P.Metric (PromPrim sort)) -> MetricDef sort name labels -> IO (PromRep sort name labels)
   type PromAction labels :: Type
@@ -202,12 +204,12 @@ instance Registrable 'Gauge where
   cons = P.gauge
 
 -- | Basic counter
-counter :: forall name. NotEmpty name => MetricDef 'Counter name '[]
-counter = MetricDef
+counter :: forall name. NotEmpty name => Proxy name -> MetricDef 'Counter name '[]
+counter _ = MetricDef
 
 -- | Basic gauge
-gauge :: forall name. NotEmpty name => MetricDef 'Gauge name '[]
-gauge = MetricDef
+gauge :: forall name. NotEmpty name => Proxy name -> MetricDef 'Gauge name '[]
+gauge _ = MetricDef
 
 type family Snoc (list ::[k]) (elem :: k) :: [k] where
   Snoc '[] e = '[e]
@@ -253,19 +255,18 @@ data MetricsState = Built | Registered
 -- It allows only 'PromRep sort name labels` types in it. All types must be
 -- uniqie which is guaranteed by @UniqName@ constraint.
 --
--- It's polymorphic in @state@, so we are not cons ':+:' constructor, wich is
--- not supposed to be used with 'Registered' collections. Instead this module
--- exports '.&' operator.
-data Metrics (state :: MetricsState) (ts :: [Type]) (names :: [Symbol]) (map :: STAssoc) where
-  MNil  :: Metrics state '[] '[] '[]
+-- It's polymorphic in @state@, so we don't export it. Instead this module
+-- exports '.>' operator which is restricted by @Built@
+data Metrics (state :: MetricsState) (map :: STAssoc) where
+  MNil  :: Metrics state '[]
   (:+:) :: ( Typeable (PromRep sort name labels)
            , PrometheusThing sort name labels
-           , UniqName name names
-           , KnownSymbol  s
+           , UniqName name as
+           , KnownSymbol name
            )
-        => (Proxy s, PromRep sort name labels)
-        -> Metrics state ts names as
-        -> Metrics state ((PromRep sort name labels) ': ts) ( name ': names) ( '(s, PromRep sort name labels) ': as)
+        => PromRep sort name labels
+        -> Metrics state as
+        -> Metrics state ( '(name, PromRep sort name labels) ': as)
 infixr 4 :+:
 
 type family Concat (l :: [k]) (r :: [k]) where
@@ -289,14 +290,15 @@ concatT (x1 :+: xs1) m2 = concatT xs1 (x1 </> m2)
 
 -- | A cons operator for metric collections.
 infixr 4 .>
-(.>) :: ( Typeable (PromRep sort name labels)
+(.>) :: forall sort name labels as .
+      ( Typeable (PromRep sort name labels)
       , PrometheusThing sort name labels
-      , UniqName name names
-      , KnownSymbol  s
+      , UniqName name as
+      , KnownSymbol name
       )
-      => (Proxy s, PromRep sort name labels)
-      -> Metrics 'Built ts names as
-      -> Metrics 'Built ((PromRep sort name labels) ': ts) ( name ': names) ( '(s, PromRep sort name labels) ': as)
+      => PromRep sort name labels
+      -> Metrics 'Built as
+      -> Metrics 'Built ( '(name, PromRep sort name labels) ': as)
 (.>) = (:+:)
 
 type family ElemT (s :: Type) (ss :: [Type]) :: Constraint where
@@ -313,13 +315,13 @@ type family TypeBySym (s :: Symbol) (map :: STAssoc) = r where
   TypeBySym s ( '(s, t) ': r) = t
   TypeBySym s ( '(_, _) ': r) = TypeBySym s r
 
-mMap :: forall state ts names as r
+mMap :: forall state as r
       . (   forall sort name labels
           . PrometheusThing sort name labels
          => SafetyBox (PromRep sort name labels) -> r)
-     -> Metrics state ts names as -> [r]
+     -> Metrics state as -> [r]
 mMap _ MNil = []
-mMap f ((_,m) :+: bs) = f (SafetyBox m) : mMap f bs
+mMap f (m :+: bs) = f (SafetyBox m) : mMap f bs
 
 runDummyOp :: forall (sort :: MetricSort) (name :: Symbol) (labels :: STAssoc)
                 . PrometheusThing sort name labels
@@ -327,7 +329,7 @@ runDummyOp :: forall (sort :: MetricSort) (name :: Symbol) (labels :: STAssoc)
 runDummyOp  (SafetyBox m) = dummyOp @sort @name @labels (\_ -> pure ()) m
 
 -- | An action to register a metric collection.
-register :: Metrics 'Built ts names as -> IO (Metrics 'Registered ts names as)
+register :: Metrics 'Built as -> IO (Metrics 'Registered as)
 register metrics = do
   _ <- sequence (mMap runDummyOp metrics)
   pure $ coerce metrics
@@ -335,33 +337,23 @@ register metrics = do
 -- | An opaque wrapper for metrics, to protect them from being used directly.
 newtype SafetyBox a = SafetyBox a
 
--- | An accessor to get a metric from a collection. Since all types in a collection
--- is unique we can implement this function as a total one.
-useMetric :: forall t ts names as. (Typeable t, ElemT t ts) => Metrics 'Registered ts names as -> SafetyBox t
-useMetric = go
-  where
-    -- Inner helper goes without recurring ElemT constraint
-    go :: forall t ts names as. (Typeable t) => Metrics 'Registered ts names as -> SafetyBox t
-    -- This won't happen, guaranteed by top-level ElemT constraint
-    go MNil = undefined
-    go (h :+: rest) = case eqTypeRep (typeRep @t) (typeOf h) of
-      Just HRefl -> SafetyBox h
-      _ -> go rest
-
 -- | Extract a metric by its name:
 --
 -- >>> collectin </> #metric_name
 --
-(</>) :: forall (s :: Symbol) ts names (as :: STAssoc)
+(</>) :: forall (s :: Symbol) (as :: STAssoc)
        . (ElemST s as, KnownSymbol s)
-      => Metrics 'Registered ts names as -> Proxy s -> SafetyBox (TypeBySym s as)
+      => Metrics 'Registered as -> Proxy s -> SafetyBox (TypeBySym s as)
 (</>) m _ = go m
   where
-    go :: forall (s' :: Symbol) ts names (as' :: STAssoc). Metrics 'Registered ts names as' -> SafetyBox (TypeBySym s as)
+    go :: forall (as' :: STAssoc). Metrics 'Registered as' -> SafetyBox (TypeBySym s as)
     go MNil = undefined
-    go ((proxy, value) :+: rest) = case eqTypeRep (typeOf (Proxy @s)) (typeOf proxy) of
+    go (value :+: rest) = case eqTypeRep (typeOf (Proxy @s)) (typeOf $ metricName value) of
       Just HRefl -> SafetyBox $ unsafeCoerce value
       Nothing  -> go rest
+
+    metricName :: forall sort name labels. PromRep sort name labels -> Proxy name
+    metricName _ = Proxy @name
 
 -- | Overloaded labels instance for more convenience
 instance (KnownSymbol s, l ~ s) => IsLabel s (Proxy l) where
@@ -536,97 +528,23 @@ instance ( KnownSymbol name
 -------------------------------------------------------------------------------}
 
 coll :: _
-coll = (#cool_name, c2)
-    .> (#specified, g1)
-    .> (#be_means_of, c0)
-    .> (#overloaded_labels, c1)
+coll = c2
+    .> g1
+    .> c0
+    .> c1
     .> MNil
   where
-    c0 = counter @"c0" .& build
+    c0 = counter #c0 .& build
 
-    c1 =  counter @"c1"
+    c1 = counter #c1
           .& lbl @"foo" @Int
           .& build
 
-    c2 =  counter @"c2"
+    c2 = counter #c2
           .& lbl @"foo" @Int
           .& lbl @"bar" @Bool
           .& build
 
-    g1 = gauge @"g1"
+    g1 = gauge #g1
           .& lbl @"foo" @Int
           .& build
-
-
-
--- c2 = counter @"c2"
---       .& lbl @"foo" @Int
---       .& lbl @"bar" @Bool
-
--- c3 = counter @"c3"
---       .& lbl @"foo" @Int
---       .& lbl @"bar" @Bool
---       .& lbl @"baz" @Bool
-
--- c4 = counter @"c4"
---       .& lbl @"foo" @Int
---       .& lbl @"bar" @Bool
---       .& lbl @"baz" @Bool
---       .& lbl @"qux" @Bool
-
--- c5 = counter @"c5"
---       .& lbl @"foo" @Int
---       .& lbl @"bar" @Bool
---       .& lbl @"baz" @Bool
---       .& lbl @"qux" @Bool
---       .& lbl @"foo1" @Bool
-
--- c6 = counter @"c6"
---       .& lbl @"foo" @Int
---       .& lbl @"bar" @Bool
---       .& lbl @"baz" @Bool
---       .& lbl @"qux" @Bool
---       .& lbl @"foo1" @Bool
---       .& lbl @"bar1" @Bool
-
--- c7 = counter @"c7"
---       .& lbl @"foo" @Int
---       .& lbl @"bar" @Bool
---       .& lbl @"baz" @Bool
---       .& lbl @"qux" @Bool
---       .& lbl @"foo1" @Bool
---       .& lbl @"bar1" @Bool
---       .& lbl @"baz1" @Bool
-
--- c8 = counter @"c8"
---       .& lbl @"foo" @Int
---       .& lbl @"bar" @Bool
---       .& lbl @"baz" @Bool
---       .& lbl @"qux" @Bool
---       .& lbl @"foo1" @Bool
---       .& lbl @"bar1" @Bool
---       .& lbl @"baz1" @Bool
---       .& lbl @"qux1" @Bool
-
--- c9 = counter @"c9"
---       .& lbl @"foo" @Int
---       .& lbl @"bar" @Bool
---       .& lbl @"baz" @Bool
---       .& lbl @"qux" @Bool
---       .& lbl @"foo1" @Bool
---       .& lbl @"bar1" @Bool
---       .& lbl @"baz1" @Bool
---       .& lbl @"qux1" @Bool
---       .& lbl @"foo2" @Bool
-
--- -- c10 = counter @"c10"
--- --       .& lbl @"foo" @Int
--- --       .& lbl @"bar" @Bool
--- --       .& lbl @"baz" @Bool
--- --       .& lbl @"qux" @Bool
--- --       .& lbl @"foo1" @Bool
--- --       .& lbl @"bar1" @Bool
--- --       .& lbl @"baz1" @Bool
--- --       .& lbl @"qux1" @Bool
--- --       .& lbl @"foo2" @Bool
--- --       .& lbl @"bar2" @Bool
