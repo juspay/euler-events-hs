@@ -121,6 +121,7 @@ of their label values, otherwise it won't make sense. Keep in mind this discrepa
 * add support for histograms
 * CanAddLabel -> CheckLabelsLimit
 * 5-9-ary instances
+* update collection concatenation
 -}
 
 -- TODO add histograms
@@ -269,25 +270,6 @@ data Metrics (state :: MetricsState) (map :: STAssoc) where
         -> Metrics state ( '(name, PromRep sort name labels) ': as)
 infixr 4 :+:
 
-type family Concat (l :: [k]) (r :: [k]) where
-   Concat '[] a = a
-   Concat (x ': xs) a = x ': Concat xs a
-
--- | A concat operator for metric collections.
-type family ConcatT m1 m2 where
-  ConcatT (Metrics state '[] '[]) (Metrics state ts2 names2) = Metrics state ts2 names2
-  -- ConcatT (Metrics state ts1 names1) (Metrics state '[] '[]) = Metrics state ts1 names1
-  ConcatT (Metrics state ts1 names1) (Metrics state ts2 names2) =
-    Metrics state (Concat ts1 ts2) (Concat names1 names2)
-
-concatT :: UniqNames names1 names2
-  => Metrics 'Built ts1 names1
-  -> Metrics 'Built ts2 names2
-  -> ConcatT (Metrics 'Built ts1 names1) (Metrics 'Built ts2 names2)
--- concatT m1 MNil = m1
-concatT MNil m2 = m2
-concatT (x1 :+: xs1) m2 = concatT xs1 (x1 </> m2)
-
 -- | A cons operator for metric collections.
 infixr 4 .>
 (.>) :: forall sort name labels as .
@@ -358,6 +340,42 @@ newtype SafetyBox a = SafetyBox a
 -- | Overloaded labels instance for more convenience
 instance (KnownSymbol s, l ~ s) => IsLabel s (Proxy l) where
   fromLabel = Proxy @l
+
+{-------------------------------------------------------------------------------
+  Working with counters
+-------------------------------------------------------------------------------}
+
+--type family Concat (l :: [k]) (r :: [k]) where
+--   Concat '[] a = a
+--   Concat (x ': xs) a = x ': Concat xs a
+
+---- | A concat operator for metric collections.
+--type family ConcatT m1 m2 where
+--  ConcatT (Metrics state '[] '[]) (Metrics state ts2 names2) = Metrics state ts2 names2
+--  -- ConcatT (Metrics state ts1 names1) (Metrics state '[] '[]) = Metrics state ts1 names1
+--  ConcatT (Metrics state ts1 names1) (Metrics state ts2 names2) =
+--    Metrics state (Concat ts1 ts2) (Concat names1 names2)
+--
+---- type UniqNames :: [Symbol] -> [Symbol] -> Constraint
+--type family UniqNames (ms :: [Symbol]) (ns :: [Symbol]) :: Constraint where
+--  UniqNames ms '[] = ()
+--  UniqNames '[] ns = ()
+--  UniqNames (n ': tail1) ns = If (NotElemT n ns)
+--                             (TypeError ('Text "Two metrics have similar elements!"))
+--                             (UniqNames tail1 ns)
+--
+--type family NotElemT (s :: Symbol) (ss :: [Symbol]) :: Bool where
+--  NotElemT _ '[] = 'True
+--  NotElemT s (s:t) = 'False
+--  NotElemT s (h:t) = NotElemT s t
+--
+--concatT :: UniqNames names1 names2
+--  => Metrics 'Built ts1 names1
+--  -> Metrics 'Built ts2 names2
+--  -> ConcatT (Metrics 'Built ts1 names1) (Metrics 'Built ts2 names2)
+---- concatT m1 MNil = m1
+--concatT MNil m2 = m2
+--concatT (x1 :+: xs1) m2 = concatT xs1 (x1 </> m2)
 
 {-------------------------------------------------------------------------------
   Working with counters
