@@ -6,9 +6,11 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoStarIsType #-}
+{-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
@@ -19,32 +21,28 @@
 -- package. Provides more expressive types to rule out some potential runtime
 -- errors for cases when your metrics are known in advance.
 module Euler.Events.MetricAPI
-  -- (
-  --   -- * Introduction
-  --   -- $intro
+  (
+    -- * Introduction
+    -- $intro
 
-  --   -- * Building metrics
-  --   PromRep (..)
-  -- , PromPrim (..)
-  -- , counter
-  -- , gauge
-  -- , (.&)
+    -- * Building metrics
+    counter
+  , gauge
+  , (.&)
+  , lbl
+  , build
   -- , lbl
   -- , build
-  -- -- , lbl
-  -- -- , build
-  --   -- * Using metrics
-  -- , Metrics (..)
-  -- , (</>)
-  -- , useMetric
-  --   -- ** Counters
-  -- , inc
-  -- , add
-  --   -- ** Gauges
-  -- , incGauge
-  --   -- ** Histograms
+    -- * Using metrics
+  , useMetric
+    -- ** Counters
+  , inc
+  , add
+    -- ** Gauges
+  , incGauge
+    -- ** Histograms
 
-  -- )
+  )
 where
 
 {-
@@ -56,12 +54,15 @@ TODO:
 
 import Data.Coerce (coerce)
 import Data.Kind
+import Data.Proxy
 import Data.Text (pack)
 import Type.Reflection
 import GHC.Exts (proxy#)
+import GHC.OverloadedLabels
 import GHC.TypeLits
 import qualified Data.Text as T
 import qualified Prometheus as P
+import Unsafe.Coerce (unsafeCoerce)
 import System.IO.Unsafe (unsafePerformIO)
 
 {- $intro
@@ -100,22 +101,16 @@ This module solves all issues mentioned.
 
 Example of using well-typed API:
 
--- TODO update and use inline
->>> -- creates a counter @c1@ with one label @foo@ of type 'Int'
 >>> c1def = counter @"c1" .& lbl @"foo" @Int .& build
--- another metric
 >>> g1def = gauge @"g1" .& build
--- collection of metrics, prevents from ambiguos metric names
 >>> coll = g1def </> c1def </> MNil
->>> -- registers a metric
 >>> coll' <- reg coll
->>> -- use a counter
 >>> inc (useMetric @(PromRep Counter "c1" '[("foo", Int)])) 42
 
-== On difference between labeled/bare metrics
+== On difference between labelled/bare metrics
 
-One peculiarity of labeled metrics in comparison to their unlabeled counerparts is that
-when being registered, labeled metrics won't appear in 'exportMetricsAsText` output.
+One peculiarity of labelled metrics in comparison to their unlabelled counterparts is that
+when being registered, labelled metrics won't appear in 'exportMetricsAsText` output.
 Indeed, in order to make it to the export data such metrics need to get at least one set
 of their label values, otherwise it won't make sense. Keep in mind this discrepancy in behaviour.
 
@@ -130,15 +125,16 @@ of their label values, otherwise it won't make sense. Keep in mind this discrepa
 data MetricSort = Counter | Gauge
   deriving stock (Show, Eq)
 
--- | Synonym for a type-level list of associated pairs
-type Labels = [(Symbol, Type)]
+-- | Kind synonym for a type-level list of associated pairs from
+-- 'Symbol' to 'Type'
+type STAssoc = [(Symbol, Type)]
 
--- type CanAddLabel :: Labels -> Constraint
-type family CanAddLabel (types :: Labels) :: Constraint where
+-- type CanAddLabel :: STAssoc -> Constraint
+type family CanAddLabel (types :: STAssoc) :: Constraint where
   CanAddLabel types = If ( Length types <=? 8) () (TypeError ('Text "You cannot use more than 9 labels."))
 
--- type CheckLabelUniqueness :: Symbol -> Labels -> Constraint
-type family CheckLabelUniqueness (name :: Symbol) (labels :: Labels) :: Constraint where
+-- type CheckLabelUniqueness :: Symbol -> STAssoc -> Constraint
+type family CheckLabelUniqueness (name :: Symbol) (labels :: STAssoc) :: Constraint where
   CheckLabelUniqueness name    ( '(name, _typ) ': tail) = TypeError ('Text "Label names must be unique across a metric.")
   CheckLabelUniqueness another ( '(name, _typ) ': tail) = CheckLabelUniqueness another tail
   CheckLabelUniqueness another '[] = ()
@@ -168,28 +164,20 @@ type family UniqName (n :: Symbol) (ns :: [Symbol]) :: Constraint where
                              (TypeError ('Text "Metrics name must be unique in a collection"))
                              (UniqName n tail)
 
--- type UniqNames :: [Symbol] -> [Symbol] -> Constraint
-type family UniqNames (ms :: [Symbol]) (ns :: [Symbol]) :: Constraint where
-  UniqNames ms '[] = ()
-  UniqNames '[] ns = ()
-  UniqNames (n ': tail1) ns = If (NotElemT n ns)
-                             (TypeError ('Text "Two metrics have similar elements!"))
-                             (UniqNames tail1 ns)
-
 -- type NotEmpty :: Symbol -> Constraint
 type family NotEmpty (s :: Symbol) where
   NotEmpty s = If (EqSymbol "" s) (TypeError ('Text "Empty names/labels are prohibited")) ()
 
 -- | A definition of a metric.
--- type MetricDef :: MetricSort -> Symbol -> Labels -> Type
-data MetricDef (sort :: MetricSort) (name :: Symbol) (labels :: Labels) = MetricDef
+-- type MetricDef :: MetricSort -> Symbol -> STAssoc -> Type
+data MetricDef (sort :: MetricSort) (name :: Symbol) (labels :: STAssoc) = MetricDef
 
 -- type PromPrim :: MetricSort -> Type
 type family PromPrim s = r | r -> s where
   PromPrim 'Counter = P.Counter
   PromPrim 'Gauge = P.Gauge
 
--- type PrometheusThing :: MetricSort -> Symbol -> Labels -> Constraint
+-- type PrometheusThing :: MetricSort -> Symbol -> STAssoc -> Constraint
 class PrometheusThing sort (name :: Symbol) labels where
   data PromRep sort name labels :: Type
   registerMetric :: (P.Info -> P.Metric (PromPrim sort)) -> MetricDef sort name labels -> IO (PromRep sort name labels)
@@ -230,7 +218,7 @@ lbl
   :: forall
       (label :: Symbol)
       (typ :: Type)
-      (types :: Labels)
+      (types :: STAssoc)
       (sort :: MetricSort)
       (name :: Symbol)
   .  KnownSymbol label
@@ -268,15 +256,16 @@ data MetricsState = Built | Registered
 -- It's polymorphic in @state@, so we are not cons ':+:' constructor, wich is
 -- not supposed to be used with 'Registered' collections. Instead this module
 -- exports '.&' operator.
-data Metrics (state :: MetricsState) (ts :: [Type]) (names :: [Symbol]) where
-  MNil  :: Metrics state '[] '[]
+data Metrics (state :: MetricsState) (ts :: [Type]) (names :: [Symbol]) (map :: STAssoc) where
+  MNil  :: Metrics state '[] '[] '[]
   (:+:) :: ( Typeable (PromRep sort name labels)
            , PrometheusThing sort name labels
            , UniqName name names
+           , KnownSymbol  s
            )
-        => PromRep sort name labels
-        -> Metrics state ts names
-        -> Metrics state ((PromRep sort name labels) ': ts) ( name ': names)
+        => (Proxy s, PromRep sort name labels)
+        -> Metrics state ts names as
+        -> Metrics state ((PromRep sort name labels) ': ts) ( name ': names) ( '(s, PromRep sort name labels) ': as)
 infixr 4 :+:
 
 type family Concat (l :: [k]) (r :: [k]) where
@@ -299,41 +288,46 @@ concatT MNil m2 = m2
 concatT (x1 :+: xs1) m2 = concatT xs1 (x1 </> m2)
 
 -- | A cons operator for metric collections.
-infixr 4 </>
-(</>) :: ( Typeable (PromRep sort name labels)
+infixr 4 .>
+(.>) :: ( Typeable (PromRep sort name labels)
       , PrometheusThing sort name labels
       , UniqName name names
+      , KnownSymbol  s
       )
-      => PromRep sort name labels
-      -> Metrics 'Built ts names
-      -> Metrics 'Built ((PromRep sort name labels) ': ts) ( name ': names)
-(</>) = (:+:)
+      => (Proxy s, PromRep sort name labels)
+      -> Metrics 'Built ts names as
+      -> Metrics 'Built ((PromRep sort name labels) ': ts) ( name ': names) ( '(s, PromRep sort name labels) ': as)
+(.>) = (:+:)
 
 type family ElemT (s :: Type) (ss :: [Type]) :: Constraint where
   ElemT _ '[] = TypeError ('Text "Not an element!")
   ElemT s (s:t) = ()
   ElemT s (h:t) = ElemT s t
 
-type family NotElemT (s :: Symbol) (ss :: [Symbol]) :: Bool where
-  NotElemT _ '[] = 'True
-  NotElemT s (s:t) = 'False
-  NotElemT s (h:t) = NotElemT s t
+type family ElemST (s :: Symbol) (map :: STAssoc) :: Constraint  where
+  ElemST _ '[] = TypeError ('Text "not an element!")
+  ElemST s ( '(s, t) ': r) = ()
+  ElemST s ( '(_, _) ': r) = ElemST s r
 
-mMap :: forall state ts names r
+type family TypeBySym (s :: Symbol) (map :: STAssoc) = r where
+  TypeBySym s ( '(s, t) ': r) = t
+  TypeBySym s ( '(_, _) ': r) = TypeBySym s r
+
+mMap :: forall state ts names as r
       . (   forall sort name labels
           . PrometheusThing sort name labels
          => SafetyBox (PromRep sort name labels) -> r)
-     -> Metrics state ts names -> [r]
+     -> Metrics state ts names as -> [r]
 mMap _ MNil = []
-mMap f (m :+: bs) = f (SafetyBox m) : mMap f bs
+mMap f ((_,m) :+: bs) = f (SafetyBox m) : mMap f bs
 
-runDummyOp :: forall (sort :: MetricSort) (name :: Symbol) (labels :: Labels)
+runDummyOp :: forall (sort :: MetricSort) (name :: Symbol) (labels :: STAssoc)
                 . PrometheusThing sort name labels
                => SafetyBox (PromRep sort name labels) -> IO ()
 runDummyOp  (SafetyBox m) = dummyOp @sort @name @labels (\_ -> pure ()) m
 
 -- | An action to register a metric collection.
-register :: Metrics 'Built ts names -> IO (Metrics 'Registered ts names)
+register :: Metrics 'Built ts names as -> IO (Metrics 'Registered ts names as)
 register metrics = do
   _ <- sequence (mMap runDummyOp metrics)
   pure $ coerce metrics
@@ -343,16 +337,35 @@ newtype SafetyBox a = SafetyBox a
 
 -- | An accessor to get a metric from a collection. Since all types in a collection
 -- is unique we can implement this function as a total one.
-useMetric :: forall t ts names. (Typeable t, ElemT t ts) => Metrics 'Registered ts names -> SafetyBox t
+useMetric :: forall t ts names as. (Typeable t, ElemT t ts) => Metrics 'Registered ts names as -> SafetyBox t
 useMetric = go
   where
     -- Inner helper goes without recurring ElemT constraint
-    go :: forall t ts names. (Typeable t) => Metrics 'Registered ts names -> SafetyBox t
+    go :: forall t ts names as. (Typeable t) => Metrics 'Registered ts names as -> SafetyBox t
     -- This won't happen, guaranteed by top-level ElemT constraint
     go MNil = undefined
     go (h :+: rest) = case eqTypeRep (typeRep @t) (typeOf h) of
       Just HRefl -> SafetyBox h
       _ -> go rest
+
+-- | Extract a metric by its name:
+--
+-- >>> collectin </> #metric_name
+--
+(</>) :: forall (s :: Symbol) ts names (as :: STAssoc)
+       . (ElemST s as, KnownSymbol s)
+      => Metrics 'Registered ts names as -> Proxy s -> SafetyBox (TypeBySym s as)
+(</>) m _ = go m
+  where
+    go :: forall (s' :: Symbol) ts names (as' :: STAssoc). Metrics 'Registered ts names as' -> SafetyBox (TypeBySym s as)
+    go MNil = undefined
+    go ((proxy, value) :+: rest) = case eqTypeRep (typeOf (Proxy @s)) (typeOf proxy) of
+      Just HRefl -> SafetyBox $ unsafeCoerce value
+      Nothing  -> go rest
+
+-- | Overloaded labels instance for more convenience
+instance (KnownSymbol s, l ~ s) => IsLabel s (Proxy l) where
+  fromLabel = Proxy @l
 
 {-------------------------------------------------------------------------------
   Working with counters
@@ -377,6 +390,9 @@ incGauge :: forall name labels
           . PrometheusThing 'Gauge name labels
          => SafetyBox (PromRep 'Gauge name labels) -> PromAction labels
 incGauge (SafetyBox m)= runOperation @'Gauge @name @labels P.incGauge m
+
+
+
 
 {-------------------------------------------------------------------------------
   PrometheusThing instances, just repetative boilerplate
@@ -519,43 +535,29 @@ instance ( KnownSymbol name
   See test/MetricApiSpec.hs
 -------------------------------------------------------------------------------}
 
--- type C0 = PromRep 'Counter "c0" '[]
--- c0 :: C0
--- c0 = counter @"c0" .& build
+coll :: _
+coll = (#cool_name, c2)
+    .> (#specified, g1)
+    .> (#be_means_of, c0)
+    .> (#overloaded_labels, c1)
+    .> MNil
+  where
+    c0 = counter @"c0" .& build
 
--- type C1 = PromRep 'Counter "c1" '[ '("foo", Int)]
--- c1 :: C1
--- c1 =  counter @"c1"
---       .& lbl @"foo" @Int
---       .& build
+    c1 =  counter @"c1"
+          .& lbl @"foo" @Int
+          .& build
 
--- type C2 = PromRep 'Counter "c2" '[ '("foo", Int), '("bar", Bool)]
--- c2 :: C2
--- c2 =  counter @"c2"
---       .& lbl @"foo" @Int
---       .& lbl @"bar" @Bool
---       .& build
+    c2 =  counter @"c2"
+          .& lbl @"foo" @Int
+          .& lbl @"bar" @Bool
+          .& build
 
--- type G1 = PromRep 'Gauge "g1" '[ '("foo", Int)]
--- g1 ::G1
--- g1 = gauge @"g1"
---       .& lbl @"foo" @Int
---       .& build
+    g1 = gauge @"g1"
+          .& lbl @"foo" @Int
+          .& build
 
--- coll = c2 </> g1 </> c0 </> c1 </> MNil
 
--- coll' = unsafePerformIO $ register coll
-
--- data MyRuntime ts names = MyRuntime
---   { foo     :: Int
---   , metrics :: Metrics Registered ts names
---   }
-
--- myRuntime = MyRuntime 42 (coll')
-
--- c1w = useMetric @C1 (metrics myRuntime)
--- won't compile
--- int11 = useMetric @Int (metrics myRuntime)
 
 -- c2 = counter @"c2"
 --       .& lbl @"foo" @Int
