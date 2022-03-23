@@ -24,15 +24,19 @@ module Euler.Events.MetricAPI
   (
     -- * Introduction
     -- $intro
-
+    -- * Types
+    MetricsState (..)
+  , Metrics(..)
+  , STAssoc
+  , MetricSort (..)
+  , PromRep
     -- * Building metrics
-    counter
+  , counter
   , gauge
   , (.&)
   , lbl
   , build
   , (.>)
-  , Metrics(MNil)
   , register
     -- * Using metrics
   , (</>)
@@ -346,6 +350,24 @@ instance (KnownSymbol s, l ~ s) => IsLabel s (Proxy l) where
   Working with counters
 -------------------------------------------------------------------------------}
 
+-- type MkSTAssoc :: [PromRep sort name labels] -> STAssoc
+-- mkSTAssoc :: [PromRep sort name labels] -> STAssoc
+-- mkSTAssoc [] = []
+-- mkSTAssoc ((PromRep sort (name :: Symbol) labels) : ps) = (name, PromRep sort name labels) : (mkSTAssoc ps)
+
+-- data MetricMap (map :: STAssoc) where
+--   MNilMap :: '[]
+--   (:++:)  :: ( Typeable (PromRep sort name labels)
+--             , PrometheusThing sort name labels
+--             , UniqName name as
+--             , KnownSymbol name
+--             )
+--         => PromRep sort name labels
+--         -> MetricMap as
+--         -> MetricMap ('(name, PromRep sort name labels) ': as)
+-- infixr 4 :++:
+
+
 --type family Concat (l :: [k]) (r :: [k]) where
 --   Concat '[] a = a
 --   Concat (x ': xs) a = x ': Concat xs a
@@ -552,18 +574,20 @@ coll = c2
     .> c0
     .> c1
     .> MNil
-  where
-    c0 = counter #c0 .& build
 
-    c1 = counter #c1
+c0 = counter #c0 .& build
+
+c1 = counter #c1
           .& lbl @"foo" @Int
           .& build
 
-    c2 = counter #c2
+c2 = counter #c2
           .& lbl @"foo" @Int
           .& lbl @"bar" @Bool
           .& build
 
-    g1 = gauge #g1
+g1 = gauge #g1
           .& lbl @"foo" @Int
           .& build
+
+-- coll2 = c0 :++: c1 :++: MNilMap
