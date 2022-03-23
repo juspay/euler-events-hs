@@ -32,6 +32,7 @@ module Euler.Events.MetricAPI
   , lbl
   , build
   , (.>)
+  , Metrics(MNil)
   , register
     -- * Using metrics
   , (</>)
