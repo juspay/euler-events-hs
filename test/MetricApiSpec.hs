@@ -70,7 +70,7 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
     it "Reg two vector metrics 2 times" $ \coll -> do
       inc (coll </> #c6) 3 True
       coll2 <- register collection
-      inc (coll </> #c6) 3 True
+      inc (coll2 </> #c6) 3 True
       respBody <- getRespBody requestMetric
       traceTest respBody "c6 inc --------------"
       BS.putStrLn respBody
