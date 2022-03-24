@@ -19,21 +19,31 @@ common common-lang
   ghc-options:
     -Wall -Wcompat -Wincomplete-record-updates
     -Wincomplete-uni-patterns -Wredundant-constraints
+    -fplugin=RecordDotPreprocessor
 
-  build-depends:      base >=4.13 && <5
+  build-depends:
+        base >=4.13 && <5
+      , record-dot-preprocessor  ^>=0.2.14
+      , record-hasfield
   default-extensions:
+    DataKinds
     DeriveAnyClass
     DeriveGeneric
     DerivingStrategies
     DuplicateRecordFields
+    FlexibleContexts
     FlexibleInstances
     FunctionalDependencies
+    GADTs
     InstanceSigs
     MultiParamTypeClasses
     MultiWayIf
     NamedFieldPuns
     OverloadedStrings
     RecordWildCards
+    TypeApplications
+    TypeSynonymInstances
+    UndecidableInstances
 
   default-language:   Haskell2010
 
