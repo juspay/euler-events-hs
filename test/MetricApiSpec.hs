@@ -1,18 +1,19 @@
 {-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE OverloadedLabels    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
-{-# LANGUAGE OverloadedLabels #-}
 
 module MetricApiSpec where
 
-import Euler.Events.Network
 import Euler.Events.MetricAPI
+import Euler.Events.Network
 
 import Control.Concurrent.Async (async, cancel)
 import Control.Exception (bracket)
+import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
--- import Data.Either (isLeft)
-import Test.Hspec (Spec, describe, it, runIO, shouldBe, hspec, beforeAll)
+import Data.Text (Text)
+import Test.Hspec (Spec, beforeAll, describe, hspec, it, runIO, shouldBe)
 
 
 
@@ -97,14 +98,13 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
           , "c11{foo=\"11\",bar=\"False\"} 1.0" `BS.isInfixOf` respBody
           ] `shouldBe` True
 
-{-
-# HELP c11 c11
-# TYPE c11 counter
-c11{foo="11",bar="False"} 1.0
-# HELP c10 c10
-# TYPE c10 counter
-c10{foo="10",bar="False"} 1.0
--}
+    it "Check showing of text types" $ \coll -> do
+      inc (coll </> #c12) "text" "string" "bs" True
+      respBody <- getRespBody requestMetric
+      traceTest respBody "c12 inc --------------"
+      BS.putStrLn respBody
+      "c12{foo=\"text\",bar=\"string\",bin=\"bs\",buz=\"True\"} 1.0" `BS.isInfixOf` respBody `shouldBe` True
+
 
 
 
@@ -166,6 +166,13 @@ c11 = counter #c11
       .& lbl @"bar" @Bool
       .& build
 
+c12 = counter #c12
+      .& lbl @"foo" @Text
+      .& lbl @"bar" @String
+      .& lbl @"bin" @ByteString
+      .& lbl @"buz" @Bool
+      .& build
+
 -- collection of metrics, prevents from ambiguos metric names
 collection =
      c1
@@ -179,6 +186,7 @@ collection =
   .> c8
   .> c9
   .> c10
+  .> c12
   .> MNil
 
 collection2 =

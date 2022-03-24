@@ -27,17 +27,20 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
       checkInfixes procMetrics respBody `shouldBe` True
       "prefix_counter 1.0" `BS.isInfixOf` respBody `shouldBe` True
 
-    it "mimics a simple Prometheus metrics flow" $ \emitMetric -> do
+    it "IncrementVector1Counter a" $ \emitMetric -> do
       emitMetric (IncrementVector1Counter "vector" "a")
       respBody2 <- getRespBody requestMetric
-      -- "prefix_counter 1.0" `BS.isInfixOf` respBody2 `shouldBe` True
-      -- "prefix_vector{merchant_id=\"a\"}" `BS.isInfixOf` respBody2
-        -- `shouldBe` False
+      and [ "prefix_counter 1.0" `BS.isInfixOf` respBody2
+          , not $ "prefix_vector{merchant_id=\"a\"}" `BS.isInfixOf` respBody2
+          ] `shouldBe` True
+
+    it "RegisterVector1Counter vector merchant_id" $ \emitMetric -> do
       emitMetric (RegisterVector1Counter "vector" "merchant_id")
       emitMetric (IncrementVector1Counter "vector" "a")
       respBody3 <- getRespBody requestMetric
-      -- "prefix_vector{merchant_id=\"a\"} 1.0" `BS.isInfixOf` respBody3
-        -- `shouldBe` True
+      "prefix_vector{merchant_id=\"a\"} 1.0" `BS.isInfixOf` respBody3 `shouldBe` True
+
+    it "RegisterVector1Counter vector merchant_id" $ \emitMetric -> do
       emitMetric (Increment "counter")
       emitMetric (Increment "counter")
       emitMetric (Increment "counter")
@@ -56,7 +59,7 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
       emitMetric (IncrementVector1Counter "vector2" "a")
       emitMetric (IncrementVector1Counter "vector2" "b")
       respBody4 <- getRespBody requestMetric
-      -- "prefix_counter 4.0" `BS.isInfixOf` respBody4 `shouldBe` True
+      "prefix_counter 4.0" `BS.isInfixOf` respBody4 `shouldBe` True
       -- "prefix_counter2 3.0" `BS.isInfixOf` respBody4 `shouldBe` True
       -- "prefix_vector{merchant_id=\"a\"} 3.0" `BS.isInfixOf` respBody4
       --   `shouldBe` True

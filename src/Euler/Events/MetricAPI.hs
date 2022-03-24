@@ -92,9 +92,11 @@ import GHC.Exts (proxy#)
 import GHC.OverloadedLabels
 import GHC.TypeLits
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 import qualified Prometheus as P
 import Unsafe.Coerce (unsafeCoerce)
 import System.IO.Unsafe (unsafePerformIO)
+import Data.ByteString (ByteString)
 
 {- $setup
 >>> :set -XTypeApplications
@@ -449,13 +451,15 @@ incGauge (SafetyBox m)= runOperation @'Gauge @name @labels P.incGauge m
 -------------------------------------------------------------------------------}
 
 showT :: (Show a, Typeable a) => a -> T.Text
-showT a = case (checkString, checkText) of
-    (Nothing, Nothing) -> pack $ show a
-    (Just HRefl, _) -> T.pack a
-    (_, Just HRefl) -> a
+showT a = case (checkString, checkText, checkBS) of
+    (Nothing, Nothing, Nothing) -> pack $ show a
+    (Just HRefl, _, _) -> T.pack a
+    (_, Just HRefl, _) -> a
+    (_, _, Just HRefl) -> TE.decodeUtf8 a
   where
     checkString = eqTypeRep (typeOf a) (typeRep @String)
     checkText = eqTypeRep (typeOf a) (typeRep @T.Text)
+    checkBS = eqTypeRep (typeOf a) (typeRep @ByteString)
 
 -- | Bare metric, without any labels
 instance (KnownSymbol name) => PrometheusThing sort name '[] where
