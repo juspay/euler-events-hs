@@ -45,6 +45,7 @@ library
     Euler.Events.Logger.Stdout
     Euler.Events.MetricAPI
     Euler.Events.MetricLogger.Prometheus
+    Euler.Events.Network
     Euler.Events.Types.Event
     Euler.Events.Types.Metric
     Euler.Events.Types.Order
@@ -53,7 +54,6 @@ library
     Euler.Events.Types.TxnCardInfo
     Euler.Events.Util.Prometheus
     Euler.Events.Types.MandateWorkflow
-
   -- Euler.Events.Logger.Kafka
   other-modules:   Euler.Events.Util
   hs-source-dirs:  src
@@ -63,6 +63,8 @@ library
     , clock
     , containers
     , deepseq
+    , either
+    , http-conduit
     , http-types
     , prometheus-client
     , prometheus-metrics-ghc
@@ -88,7 +90,6 @@ test-suite tests
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
   other-modules:
-    Common
     EventSpec
     MetricApiSpec
     PrometheusSpec
@@ -100,7 +101,6 @@ test-suite tests
     , either
     , euler-events-hs
     , hspec
-    , http-conduit
     , time
     , prometheus-client
     , wai

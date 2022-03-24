@@ -5,9 +5,8 @@
 
 module MetricApiSpec where
 
-import Common
+import Euler.Events.Network
 import Euler.Events.MetricAPI
-
 
 import Control.Concurrent.Async (async, cancel)
 import Control.Exception (bracket)

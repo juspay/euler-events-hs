@@ -2,7 +2,7 @@
 
 module PrometheusSpec where
 
-import Common
+import Euler.Events.Network
 import Euler.Events.Class (emitMetricIO, initMetricLogger)
 import Euler.Events.MetricLogger.Prometheus (PrometheusConfig (PrometheusConfig))
 import Euler.Events.Types.Metric (MetricOperation (Increment, IncrementVector1Counter, RegisterVector1Counter))

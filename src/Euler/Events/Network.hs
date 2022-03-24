@@ -1,4 +1,4 @@
-module Common where
+module Euler.Events.Network where
 
 import Control.Exception (SomeException, try)
 import qualified Data.ByteString as BS
