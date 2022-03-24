@@ -19,6 +19,7 @@
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE LambdaCase #-}
 
 {- |
 
@@ -68,6 +69,11 @@ module Euler.Events.MetricAPI
     -- * Core types
   , MetricSort (..)
   , PromRep
+
+    -- * Ready stuff
+  , ReadyHandler (..)
+  , Ready(..)
+  , mkReadyHandler
   )
 where
 
@@ -444,7 +450,15 @@ add (SafetyBox rep) value = runOperation @'Counter @name @labels
 incGauge :: forall name labels
           . PrometheusThing 'Gauge name labels
          => SafetyBox (PromRep 'Gauge name labels) -> PromAction labels
-incGauge (SafetyBox m)= runOperation @'Gauge @name @labels P.incGauge m
+incGauge (SafetyBox m) = runOperation @'Gauge @name @labels P.incGauge m
+
+-- | Increments a gauge. Number and types of arguments depend on the counter
+-- definition.
+setGauge :: forall name labels
+          . PrometheusThing 'Gauge name labels
+         => SafetyBox (PromRep 'Gauge name labels) -> Double -> PromAction labels
+setGauge (SafetyBox m) value = runOperation @'Gauge @name @labels
+  (flip P.setGauge $ value) m
 
 {-------------------------------------------------------------------------------
   PrometheusThing instances, just repeatative boilerplate
@@ -585,3 +599,27 @@ instance ( KnownSymbol name
       , showT v4
       )
       op
+
+-------------------------------------------------------------------------------
+-- Land metric stuff on new api
+-- Move to another module.
+-------------------------------------------------------------------------------
+
+data Ready
+  = ReadyUp
+  | ReadyDown
+  deriving stock Show
+
+data ReadyHandler = ReadyHandler
+  { setReadyGauge :: Ready -> IO ()
+  }
+
+mkReadyHandler :: IO ReadyHandler
+mkReadyHandler = do
+  let up = gauge #up .& build
+  let collection = up .> MNil
+  metrics <- register collection
+  let go = setGauge $ metrics </> #up
+  pure $ ReadyHandler $ \case
+      ReadyUp   -> go 1
+      ReadyDown -> go 0
