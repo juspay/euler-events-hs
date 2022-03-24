@@ -2,59 +2,84 @@
 
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE NoStarIsType #-}
+{-# LANGUAGE OverloadedLabels #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | A type-safe wrapper around "Prometheus" API from @prometheus-client@
--- package. Provides more expressive types to rule out some potential runtime
--- errors for cases when your metrics are known in advance.
+{- |
+
+= Type-safe API for Prometheus
+
+A type-safe wrapper around "Prometheus" API from @prometheus-client@
+package. In cases when metrics are known in advance, this module can
+help with ruling out many potential run time errors. \"Know a metric\"
+implies that the name and the labels names can be specified at compile
+time.
+
+Also this package provides typed API for labels, so instead of effectively
+untyped @Text@-based API you can use different types which also might
+prevent from hard-to-debug typos.
+
+-}
 module Euler.Events.MetricAPI
   (
     -- * Introduction
     -- $intro
-    -- * Types
-    MetricsState (..)
-  , Metrics(..)
-  , STAssoc
-  , MetricSort (..)
-  , PromRep
+
     -- * Building metrics
-  , counter
+    counter
   , gauge
   , (.&)
   , lbl
   , build
+
+    -- * Metrics collection
+  , MetricsState
+  , Metrics (MNil)
   , (.>)
   , register
+
     -- * Using metrics
   , (</>)
+
     -- ** Counters
   , inc
   , add
+
     -- ** Gauges
   , incGauge
+
     -- ** Histograms
 
+    -- * Core types
+  , MetricSort (..)
+  , PromRep
   )
 where
 
 {-
+NOTES:
+ * this file uses doctest, run `cabal run metricapi-doctest` to verify haddock examples
+
 TODO:
  * add help to MetricDef (easy)
  * add histograms support (easy)
- * implement instances for 5..9-arity
+ * add more operations
+ * implement instances for 5..9-arity (easy)
  * fix orphan instance: instance (KnownSymbol s, l ~ s) => IsLabel s (Proxy l)
 -}
 
@@ -71,9 +96,22 @@ import qualified Prometheus as P
 import Unsafe.Coerce (unsafeCoerce)
 import System.IO.Unsafe (unsafePerformIO)
 
+{- $setup
+>>> :set -XTypeApplications
+>>> :set -XOverloadedLabels
+>>> :set -XOverloadedStrings
+>>> :set -XDataKinds
+>>> :set -XTypeOperators
+>>> :set -XFlexibleContexts
+>>> :set -XGADTs
+>>> :set -XTypeFamilies
+>>> :set -XAllowAmbiguousTypes
+>>> import qualified Prometheus as P
+-}
+
 {- $intro
 
-Let's consider a typical workflow based on bare "Prometheus" API:
+Let's consider a typical workflow based on bare "Prometheus" API from @prometheus-client@ package:
 
 @
 λ> myVector1 <- register $ vector ("name", "name") $ Prometheus.counter (Info "http_requests" "")
@@ -99,19 +137,51 @@ http_requests{name="200",name="GET"} 1.0
 This snippet demonstrates several flaws of the API
 
 * one might register several metrics sharing the same name
-* you might give the same names to labels in vectors, making them ambigous
-* since all label values are just 'Text', one may accidenatlly mess up their order when using a metric
-* empty names and labels are considered to be just fine
+* you might give the same names to the labels in vectors, making them ambiguous
+* since all label values are just 'Text', one may accidentally flip them when using a labelled metric
+* empty names and labels are considered to be acceptable, which does not make any sense
 
-This module solves all issues mentioned.
+This module solves all the issues mentioned by leveraging type-level Haskell features.
 
-Example of using well-typed API:
+== Example of API's use
 
->>> c1def = counter #c1 .& lbl @"foo" @Int .& build
->>> g1def = gauge #g1 .& build
->>> coll = g1def .> c1def .> MNil
->>> coll' <- reg coll
->>> inc (coll' </> #c1) 42
+Define a __counter__ with name __c0__  without any labels:
+
+>>> c0 = counter #c0 .& build
+
+Let's add a counter __c2__ with two labels, the first being 'Int' and the other being 'Bool':
+
+>>> c2 = counter #c2 .& lbl @"foo" @Int .& lbl @"bar" @Bool .& build
+
+And a gauge for good measure:
+
+>>> g1 = gauge #g1 .& lbl @"foo" @Int .& build
+
+Now we are ready to pack all those metrics in a collection:
+
+>>> coll = c2 .> g1 .> c0 .> MNil
+
+This collection can be extended using '.>' operator until it gets registered:
+
+>>> metrics <- register coll
+
+Later we can refer to metrics by their names with '</>' operator. The type
+of actions depend on the metric's labels:
+
+>>> inc (metrics </> #c2) 42 True
+
+Notice that we don't have to write any explicit types for metrics anywhere, even to get them
+from a collection.
+
+Let's check the results:
+
+>>> P.exportMetricsAsText >>= Data.ByteString.Lazy.putStr
+# HELP c2 c2
+# TYPE c2 counter
+c2{foo="42",bar="True"} 1.0
+# HELP c0 c0
+# TYPE c0 counter
+c0 0.0
 
 == On difference between labelled/bare metrics
 
@@ -122,14 +192,7 @@ of their label values, otherwise it won't make sense. Keep in mind this discrepa
 
 -}
 
-{-
-* add support for histograms
-* CanAddLabel -> CheckLabelsLimit
-* 5-9-ary instances
-* update collection concatenation
--}
-
--- TODO add histograms
+-- | Types of metrics
 data MetricSort = Counter | Gauge
   deriving stock (Show, Eq)
 
@@ -137,9 +200,9 @@ data MetricSort = Counter | Gauge
 -- 'Symbol' to 'Type'
 type STAssoc = [(Symbol, Type)]
 
--- type CanAddLabel :: STAssoc -> Constraint
-type family CanAddLabel (types :: STAssoc) :: Constraint where
-  CanAddLabel types = If ( Length types <=? 8) () (TypeError ('Text "You cannot use more than 9 labels."))
+-- type CheckLabelLimit :: STAssoc -> Constraint
+type family CheckLabelLimit (types :: STAssoc) :: Constraint where
+  CheckLabelLimit types = If ( Length types <=? 8) () (TypeError ('Text "You cannot use more than 9 labels."))
 
 -- type CheckLabelUniqueness :: Symbol -> STAssoc -> Constraint
 type family CheckLabelUniqueness (name :: Symbol) (labels :: STAssoc) :: Constraint where
@@ -176,7 +239,7 @@ type family UniqName (n :: Symbol) (ns :: STAssoc) :: Constraint where
 type family NotEmpty (s :: Symbol) where
   NotEmpty s = If (EqSymbol "" s) (TypeError ('Text "Empty names/labels are prohibited")) ()
 
--- | A definition of a metric.
+-- | A definition of a metric. Includes its type, name and list of label names and types.
 -- type MetricDef :: MetricSort -> Symbol -> STAssoc -> Type
 data MetricDef (sort :: MetricSort) (name :: Symbol) (labels :: STAssoc) = MetricDef
 
@@ -198,7 +261,8 @@ class PrometheusThing (sort :: MetricSort) (name :: Symbol) (labels :: STAssoc) 
   dummyOp :: (PromPrim sort -> IO ()) -> PromRep sort name labels -> IO ()
   dummyOp _ _ = pure ()
 
--- | An aux typeclass to back one 'reg' for all sorts of metrics.
+-- | An auxiliary type class, set correspondence between metric's sort and 
+-- low-level constructor.
 -- type Registrable :: MetricSort -> Constraint
 class Registrable sort where
   cons :: P.Info -> P.Metric (PromPrim sort)
@@ -209,11 +273,11 @@ instance Registrable 'Counter where
 instance Registrable 'Gauge where
   cons = P.gauge
 
--- | Basic counter
+-- | Creates a basic counter definition
 counter :: forall name. NotEmpty name => Proxy name -> MetricDef 'Counter name '[]
 counter _ = MetricDef
 
--- | Basic gauge
+-- | Created a basic gauge definition
 gauge :: forall name. NotEmpty name => Proxy name -> MetricDef 'Gauge name '[]
 gauge _ = MetricDef
 
@@ -221,7 +285,8 @@ type family Snoc (list ::[k]) (elem :: k) :: [k] where
   Snoc '[] e = '[e]
   Snoc (e ': es) elem = e ': (Snoc es elem)
 
--- | Attaches a label to a metric of any sort
+-- | Attaches a label of a given type to a metric of any sort. Up to 9 labels
+-- are supported.
 lbl
   :: forall
       (label :: Symbol)
@@ -230,39 +295,42 @@ lbl
       (sort :: MetricSort)
       (name :: Symbol)
   .  KnownSymbol label
-  => CanAddLabel types
+  => CheckLabelLimit types
   => CheckLabelUniqueness label types
   => NotEmpty label
   => MetricDef sort name types -> MetricDef sort name (Snoc types '(label, typ))
 lbl = coerce
 
 infixl 3 .&
--- | 'Data.Function.&' with higher precedence.
+-- | 'Data.Function.&' with higher precedence to use with 'lbl'.
 (.&) :: a -> (a -> b) -> b
 a .& f = f a
 {-# INLINE (.&) #-}
 
--- | Constructs (lazily) a metric (calculated by 'PromRep' family)
--- by its definition.
+-- | Lazily constructs a metric (calculated by 'PromRep' family) by its definition.
 build :: forall sort name labels
        . (PrometheusThing sort name labels
        , Registrable sort)
-       => MetricDef sort name labels -> PromRep sort name labels
+      => MetricDef sort name labels -> PromRep sort name labels
 build = unsafePerformIO . (registerMetric cons)
 
 {-------------------------------------------------------------------------------
   Metrics collection
 -------------------------------------------------------------------------------}
 
--- | The state of the metric collection
-data MetricsState = Built | Registered
+-- | The state of the metric collection.
+data MetricsState
+  = Built
+  -- ^ a collection has not been registered
+  | Registered
+  -- ^ a registered collection
 
--- | Metrics collection, which is effectively a resticted heterogeneous list.
--- It allows only 'PromRep sort name labels` types in it. All types must be
--- uniqie which is guaranteed by @UniqName@ constraint.
+-- | Metrics collection, which is effectively a restricted heterogeneous list.
+-- It allows only @PromRep sort name labels@ types in it. All @name@s must be
+-- unique which is guaranteed by @UniqName@ constraint.
 --
--- It's polymorphic in @state@, so we don't export it. Instead this module
--- exports '.>' operator which is restricted by @Built@
+-- @:+:@ is polymorphic in @state@, so we don't export it. Instead this module
+-- exports '.>' operator which is restricted by @Built@ state.
 data Metrics (state :: MetricsState) (map :: STAssoc) where
   MNil  :: Metrics state '[]
   (:+:) :: ( Typeable (PromRep sort name labels)
@@ -294,7 +362,7 @@ type family ElemT (s :: Type) (ss :: [Type]) :: Constraint where
   ElemT s (h:t) = ElemT s t
 
 type family ElemST (s :: Symbol) (map :: STAssoc) :: Constraint  where
-  ElemST _ '[] = TypeError ('Text "not an element!")
+  ElemST _ '[] = TypeError ('Text "Not an element!")
   ElemST s ( '(s, t) ': r) = ()
   ElemST s ( '(_, _) ': r) = ElemST s r
 
@@ -326,8 +394,8 @@ newtype SafetyBox a = SafetyBox a
 
 -- | Extract a metric by its name:
 --
--- >>> collectin </> #metric_name
---
+-- >>> metricsCollection <- register ((counter #myCounter .& build) .> MNil)
+-- >>> myReadyToUseCounter = metricsCollection </> #myCounter
 (</>) :: forall (s :: Symbol) (as :: STAssoc)
        . (ElemST s as, KnownSymbol s)
       => Metrics 'Registered as -> Proxy s -> SafetyBox (TypeBySym s as)
@@ -342,7 +410,7 @@ newtype SafetyBox a = SafetyBox a
     metricName :: forall sort name labels. PromRep sort name labels -> Proxy name
     metricName _ = Proxy @name
 
--- | Overloaded labels instance for more convenience
+-- | @OverloadedLabels@ instance for convenience
 instance (KnownSymbol s, l ~ s) => IsLabel s (Proxy l) where
   fromLabel = Proxy @l
 
@@ -350,65 +418,15 @@ instance (KnownSymbol s, l ~ s) => IsLabel s (Proxy l) where
   Working with counters
 -------------------------------------------------------------------------------}
 
--- type MkSTAssoc :: [PromRep sort name labels] -> STAssoc
--- mkSTAssoc :: [PromRep sort name labels] -> STAssoc
--- mkSTAssoc [] = []
--- mkSTAssoc ((PromRep sort (name :: Symbol) labels) : ps) = (name, PromRep sort name labels) : (mkSTAssoc ps)
-
--- data MetricMap (map :: STAssoc) where
---   MNilMap :: '[]
---   (:++:)  :: ( Typeable (PromRep sort name labels)
---             , PrometheusThing sort name labels
---             , UniqName name as
---             , KnownSymbol name
---             )
---         => PromRep sort name labels
---         -> MetricMap as
---         -> MetricMap ('(name, PromRep sort name labels) ': as)
--- infixr 4 :++:
-
-
---type family Concat (l :: [k]) (r :: [k]) where
---   Concat '[] a = a
---   Concat (x ': xs) a = x ': Concat xs a
-
----- | A concat operator for metric collections.
---type family ConcatT m1 m2 where
---  ConcatT (Metrics state '[] '[]) (Metrics state ts2 names2) = Metrics state ts2 names2
---  -- ConcatT (Metrics state ts1 names1) (Metrics state '[] '[]) = Metrics state ts1 names1
---  ConcatT (Metrics state ts1 names1) (Metrics state ts2 names2) =
---    Metrics state (Concat ts1 ts2) (Concat names1 names2)
---
----- type UniqNames :: [Symbol] -> [Symbol] -> Constraint
---type family UniqNames (ms :: [Symbol]) (ns :: [Symbol]) :: Constraint where
---  UniqNames ms '[] = ()
---  UniqNames '[] ns = ()
---  UniqNames (n ': tail1) ns = If (NotElemT n ns)
---                             (TypeError ('Text "Two metrics have similar elements!"))
---                             (UniqNames tail1 ns)
---
---type family NotElemT (s :: Symbol) (ss :: [Symbol]) :: Bool where
---  NotElemT _ '[] = 'True
---  NotElemT s (s:t) = 'False
---  NotElemT s (h:t) = NotElemT s t
---
---concatT :: UniqNames names1 names2
---  => Metrics 'Built ts1 names1
---  -> Metrics 'Built ts2 names2
---  -> ConcatT (Metrics 'Built ts1 names1) (Metrics 'Built ts2 names2)
----- concatT m1 MNil = m1
---concatT MNil m2 = m2
---concatT (x1 :+: xs1) m2 = concatT xs1 (x1 </> m2)
-
-{-------------------------------------------------------------------------------
-  Working with counters
--------------------------------------------------------------------------------}
-
+-- | Increments a counter. Number and types of arguments depend on the counter
+-- definition.
 inc :: forall name labels
      . PrometheusThing 'Counter name labels
     => SafetyBox (PromRep 'Counter name labels) -> PromAction labels
 inc (SafetyBox m) = runOperation @'Counter @name @labels P.incCounter m
 
+-- | Adds a positive number to a counter. Number and types of arguments depend on the counter
+-- definition.
 add :: forall name labels
      . PrometheusThing 'Counter name labels
     => SafetyBox (PromRep 'Counter name labels) -> Word -> PromAction labels
@@ -419,17 +437,21 @@ add (SafetyBox rep) value = runOperation @'Counter @name @labels
   Working with gauge
 -------------------------------------------------------------------------------}
 
+-- | Increments a gauge. Number and types of arguments depend on the counter
+-- definition.
 incGauge :: forall name labels
           . PrometheusThing 'Gauge name labels
          => SafetyBox (PromRep 'Gauge name labels) -> PromAction labels
 incGauge (SafetyBox m)= runOperation @'Gauge @name @labels P.incGauge m
 
-
-
-
 {-------------------------------------------------------------------------------
-  PrometheusThing instances, just repetative boilerplate
+  PrometheusThing instances, just repeatative boilerplate
 -------------------------------------------------------------------------------}
+
+showT :: (Show a, Typeable a) => a -> T.Text
+showT a = case eqTypeRep (typeOf a) (typeRep @T.Text) of
+  Just HRefl -> a
+  Nothing -> pack $ show a
 
 -- | Bare metric, without any labels
 instance (KnownSymbol name) => PrometheusThing sort name '[] where
@@ -446,7 +468,7 @@ instance (KnownSymbol name) => PrometheusThing sort name '[] where
   dummyOp op (PromRepBare ref) = op ref
 
 -- | 1-ary vector
-instance (KnownSymbol name, KnownSymbol l1, Show t1)
+instance (KnownSymbol name, KnownSymbol l1, Show t1, Typeable t1)
   => PrometheusThing sort name '[ '(l1, t1)] where
   data instance PromRep sort name '[ '(l1, t1)] =
     PromRepVec1 (P.Vector (T.Text) (PromPrim sort))
@@ -460,12 +482,12 @@ instance (KnownSymbol name, KnownSymbol l1, Show t1)
         $ con $ P.Info name help)
         >>= pure . PromRepVec1
   type PromAction '[ '(l1, t1)] = t1 -> IO ()
-  runOperation op (PromRepVec1 ref) v1 = P.withLabel ref (pack $ show v1) op
+  runOperation op (PromRepVec1 ref) v1 = P.withLabel ref (showT v1) op
 
 -- | 2-ary vector
 instance ( KnownSymbol name
-         , KnownSymbol l1, Show t1
-         , KnownSymbol l2, Show t2
+         , KnownSymbol l1, Show t1, Typeable t1
+         , KnownSymbol l2, Show t2, Typeable t2
          )
   => PrometheusThing sort name '[ '(l1, t1), '(l2, t2)] where
   data instance PromRep sort name '[ '(l1, t1), '(l2, t2)] =
@@ -485,16 +507,16 @@ instance ( KnownSymbol name
   type PromAction '[ '(l1, t1), '(l2, t2)] = t1 -> t2 -> IO ()
   runOperation op (PromRepVec2 ref) v1 v2 =
     P.withLabel ref
-      ( pack $ show v1
-      , pack $ show v2
+      ( showT v1
+      , showT v2
       )
       op
 
 -- | 3-ary vector
 instance ( KnownSymbol name
-         , KnownSymbol l1, Show t1
-         , KnownSymbol l2, Show t2
-         , KnownSymbol l3, Show t3
+         , KnownSymbol l1, Show t1, Typeable t1
+         , KnownSymbol l2, Show t2, Typeable t2
+         , KnownSymbol l3, Show t3, Typeable t3
          )
   => PrometheusThing sort name '[ '(l1, t1), '(l2, t2), '(l3, t3)] where
   data instance PromRep sort name '[ '(l1, t1), '(l2, t2), '(l3, t3)] =
@@ -515,18 +537,18 @@ instance ( KnownSymbol name
   type PromAction '[ '(l1, t1), '(l2, t2), '(l3, t3)] = t1 -> t2 -> t3 -> IO ()
   runOperation op (PromRepVec3 ref) v1 v2 v3 =
     P.withLabel ref
-      ( pack $ show v1
-      , pack $ show v2
-      , pack $ show v3
+      ( showT v1
+      , showT v2
+      , showT v3
       )
       op
 
 -- | 4-ary vector
 instance ( KnownSymbol name
-         , KnownSymbol l1, Show t1
-         , KnownSymbol l2, Show t2
-         , KnownSymbol l3, Show t3
-         , KnownSymbol l4, Show t4
+         , KnownSymbol l1, Show t1, Typeable t1
+         , KnownSymbol l2, Show t2, Typeable t2
+         , KnownSymbol l3, Show t3, Typeable t3
+         , KnownSymbol l4, Show t4, Typeable t4
          )
   => PrometheusThing sort name '[ '(l1, t1), '(l2, t2), '(l3, t3), '(l4, t4)] where
   data instance PromRep sort name '[ '(l1, t1), '(l2, t2), '(l3, t3), '(l4, t4)] =
@@ -549,45 +571,9 @@ instance ( KnownSymbol name
     = t1 -> t2 -> t3 -> t4 -> IO ()
   runOperation op (PromRepVec4 ref) v1 v2 v3 v4 =
     P.withLabel ref
-      ( pack $ show v1
-      , pack $ show v2
-      , pack $ show v3
-      , pack $ show v4
+      ( showT v1
+      , showT v2
+      , showT v3
+      , showT v4
       )
       op
-
-
-
-
-
-
-
-
-{-------------------------------------------------------------------------------
-  Sample metrics (move to tests)
-  See test/MetricApiSpec.hs
--------------------------------------------------------------------------------}
-
-coll :: _
-coll = c2
-    .> g1
-    .> c0
-    .> c1
-    .> MNil
-
-c0 = counter #c0 .& build
-
-c1 = counter #c1
-          .& lbl @"foo" @Int
-          .& build
-
-c2 = counter #c2
-          .& lbl @"foo" @Int
-          .& lbl @"bar" @Bool
-          .& build
-
-g1 = gauge #g1
-          .& lbl @"foo" @Int
-          .& build
-
--- coll2 = c0 :++: c1 :++: MNilMap
