@@ -261,7 +261,7 @@ class PrometheusThing (sort :: MetricSort) (name :: Symbol) (labels :: STAssoc) 
   dummyOp :: (PromPrim sort -> IO ()) -> PromRep sort name labels -> IO ()
   dummyOp _ _ = pure ()
 
--- | An auxiliary type class, set correspondence between metric's sort and 
+-- | An auxiliary type class, set correspondence between metric's sort and
 -- low-level constructor.
 -- type Registrable :: MetricSort -> Constraint
 class Registrable sort where
@@ -449,9 +449,13 @@ incGauge (SafetyBox m)= runOperation @'Gauge @name @labels P.incGauge m
 -------------------------------------------------------------------------------}
 
 showT :: (Show a, Typeable a) => a -> T.Text
-showT a = case eqTypeRep (typeOf a) (typeRep @T.Text) of
-  Just HRefl -> a
-  Nothing -> pack $ show a
+showT a = case (checkString, checkText) of
+    (Nothing, Nothing) -> pack $ show a
+    (Just HRefl, _) -> T.pack a
+    (_, Just HRefl) -> a
+  where
+    checkString = eqTypeRep (typeOf a) (typeRep @String)
+    checkText = eqTypeRep (typeOf a) (typeRep @T.Text)
 
 -- | Bare metric, without any labels
 instance (KnownSymbol name) => PrometheusThing sort name '[] where
