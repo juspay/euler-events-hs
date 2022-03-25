@@ -68,6 +68,7 @@ module Euler.Events.MetricAPI
   , setGauge
 
     -- ** Histograms
+  , observe
 
     -- * Core types
   , MetricSort (..)
@@ -77,6 +78,9 @@ module Euler.Events.MetricAPI
   , ReadyHandler (..)
   , Ready(..)
   , mkReadyHandler
+
+    -- * Observe request time stuff
+  , sendHistorgam
   )
 where
 
@@ -88,7 +92,7 @@ TODO:
  * add help to MetricDef (easy)
  * add histograms support (easy)
  * add more operations
- * implement instances for 5..9-arity (easy)
+ * implement instances for 6..9-arit6 (easy6
  * fix orphan instance: instance (KnownSymbol s, l ~ s) => IsLabel s (Proxy l)
 -}
 
@@ -101,6 +105,7 @@ import GHC.Exts (proxy#)
 import GHC.OverloadedLabels
 import GHC.TypeLits
 import qualified Data.Text as T
+import Data.Text (Text)
 import qualified Data.Text.Encoding as TE
 import qualified Prometheus as P
 import Unsafe.Coerce (unsafeCoerce)
@@ -297,10 +302,11 @@ instance Registrable 'Gauge where
   cons = P.gauge
 
 instance Registrable 'Histogram where
-  cons = flip P.histogram buckets
+  cons = flip P.histogram defaultBuckets
 
-buckets :: [Double]
-buckets = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 20, 30]
+defaultBuckets :: [Double]
+defaultBuckets =
+ [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 20, 30]
 
 -- | Creates a basic counter definition
 counter :: forall name help. NotEmpty name
@@ -385,9 +391,9 @@ data Metrics (state :: MetricsState) (map :: STAssoc) where
         => PromRep sort name help labels
         -> Metrics state as
         -> Metrics state ( '(name, PromRep sort name help labels) ': as)
-infixr 4 :+:
+infixr 5 :+:
 
--- | A cons operator for metric collections.
+-- | A cons operator for metric collections5
 infixr 4 .>
 (.>) :: forall sort name help labels as .
       ( Typeable (PromRep sort name help labels)
@@ -494,7 +500,7 @@ incGauge :: forall name help labels
          -> PromAction labels
 incGauge (SafetyBox m) = runOperation @'Gauge @name @help @labels P.incGauge m
 
--- | Increments a gauge. Number and types of arguments depend on the counter
+-- | Set a gauge. Number and types of arguments depend on the counter
 -- definition.
 setGauge :: forall name help labels
           . PrometheusThing 'Gauge name help labels
@@ -503,6 +509,19 @@ setGauge :: forall name help labels
          -> PromAction labels
 setGauge (SafetyBox m) value = runOperation @'Gauge @name @help @labels
   (flip P.setGauge $ value) m
+
+{-------------------------------------------------------------------------------
+  Working with histogram
+-------------------------------------------------------------------------------}
+-- Observe histogram metric
+observe :: forall name help labels
+          . PrometheusThing 'Histogram name help labels
+         => SafetyBox (PromRep 'Histogram name help labels)
+         -> Double
+         -> PromAction labels
+observe (SafetyBox m) value = runOperation @'Histogram @name @help @labels
+  (flip P.observe $ value) m
+
 
 {-------------------------------------------------------------------------------
   PrometheusThing instances, just repeatative boilerplate
@@ -648,11 +667,210 @@ instance ( KnownSymbol name
       )
       op
 
+-- | 5-ary vector
+instance ( KnownSymbol name
+         , KnownSymbol help
+         , KnownSymbol l1, Show t1, Typeable t1
+         , KnownSymbol l2, Show t2, Typeable t2
+         , KnownSymbol l3, Show t3, Typeable t3
+         , KnownSymbol l4, Show t4, Typeable t4
+         , KnownSymbol l5, Show t5, Typeable t5
+         )
+  => PrometheusThing sort name help
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    ] where
+  data instance PromRep sort name help
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    ] =
+    PromRepVec5 (P.Vector (T.Text, T.Text, T.Text, T.Text, T.Text) (PromPrim sort))
+  registerMetric con _ =
+    let
+      name = pack $ symbolVal' @name proxy#
+      help = pack $ symbolVal' @help proxy#
+    in
+      (P.register
+        $ P.vector
+          ( pack $ symbolVal' @l1 proxy#
+          , pack $ symbolVal' @l2 proxy#
+          , pack $ symbolVal' @l3 proxy#
+          , pack $ symbolVal' @l4 proxy#
+          , pack $ symbolVal' @l5 proxy#
+          )
+        $ con $ P.Info name help)
+        >>= pure . PromRepVec5
+  type PromAction '[ '(l1, t1), '(l2, t2), '(l3, t3), '(l4, t4), '(l5, t5)]
+    = t1 -> t2 -> t3 -> t4 -> t5 -> IO ()
+  runOperation op (PromRepVec5 ref) v1 v2 v3 v4 v5 =
+    P.withLabel ref
+      ( showT v1
+      , showT v2
+      , showT v3
+      , showT v4
+      , showT v5
+      )
+      op
+
+-- | 6-ary vector
+instance ( KnownSymbol name
+         , KnownSymbol help
+         , KnownSymbol l1, Show t1, Typeable t1
+         , KnownSymbol l2, Show t2, Typeable t2
+         , KnownSymbol l3, Show t3, Typeable t3
+         , KnownSymbol l4, Show t4, Typeable t4
+         , KnownSymbol l5, Show t5, Typeable t5
+         , KnownSymbol l6, Show t6, Typeable t6
+         )
+  => PrometheusThing sort name help
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    ] where
+  data instance PromRep sort name help
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    ] =
+    PromRepVec6 (P.Vector
+      ( T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      ) (PromPrim sort))
+  registerMetric con _ =
+    let
+      name = pack $ symbolVal' @name proxy#
+      help = pack $ symbolVal' @help proxy#
+    in
+      (P.register
+        $ P.vector
+          ( pack $ symbolVal' @l1 proxy#
+          , pack $ symbolVal' @l2 proxy#
+          , pack $ symbolVal' @l3 proxy#
+          , pack $ symbolVal' @l4 proxy#
+          , pack $ symbolVal' @l5 proxy#
+          , pack $ symbolVal' @l6 proxy#
+          )
+        $ con $ P.Info name help)
+        >>= pure . PromRepVec6
+  type PromAction
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    ]
+    = t1 -> t2 -> t3 -> t4 -> t5 -> t6 -> IO ()
+  runOperation op (PromRepVec6 ref) v1 v2 v3 v4 v5 v6 =
+    P.withLabel ref
+      ( showT v1
+      , showT v2
+      , showT v3
+      , showT v4
+      , showT v5
+      , showT v6
+      )
+      op
+
+-- | 7-ary vector
+instance ( KnownSymbol name
+         , KnownSymbol help
+         , KnownSymbol l1, Show t1, Typeable t1
+         , KnownSymbol l2, Show t2, Typeable t2
+         , KnownSymbol l3, Show t3, Typeable t3
+         , KnownSymbol l4, Show t4, Typeable t4
+         , KnownSymbol l5, Show t5, Typeable t5
+         , KnownSymbol l6, Show t6, Typeable t6
+         , KnownSymbol l7, Show t7, Typeable t7
+         )
+  => PrometheusThing sort name help
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    ] where
+  data instance PromRep sort name help
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    ] =
+    PromRepVec7 (P.Vector
+      ( T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      ) (PromPrim sort))
+  registerMetric con _ =
+    let
+      name = pack $ symbolVal' @name proxy#
+      help = pack $ symbolVal' @help proxy#
+    in
+      (P.register
+        $ P.vector
+          ( pack $ symbolVal' @l1 proxy#
+          , pack $ symbolVal' @l2 proxy#
+          , pack $ symbolVal' @l3 proxy#
+          , pack $ symbolVal' @l4 proxy#
+          , pack $ symbolVal' @l5 proxy#
+          , pack $ symbolVal' @l6 proxy#
+          , pack $ symbolVal' @l7 proxy#
+          )
+        $ con $ P.Info name help)
+        >>= pure . PromRepVec7
+  type PromAction
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    ]
+    = t1 -> t2 -> t3 -> t4 -> t5 -> t6 -> t7 -> IO ()
+  runOperation op (PromRepVec7 ref) v1 v2 v3 v4 v5 v6 v7 =
+    P.withLabel ref
+      ( showT v1
+      , showT v2
+      , showT v3
+      , showT v4
+      , showT v5
+      , showT v6
+      , showT v7
+      )
+      op
+
 -------------------------------------------------------------------------------
--- Land metric stuff on new api
 -- Move to another module.
+-- Land metric stuff on new api
 -------------------------------------------------------------------------------
 
+-- Metric for start and down of an application
 data Ready
   = ReadyUp
   | ReadyDown
@@ -671,3 +889,50 @@ mkReadyHandler = do
   pure $ ReadyHandler $ \case
       ReadyUp   -> go 1
       ReadyDown -> go 0
+
+-- Histogram to observe request time
+
+
+
+histHelp = Proxy @"duration histogram of http responses labeled with: status_code, method, path, host, eulerInstance, pid, merchant_id"
+
+sendHistorgam :: Double
+  -> Text
+  -> Text
+  -> Text
+  -> Text
+  -> Text
+  -> Text
+  -> Text
+  -> IO ()
+sendHistorgam
+  latency
+  status
+  method
+  path
+  host
+  eulerInstance
+  pid
+  merchantId = do
+    let euler_http_request_duration = histogram
+          #euler_http_request_duration
+          histHelp
+            .& lbl @"status_code" @Text
+            .& lbl @"method" @Text
+            .& lbl @"path" @Text
+            .& lbl @"host" @Text
+            .& lbl @"eulerInstance" @Text
+            .& lbl @"pid" @Text
+            .& lbl @"merchant_id" @Text
+            .& build
+    let collectionHistogram = euler_http_request_duration .> MNil
+    coll <- register collectionHistogram
+    observe (coll </> #euler_http_request_duration)
+       latency
+       status
+       method
+       path
+       host
+       eulerInstance
+       pid
+       merchantId

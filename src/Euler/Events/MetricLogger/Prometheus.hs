@@ -16,6 +16,7 @@ import Euler.Events.Util.Prometheus
     increment,
     incrementVector1Counter,
     observeSeconds,
+    observeSecondsNew,
     registerVector1Counter,
     set,
   )
@@ -101,4 +102,28 @@ instance MetricLogger PrometheusConfig PrometheusLogger PrometheusMetric where
                       Wai.responseHeaders res
                   )
       observeSeconds status method path merchantId start end
+      respond res
+
+
+instrumentApp :: (Text -> Text) -> Middleware
+instrumentApp normalizer app req respond = do
+    start <- getTime Monotonic
+    app req $ \res -> do
+      end <- getTime Monotonic
+      let method = Just $ decodeUtf8 (Wai.requestMethod req)
+      let status =
+            Just $ T.pack (show (HTTP.statusCode (Wai.responseStatus res)))
+      let path =
+            normalizer
+              <$> ( Just $
+                      T.intercalate "/" $
+                        "" : filter (\e -> T.length e /= 0) (Wai.pathInfo req)
+                  )
+      -- TODO factor out headers from Server.hs get rid of the literal
+      let merchantId =
+            decodeUtf8
+              <$> ( fmap snd <$> find (\(h, _) -> h == "x-jp-merchant-id") $
+                      Wai.responseHeaders res
+                  )
+      observeSecondsNew status method path merchantId start end
       respond res

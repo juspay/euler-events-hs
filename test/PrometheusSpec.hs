@@ -10,7 +10,7 @@ import Euler.Events.Types.Metric (MetricOperation (Increment, IncrementVector1Co
 import Control.Concurrent.Async (async, cancel)
 import Control.Exception (bracket)
 import qualified Data.ByteString as BS
-import Data.Either (isLeft)
+-- import Data.Either (isLeft)
 import Test.Hspec (Spec, describe, hspec, it, runIO, shouldBe, beforeAll)
 
 spec :: Spec

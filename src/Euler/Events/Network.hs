@@ -34,6 +34,7 @@ runMetricServer = run port Prometheus.metricsApp
 
 traceTest :: BS.ByteString -> String -> IO ()
 traceTest resp str = do
+  putStrLn ""
   putStrLn str
   BS.putStrLn resp
 
