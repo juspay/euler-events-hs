@@ -893,7 +893,7 @@ mkReadyHandler = do
 -- Histogram to observe request time
 
 
-
+histHelp :: Proxy "duration histogram of http responses labeled with: status_code, method, path, host, eulerInstance, pid, merchant_id"
 histHelp = Proxy @"duration histogram of http responses labeled with: status_code, method, path, host, eulerInstance, pid, merchant_id"
 
 sendHistorgam :: Double

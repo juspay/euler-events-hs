@@ -105,8 +105,8 @@ instance MetricLogger PrometheusConfig PrometheusLogger PrometheusMetric where
       respond res
 
 
-instrumentApp :: (Text -> Text) -> Middleware
-instrumentApp normalizer app req respond = do
+instrumentAppNew :: (Text -> Text) -> Middleware
+instrumentAppNew normalizer app req respond = do
     start <- getTime Monotonic
     app req $ \res -> do
       end <- getTime Monotonic
