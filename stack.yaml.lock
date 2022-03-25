@@ -63,6 +63,13 @@ packages:
       sha256: 50912d2ac162c8fab4243c9d73b8a2adb3bb609fbe13853bb8396c7e7b3b87e2
   original:
     hackage: unix-memory-0.1.2@sha256:601231a46e84088103190a156c1919573237317e7d4f775cd555c54356e0e2c4,1269
+- completed:
+    hackage: record-dot-preprocessor-0.2.14@sha256:00967231260e798d9125437db6e1cf04b3b232a9c0193a629563c0e6752c8e7c,2538
+    pantry-tree:
+      size: 1078
+      sha256: 9c7f2f8c0159a565b3fa9d16068f1281c1bd9827155d6e71faa57a7c4684b25a
+  original:
+    hackage: record-dot-preprocessor-0.2.14@sha256:00967231260e798d9125437db6e1cf04b3b232a9c0193a629563c0e6752c8e7c,2538
 snapshots:
 - completed:
     size: 496112

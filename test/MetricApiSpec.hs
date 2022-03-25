@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedLabels    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications    #-}
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
 
 module MetricApiSpec where
 
@@ -105,72 +106,92 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
       BS.putStrLn respBody
       "c12{foo=\"text\",bar=\"string\",bin=\"bs\",buz=\"True\"} 1.0" `BS.isInfixOf` respBody `shouldBe` True
 
+    it "Set gauge metrics" $ \_ -> do
+      metric <- mkReadyHandler
+      metric.setReadyGauge ReadyUp
+      metric.setReadyGauge ReadyDown
+      respBody <- getRespBody requestMetric
+      traceTest respBody "up --------------"
+      "up 0.0" `BS.isInfixOf` respBody `shouldBe` True
+
+    it "Check help is empty" $ \coll -> do
+      inc (coll </> #c13) 3 True
+      respBody <- getRespBody requestMetric
+      traceTest respBody "c13 help --------------"
+      BS.putStrLn respBody
+      "# HELP c13 \n# TYPE c13 counter" `BS.isInfixOf` respBody `shouldBe` True
 
 
 
 
-c1 = counter #c1
+
+c1 = counter #c1 #help
   .& lbl @"foo" @Int
   .& build
 
-c2 = counter #c2
+c2 = counter #c2 #help
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c3 = counter #c3
+c3 = counter #c3 #help
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-g1 = gauge #g1
+g1 = gauge #g1 #help
       .& build
 
-c4 = counter #c4
+c4 = counter #c4 #help
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c5 = counter #c5
+c5 = counter #c5 #help
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c6 = counter #c6
+c6 = counter #c6 #help
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c7 = counter #c7
+c7 = counter #c7 #help
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c8 = counter #c8
+c8 = counter #c8 #help
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c9 = counter #c9
+c9 = counter #c9 #help
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c10 = counter #c10
+c10 = counter #c10 #help
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c11 = counter #c11
+c11 = counter #c11 #help
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c12 = counter #c12
+c12 = counter #c12 #help
       .& lbl @"foo" @Text
       .& lbl @"bar" @String
       .& lbl @"bin" @ByteString
       .& lbl @"buz" @Bool
+      .& build
+
+c13 = counter #c13 emptyHelp
+      .& lbl @"foo" @Int
+      .& lbl @"bar" @Bool
       .& build
 
 -- collection of metrics, prevents from ambiguos metric names
@@ -187,6 +208,7 @@ collection =
   .> c9
   .> c10
   .> c12
+  .> c13
   .> MNil
 
 collection2 =
