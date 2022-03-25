@@ -8,5 +8,5 @@ main :: IO ()
 main = do
   doctest
     [ "-isrc"
-    , "src/Euler/Events/MetricAPI.hs"
+    , "src/Euler/Events/MetricApi/MetricApi.hs"
     ]

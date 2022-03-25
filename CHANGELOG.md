@@ -1,5 +1,9 @@
 # Revision history for `euler-events-hs`
 
+## 1.0.0 -- 2022-03-25
+
+* New metric api
+
 ## 0.0.8 -- 2022-02-17
 
 * Remove `LogType` type.

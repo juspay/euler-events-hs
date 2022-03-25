@@ -1,6 +1,6 @@
 cabal-version: 2.2
 name:          euler-events-hs
-version:       0.0.8
+version:       1.0.0
 synopsis:      Events library for euler
 homepage:      https://bitbucket.org/juspay/euler-events-hs
 license:
@@ -52,10 +52,11 @@ library
   exposed-modules:
     Euler.Events.Class
     Euler.Events.Constants
-    Euler.Events.Logger.Stdout
-    Euler.Events.MetricAPI
-    Euler.Events.MetricLogger.Prometheus
     Euler.Events.Network
+    Euler.Events.Logger.Stdout
+    Euler.Events.MetricApi.Extra
+    Euler.Events.MetricApi.MetricApi
+    Euler.Events.MetricLogger.Prometheus
     Euler.Events.Types.Event
     Euler.Events.Types.Metric
     Euler.Events.Types.Order
@@ -124,6 +125,7 @@ test-suite metricapi-doctest
   type: exitcode-stdio-1.0
   main-is: test/Doctest.hs
   ghc-options: -threaded
+  default-language:   Haskell2010
   build-depends:
     , base >=4.13 && <5
     , doctest >=0.12 && <0.17

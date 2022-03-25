@@ -1,5 +1,4 @@
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE OverloadedLabels    #-}
+{-# LANGUAGE OverloadedLabels #-}
 
 module Euler.Events.Util.Prometheus where
 
@@ -20,7 +19,6 @@ import qualified StmContainers.Map as StmMap
 import System.Clock (TimeSpec, diffTimeSpec, toNanoSecs)
 import System.Environment (getEnvironment)
 import System.Posix.Process (getProcessID)
-import qualified Euler.Events.MetricAPI as Mapi
 
 data PrometheusMetric
   = Counter Prometheus.Counter
@@ -97,33 +95,6 @@ observeSeconds status method path merchantId start end = do
       )
     )
     (flip Prometheus.observe latency)
-
-observeSecondsNew ::
-  Maybe Text ->
-  Maybe Text ->
-  Maybe Text ->
-  Maybe Text ->
-  TimeSpec ->
-  TimeSpec ->
-  IO ()
-observeSecondsNew status method path merchantId start end = do
-  let latency =
-        fromRational $
-          toRational (toNanoSecs (end `diffTimeSpec` start) % 1000000000)
-  envVars <- Map.fromList <$> getEnvironment
-  let eulerInstance = T.pack <$> Map.lookup "HOSTNAME" envVars
-  let host = Nothing
-  processId <- getProcessID
-  let pid = tshow <$> Just processId
-  Mapi.sendHistorgam
-    latency
-    (fromMaybe "" status)
-    (fromMaybe "" method)
-    (fromMaybe "" path)
-    (fromMaybe "" host)
-    (fromMaybe "" eulerInstance)
-    (fromMaybe "" pid)
-    (fromMaybe "" merchantId)
 
 increment ::
   Text ->

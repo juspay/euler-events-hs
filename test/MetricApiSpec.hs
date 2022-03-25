@@ -6,7 +6,8 @@
 
 module MetricApiSpec where
 
-import Euler.Events.MetricAPI
+import Euler.Events.MetricApi.Extra
+import Euler.Events.MetricApi.MetricApi
 import Euler.Events.Network
 
 import Control.Concurrent.Async (async, cancel)

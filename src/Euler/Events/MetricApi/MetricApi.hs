@@ -36,7 +36,7 @@ untyped @Text@-based API you can use different types which also might
 prevent from hard-to-debug typos.
 
 -}
-module Euler.Events.MetricAPI
+module Euler.Events.MetricApi.MetricApi
   (
     -- * Introduction
     -- $intro
@@ -73,14 +73,6 @@ module Euler.Events.MetricAPI
     -- * Core types
   , MetricSort (..)
   , PromRep
-
-    -- * Ready stuff
-  , ReadyHandler (..)
-  , Ready(..)
-  , mkReadyHandler
-
-    -- * Observe request time stuff
-  , sendHistorgam
   )
 where
 
@@ -105,7 +97,6 @@ import GHC.Exts (proxy#)
 import GHC.OverloadedLabels
 import GHC.TypeLits
 import qualified Data.Text as T
-import Data.Text (Text)
 import qualified Data.Text.Encoding as TE
 import qualified Prometheus as P
 import Unsafe.Coerce (unsafeCoerce)
@@ -864,75 +855,3 @@ instance ( KnownSymbol name
       , showT v7
       )
       op
-
--------------------------------------------------------------------------------
--- Move to another module.
--- Land metric stuff on new api
--------------------------------------------------------------------------------
-
--- Metric for start and down of an application
-data Ready
-  = ReadyUp
-  | ReadyDown
-  deriving stock Show
-
-data ReadyHandler = ReadyHandler
-  { setReadyGauge :: Ready -> IO ()
-  }
-
-mkReadyHandler :: IO ReadyHandler
-mkReadyHandler = do
-  let up = (gauge #up emptyHelp) .& build
-  let collection = up .> MNil
-  metrics <- register collection
-  let go = setGauge $ metrics </> #up
-  pure $ ReadyHandler $ \case
-      ReadyUp   -> go 1
-      ReadyDown -> go 0
-
--- Histogram to observe request time
-
-
-histHelp :: Proxy "duration histogram of http responses labeled with: status_code, method, path, host, eulerInstance, pid, merchant_id"
-histHelp = Proxy @"duration histogram of http responses labeled with: status_code, method, path, host, eulerInstance, pid, merchant_id"
-
-sendHistorgam :: Double
-  -> Text
-  -> Text
-  -> Text
-  -> Text
-  -> Text
-  -> Text
-  -> Text
-  -> IO ()
-sendHistorgam
-  latency
-  status
-  method
-  path
-  host
-  eulerInstance
-  pid
-  merchantId = do
-    let euler_http_request_duration = histogram
-          #euler_http_request_duration
-          histHelp
-            .& lbl @"status_code" @Text
-            .& lbl @"method" @Text
-            .& lbl @"path" @Text
-            .& lbl @"host" @Text
-            .& lbl @"eulerInstance" @Text
-            .& lbl @"pid" @Text
-            .& lbl @"merchant_id" @Text
-            .& build
-    let collectionHistogram = euler_http_request_duration .> MNil
-    coll <- register collectionHistogram
-    observe (coll </> #euler_http_request_duration)
-       latency
-       status
-       method
-       path
-       host
-       eulerInstance
-       pid
-       merchantId
