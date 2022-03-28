@@ -116,7 +116,7 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
     it "Check help is empty" $ \coll -> do
       inc (coll </> #c13) 3 True
       respBody <- getRespBody requestMetric
-      traceTest respBody "c13 help --------------"
+      -- traceTest respBody "c13 help --------------"
       "# HELP c13 \n# TYPE c13 counter" `BS.isInfixOf` respBody `shouldBe` True
 
     it "Observe histogram" $ \coll -> do
@@ -135,8 +135,12 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
       sendHistorgam
         3 "status_code" "method" "path" "host" "eulerInstance" "pid" "merchant_id"
       respBody <- getRespBody requestMetric
-      -- traceTest respBody "c14 histogram --------------"
-      "euler_http_request_duration_sum{status_code=\"status_code\",method=\"method\",path=\"path\",host=\"host\",eulerInstance=\"eulerInstance\",pid=\"pid\",merchant_id=\"merchant_id\"} 3.0" `BS.isInfixOf` respBody `shouldBe` True
+      let isTest = "euler_http_request_duration_sum{status_code=\"status_code\",method=\"method\",path=\"path\",host=\"host\",eulerInstance=\"eulerInstance\",pid=\"pid\",merchant_id=\"merchant_id\"} 3.0" `BS.isInfixOf` respBody
+      case isTest of
+        False -> do
+          traceTest respBody "c14 histogram --------------"
+          pure ()
+        True -> isTest `shouldBe` True
 
 
 
