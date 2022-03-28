@@ -16,7 +16,6 @@ module Euler.Events.MetricApi.Extra
 import Data.List (find)
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
-import Data.Proxy (Proxy (..))
 import Data.Ratio ((%))
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -48,7 +47,7 @@ data ReadyHandler = ReadyHandler
 
 mkReadyHandler :: IO ReadyHandler
 mkReadyHandler = do
-  let up = (gauge #up emptyHelp) .& build
+  let up = (gauge #up) .& build emptyHelp
   let collection = up .> MNil
   metrics <- register collection
   let go = setGauge $ metrics </> #up
@@ -77,7 +76,6 @@ sendHistorgam
   merchantId = do
     let euler_http_request_duration = histogram
           #euler_http_request_duration
-          histHelp
             .& lbl @"status_code" @Text
             .& lbl @"method" @Text
             .& lbl @"path" @Text
@@ -85,7 +83,7 @@ sendHistorgam
             .& lbl @"eulerInstance" @Text
             .& lbl @"pid" @Text
             .& lbl @"merchant_id" @Text
-            .& build
+            .& build histHelp
     let collectionHistogram = euler_http_request_duration .> MNil
     coll <- register collectionHistogram
     observe (coll </> #euler_http_request_duration)
@@ -98,8 +96,8 @@ sendHistorgam
        pid
        merchantId
 
-histHelp :: Proxy "duration histogram of http responses labeled with: status_code, method, path, host, eulerInstance, pid, merchant_id"
-histHelp = Proxy @"duration histogram of http responses labeled with: status_code, method, path, host, eulerInstance, pid, merchant_id"
+histHelp :: String
+histHelp = "duration histogram of http responses labeled with: status_code, method, path, host, eulerInstance, pid, merchant_id"
 
 observeSecondsNew ::
   Maybe Text ->

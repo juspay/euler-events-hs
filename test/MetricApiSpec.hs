@@ -116,7 +116,7 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
     it "Check help is empty" $ \coll -> do
       inc (coll </> #c13) 3 True
       respBody <- getRespBody requestMetric
-      -- traceTest respBody "c13 help --------------"
+      traceTest respBody "c13 help --------------"
       "# HELP c13 \n# TYPE c13 counter" `BS.isInfixOf` respBody `shouldBe` True
 
     it "Observe histogram" $ \coll -> do
@@ -124,7 +124,7 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
       observe (coll </> #o14) 3 1
       observe (coll </> #o14) 3 1
       respBody <- getRespBody requestMetric
-      traceTest respBody "c14 histogram --------------"
+      -- traceTest respBody "c14 histogram --------------"
       "o14_bucket{foo=\"1\",le=\"30.0\"} 2" `BS.isInfixOf` respBody `shouldBe` True
 
     it "Observe histogram with 7 vector" $ \_ -> do
@@ -135,84 +135,84 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
       sendHistorgam
         3 "status_code" "method" "path" "host" "eulerInstance" "pid" "merchant_id"
       respBody <- getRespBody requestMetric
-      traceTest respBody "c14 histogram --------------"
+      -- traceTest respBody "c14 histogram --------------"
       "euler_http_request_duration_sum{status_code=\"status_code\",method=\"method\",path=\"path\",host=\"host\",eulerInstance=\"eulerInstance\",pid=\"pid\",merchant_id=\"merchant_id\"} 3.0" `BS.isInfixOf` respBody `shouldBe` True
 
 
 
 
-c1 = counter #c1 #help
+c1 = counter #c1
   .& lbl @"foo" @Int
-  .& build
+  .& build "help"
 
-c2 = counter #c2 #help
+c2 = counter #c2
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build
+      .& build "help"
 
-c3 = counter #c3 #help
+c3 = counter #c3
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build
+      .& build "help"
 
-g1 = gauge #g1 #help
-      .& build
+g1 = gauge #g1
+      .& build "help"
 
-c4 = counter #c4 #help
+c4 = counter #c4
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build
+      .& build "help"
 
-c5 = counter #c5 #help
+c5 = counter #c5
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build
+      .& build "help"
 
-c6 = counter #c6 #help
+c6 = counter #c6
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build
+      .& build "help"
 
-c7 = counter #c7 #help
+c7 = counter #c7
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build
+      .& build "help"
 
-c8 = counter #c8 #help
+c8 = counter #c8
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build
+      .& build "help"
 
-c9 = counter #c9 #help
+c9 = counter #c9
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build
+      .& build "help"
 
-c10 = counter #c10 #help
+c10 = counter #c10
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build
+      .& build "help"
 
-c11 = counter #c11 #help
+c11 = counter #c11
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build
+      .& build "help"
 
-c12 = counter #c12 #help
+c12 = counter #c12
       .& lbl @"foo" @Text
       .& lbl @"bar" @String
       .& lbl @"bin" @ByteString
       .& lbl @"buz" @Bool
-      .& build
+      .& build "help"
 
-c13 = counter #c13 emptyHelp
+c13 = counter #c13
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build
+      .& build ""
 
-o14 = histogram #o14 #help
+o14 = histogram #o14
   .& lbl @"foo" @Int
-  .& build
+  .& build "help"
 
 -- collection of metrics, prevents from ambiguos metric names
 collection =

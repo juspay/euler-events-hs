@@ -154,15 +154,15 @@ This module solves all the issues mentioned by leveraging type-level Haskell fea
 
 Define a __counter__ with name __c0__  without any labels:
 
->>> c0 = counter #c0 #help .& build
+>>> c0 = counter #c0 .& build "help"
 
 Let's add a counter __c2__ with two labels, the first being 'Int' and the other being 'Bool':
 
->>> c2 = counter #c2 #help .& lbl @"foo" @Int .& lbl @"bar" @Bool .& build
+>>> c2 = counter #c2 .& lbl @"foo" @Int .& lbl @"bar" @Bool .& build "help"
 
 And a gauge for good measure:
 
->>> g1 = gauge #g1 #help .& lbl @"foo" @Int .& build
+>>> g1 = gauge #g1 .& lbl @"foo" @Int .& build "help"
 
 Now we are ready to pack all those metrics in a collection:
 
@@ -247,11 +247,10 @@ type family NotEmpty (s :: Symbol) where
   NotEmpty s = If (EqSymbol "" s) (TypeError ('Text "Empty names/labels are prohibited")) ()
 
 -- | A definition of a metric. Includes its type, name and list of label names and types.
--- type MetricDef :: MetricSort -> Symbol -> Symbol -> STAssoc -> Type
+-- type MetricDef :: MetricSort -> Symbol -> STAssoc -> Type
 data MetricDef
     (sort :: MetricSort)
     (name :: Symbol)
-    (help :: Symbol)
     (labels :: STAssoc)
     = MetricDef
 
@@ -265,19 +264,19 @@ type family PromPrim s = r | r -> s where
 class PrometheusThing
   (sort :: MetricSort)
   (name :: Symbol)
-  (help :: Symbol)
   (labels :: STAssoc) where
-  data PromRep sort name help labels :: Type
+  data PromRep sort name labels :: Type
   registerMetric :: (P.Info -> P.Metric (PromPrim sort))
-    -> MetricDef sort name help labels
-    -> IO (PromRep sort name help labels)
+    -> String  -- Help text
+    -> MetricDef sort name labels
+    -> IO (PromRep sort name labels)
   type PromAction labels :: Type
-  runOperation :: (PromPrim sort -> IO ()) -> PromRep sort name help labels -> PromAction labels
+  runOperation :: (PromPrim sort -> IO ()) -> PromRep sort name labels -> PromAction labels
   -- | A hatch to add some strictness. After the registration this
   -- operation force the evaluation of the metric. The default
   -- implementation does nothing, but 0-ary instance performs
   -- an empty action to do the job.
-  dummyOp :: (PromPrim sort -> IO ()) -> PromRep sort name help labels -> IO ()
+  dummyOp :: (PromPrim sort -> IO ()) -> PromRep sort name labels -> IO ()
   dummyOp _ _ = pure ()
 
 -- | An auxiliary type class, set correspondence between metric's sort and
@@ -300,25 +299,22 @@ defaultBuckets =
  [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 20, 30]
 
 -- | Creates a basic counter definition
-counter :: forall name help. NotEmpty name
+counter :: forall name. NotEmpty name
   => Proxy name
-  -> Proxy help
-  -> MetricDef 'Counter name help '[]
-counter _ _ = MetricDef
+  -> MetricDef 'Counter name '[]
+counter _ = MetricDef
 
 -- | Created a basic gauge definition
-gauge :: forall name help. NotEmpty name
+gauge :: forall name. NotEmpty name
   => Proxy name
-  -> Proxy help
-  -> MetricDef 'Gauge name help '[]
-gauge _ _ = MetricDef
+  -> MetricDef 'Gauge name '[]
+gauge _ = MetricDef
 
 -- | Created a basic histogram definition
-histogram :: forall name help. NotEmpty name
+histogram :: forall name. NotEmpty name
   => Proxy name
-  -> Proxy help
-  -> MetricDef 'Histogram name help '[]
-histogram _ _ = MetricDef
+  -> MetricDef 'Histogram name '[]
+histogram _ = MetricDef
 
 type family Snoc (list ::[k]) (elem :: k) :: [k] where
   Snoc '[] e = '[e]
@@ -333,12 +329,12 @@ lbl
       (types :: STAssoc)
       (sort :: MetricSort)
       (name :: Symbol)
-      (help :: Symbol)
   .  KnownSymbol label
   => CheckLabelLimit types
   => CheckLabelUniqueness label types
   => NotEmpty label
-  => MetricDef sort name help types -> MetricDef sort name help (Snoc types '(label, typ))
+  => MetricDef sort name types
+  -> MetricDef sort name (Snoc types '(label, typ))
 lbl = coerce
 
 infixl 3 .&
@@ -348,11 +344,13 @@ a .& f = f a
 {-# INLINE (.&) #-}
 
 -- | Lazily constructs a metric (calculated by 'PromRep' family) by its definition.
-build :: forall sort name help labels
-       . (PrometheusThing sort name help labels
+build :: forall sort name labels
+       . (PrometheusThing sort name labels
        , Registrable sort)
-      => MetricDef sort name help labels -> PromRep sort name help labels
-build = unsafePerformIO . (registerMetric cons)
+      => String
+      -> MetricDef sort name labels
+      -> PromRep sort name labels
+build help = unsafePerformIO . (registerMetric cons help)
 
 {-------------------------------------------------------------------------------
   Metrics collection
@@ -373,29 +371,27 @@ data MetricsState
 -- exports '.>' operator which is restricted by @Built@ state.
 data Metrics (state :: MetricsState) (map :: STAssoc) where
   MNil  :: Metrics state '[]
-  (:+:) :: ( Typeable (PromRep sort name help labels)
-           , PrometheusThing sort name help labels
+  (:+:) :: ( Typeable (PromRep sort name labels)
+           , PrometheusThing sort name labels
            , UniqName name as
            , KnownSymbol name
-           , KnownSymbol help
            )
-        => PromRep sort name help labels
+        => PromRep sort name labels
         -> Metrics state as
-        -> Metrics state ( '(name, PromRep sort name help labels) ': as)
+        -> Metrics state ( '(name, PromRep sort name labels) ': as)
 infixr 5 :+:
 
 -- | A cons operator for metric collections5
 infixr 4 .>
-(.>) :: forall sort name help labels as .
-      ( Typeable (PromRep sort name help labels)
-      , PrometheusThing sort name help labels
+(.>) :: forall sort name labels as .
+      ( Typeable (PromRep sort name labels)
+      , PrometheusThing sort name labels
       , UniqName name as
       , KnownSymbol name
-      , KnownSymbol help
       )
-      => PromRep sort name help labels
+      => PromRep sort name labels
       -> Metrics 'Built as
-      -> Metrics 'Built ( '(name, PromRep sort name help labels) ': as)
+      -> Metrics 'Built ( '(name, PromRep sort name labels) ': as)
 (.>) = (:+:)
 
 type family ElemT (s :: Type) (ss :: [Type]) :: Constraint where
@@ -413,18 +409,18 @@ type family TypeBySym (s :: Symbol) (map :: STAssoc) = r where
   TypeBySym s ( '(_, _) ': r) = TypeBySym s r
 
 mMap :: forall state as r
-      . (   forall sort name help labels
-          . PrometheusThing sort name help labels
-         => SafetyBox (PromRep sort name help labels) -> r)
+      . (   forall sort name labels
+          . PrometheusThing sort name labels
+         => SafetyBox (PromRep sort name labels) -> r)
      -> Metrics state as -> [r]
 mMap _ MNil = []
 mMap f (m :+: bs) = f (SafetyBox m) : mMap f bs
 
 runDummyOp ::
-  forall (sort :: MetricSort) (name :: Symbol) (help :: Symbol) (labels :: STAssoc)
-                . PrometheusThing sort name help labels
-               => SafetyBox (PromRep sort name help labels) -> IO ()
-runDummyOp  (SafetyBox m) = dummyOp @sort @name @help @labels (\_ -> pure ()) m
+  forall (sort :: MetricSort) (name :: Symbol) (labels :: STAssoc)
+                . PrometheusThing sort name labels
+               => SafetyBox (PromRep sort name labels) -> IO ()
+runDummyOp  (SafetyBox m) = dummyOp @sort @name @labels (\_ -> pure ()) m
 
 -- | An action to register a metric collection.
 register :: Metrics 'Built as -> IO (Metrics 'Registered as)
@@ -437,28 +433,30 @@ newtype SafetyBox a = SafetyBox a
 
 -- | Extract a metric by its name:
 --
--- >>> metricsCollection <- register ((counter #myCounter #help .& build) .> MNil)
+-- >>> metricsCollection <- register ((counter #myCounter .& build "help") .> MNil)
 -- >>> myReadyToUseCounter = metricsCollection </> #myCounter
 (</>) :: forall (s :: Symbol) (as :: STAssoc)
        . (ElemST s as, KnownSymbol s)
       => Metrics 'Registered as -> Proxy s -> SafetyBox (TypeBySym s as)
 (</>) m _ = go m
   where
-    go :: forall (as' :: STAssoc). Metrics 'Registered as' -> SafetyBox (TypeBySym s as)
+    go :: forall (as' :: STAssoc). Metrics 'Registered as'
+      -> SafetyBox (TypeBySym s as)
     go MNil = undefined
     go (value :+: rest) = case eqTypeRep (typeOf (Proxy @s)) (typeOf $ metricName value) of
       Just HRefl -> SafetyBox $ unsafeCoerce value
       Nothing  -> go rest
 
-    metricName :: forall sort name help labels. PromRep sort name help labels -> Proxy name
+    metricName :: forall sort name labels. PromRep sort name labels
+      -> Proxy name
     metricName _ = Proxy @name
 
 -- | @OverloadedLabels@ instance for convenience
 instance (KnownSymbol s, l ~ s) => IsLabel s (Proxy l) where
   fromLabel = Proxy @l
 
-emptyHelp :: Proxy ""
-emptyHelp = Proxy @""
+emptyHelp :: String
+emptyHelp = ""
 
 {-------------------------------------------------------------------------------
   Working with counters
@@ -466,17 +464,17 @@ emptyHelp = Proxy @""
 
 -- | Increments a counter. Number and types of arguments depend on the counter
 -- definition.
-inc :: forall name help labels
-     . PrometheusThing 'Counter name help labels
-    => SafetyBox (PromRep 'Counter name help labels) -> PromAction labels
-inc (SafetyBox m) = runOperation @'Counter @name @help @labels P.incCounter m
+inc :: forall name labels
+     . PrometheusThing 'Counter name labels
+    => SafetyBox (PromRep 'Counter name labels) -> PromAction labels
+inc (SafetyBox m) = runOperation @'Counter @name @labels P.incCounter m
 
 -- | Adds a positive number to a counter. Number and types of arguments depend on the counter
 -- definition.
-add :: forall name help labels
-     . PrometheusThing 'Counter name help labels
-    => SafetyBox (PromRep 'Counter name help labels) -> Word -> PromAction labels
-add (SafetyBox rep) value = runOperation @'Counter @name @help @labels
+add :: forall name labels
+     . PrometheusThing 'Counter name labels
+    => SafetyBox (PromRep 'Counter name labels) -> Word -> PromAction labels
+add (SafetyBox rep) value = runOperation @'Counter @name @labels
   (flip P.unsafeAddCounter $ fromIntegral value) rep
 
 {-------------------------------------------------------------------------------
@@ -485,32 +483,32 @@ add (SafetyBox rep) value = runOperation @'Counter @name @help @labels
 
 -- | Increments a gauge. Number and types of arguments depend on the counter
 -- definition.
-incGauge :: forall name help labels
-          . PrometheusThing 'Gauge name help labels
-         => SafetyBox (PromRep 'Gauge name help labels)
+incGauge :: forall name labels
+          . PrometheusThing 'Gauge name labels
+         => SafetyBox (PromRep 'Gauge name labels)
          -> PromAction labels
-incGauge (SafetyBox m) = runOperation @'Gauge @name @help @labels P.incGauge m
+incGauge (SafetyBox m) = runOperation @'Gauge @name @labels P.incGauge m
 
 -- | Set a gauge. Number and types of arguments depend on the counter
 -- definition.
-setGauge :: forall name help labels
-          . PrometheusThing 'Gauge name help labels
-         => SafetyBox (PromRep 'Gauge name help labels)
+setGauge :: forall name labels
+          . PrometheusThing 'Gauge name labels
+         => SafetyBox (PromRep 'Gauge name labels)
          -> Double
          -> PromAction labels
-setGauge (SafetyBox m) value = runOperation @'Gauge @name @help @labels
+setGauge (SafetyBox m) value = runOperation @'Gauge @name @labels
   (flip P.setGauge $ value) m
 
 {-------------------------------------------------------------------------------
   Working with histogram
 -------------------------------------------------------------------------------}
 -- Observe histogram metric
-observe :: forall name help labels
-          . PrometheusThing 'Histogram name help labels
-         => SafetyBox (PromRep 'Histogram name help labels)
+observe :: forall name labels
+          . PrometheusThing 'Histogram name labels
+         => SafetyBox (PromRep 'Histogram name labels)
          -> Double
          -> PromAction labels
-observe (SafetyBox m) value = runOperation @'Histogram @name @help @labels
+observe (SafetyBox m) value = runOperation @'Histogram @name @labels
   (flip P.observe $ value) m
 
 
@@ -530,57 +528,53 @@ showT a = case (checkString, checkText, checkBS) of
     checkBS = eqTypeRep (typeOf a) (typeRep @ByteString)
 
 -- | Bare metric, without any labels
-instance (KnownSymbol name, KnownSymbol help)
-  => PrometheusThing sort name help '[] where
-  data instance PromRep sort name help '[] = PromRepBare (PromPrim sort)
-  registerMetric con _ =
+instance (KnownSymbol name)
+  => PrometheusThing sort name '[] where
+  data instance PromRep sort name '[] = PromRepBare (PromPrim sort)
+  registerMetric con help _ =
     let
       name = pack $ symbolVal' @name proxy#
-      help = pack $ symbolVal' @help proxy#
     in
-      (P.register $ con $ P.Info name help)
+      (P.register $ con $ P.Info name $ T.pack help)
         >>= pure . PromRepBare
   type PromAction '[] = IO ()
   runOperation op (PromRepBare ref) = op ref
   dummyOp op (PromRepBare ref) = op ref
 
 -- | 1-ary vector
-instance (KnownSymbol name, KnownSymbol help, KnownSymbol l1, Show t1, Typeable t1)
-  => PrometheusThing sort name help '[ '(l1, t1)] where
-  data instance PromRep sort name help '[ '(l1, t1)] =
+instance (KnownSymbol name, KnownSymbol l1, Show t1, Typeable t1)
+  => PrometheusThing sort name '[ '(l1, t1)] where
+  data instance PromRep sort name '[ '(l1, t1)] =
     PromRepVec1 (P.Vector (T.Text) (PromPrim sort))
-  registerMetric con _ =
+  registerMetric con help _ =
     let
       name = pack $ symbolVal' @name proxy#
-      help = pack $ symbolVal' @help proxy#
     in
       (P.register
         $ P.vector (pack $ symbolVal' @l1 proxy#)
-        $ con $ P.Info name help)
+        $ con $ P.Info name $ T.pack help)
         >>= pure . PromRepVec1
   type PromAction '[ '(l1, t1)] = t1 -> IO ()
   runOperation op (PromRepVec1 ref) v1 = P.withLabel ref (showT v1) op
 
 -- | 2-ary vector
 instance ( KnownSymbol name
-         , KnownSymbol help
          , KnownSymbol l1, Show t1, Typeable t1
          , KnownSymbol l2, Show t2, Typeable t2
          )
-  => PrometheusThing sort name help '[ '(l1, t1), '(l2, t2)] where
-  data instance PromRep sort name help '[ '(l1, t1), '(l2, t2)] =
+  => PrometheusThing sort name '[ '(l1, t1), '(l2, t2)] where
+  data instance PromRep sort name '[ '(l1, t1), '(l2, t2)] =
     PromRepVec2 (P.Vector (T.Text, T.Text) (PromPrim sort))
-  registerMetric con _ =
+  registerMetric con help _ =
     let
       name = pack $ symbolVal' @name proxy#
-      help = pack $ symbolVal' @help proxy#
     in
       (P.register
         $ P.vector
           ( pack $ symbolVal' @l1 proxy#
           , pack $ symbolVal' @l2 proxy#
           )
-        $ con $ P.Info name help)
+        $ con $ P.Info name $ T.pack help)
         >>= pure . PromRepVec2
   type PromAction '[ '(l1, t1), '(l2, t2)] = t1 -> t2 -> IO ()
   runOperation op (PromRepVec2 ref) v1 v2 =
@@ -592,18 +586,16 @@ instance ( KnownSymbol name
 
 -- | 3-ary vector
 instance ( KnownSymbol name
-         , KnownSymbol help
          , KnownSymbol l1, Show t1, Typeable t1
          , KnownSymbol l2, Show t2, Typeable t2
          , KnownSymbol l3, Show t3, Typeable t3
          )
-  => PrometheusThing sort name help '[ '(l1, t1), '(l2, t2), '(l3, t3)] where
-  data instance PromRep sort name help '[ '(l1, t1), '(l2, t2), '(l3, t3)] =
+  => PrometheusThing sort name '[ '(l1, t1), '(l2, t2), '(l3, t3)] where
+  data instance PromRep sort name '[ '(l1, t1), '(l2, t2), '(l3, t3)] =
     PromRepVec3 (P.Vector (T.Text, T.Text, T.Text) (PromPrim sort))
-  registerMetric con _ =
+  registerMetric con help _ =
     let
       name = pack $ symbolVal' @name proxy#
-      help = pack $ symbolVal' @help proxy#
     in
       (P.register
         $ P.vector
@@ -611,7 +603,7 @@ instance ( KnownSymbol name
           , pack $ symbolVal' @l2 proxy#
           , pack $ symbolVal' @l3 proxy#
           )
-        $ con $ P.Info name help)
+        $ con $ P.Info name $ T.pack help)
         >>= pure . PromRepVec3
   type PromAction '[ '(l1, t1), '(l2, t2), '(l3, t3)] = t1 -> t2 -> t3 -> IO ()
   runOperation op (PromRepVec3 ref) v1 v2 v3 =
@@ -624,19 +616,17 @@ instance ( KnownSymbol name
 
 -- | 4-ary vector
 instance ( KnownSymbol name
-         , KnownSymbol help
          , KnownSymbol l1, Show t1, Typeable t1
          , KnownSymbol l2, Show t2, Typeable t2
          , KnownSymbol l3, Show t3, Typeable t3
          , KnownSymbol l4, Show t4, Typeable t4
          )
-  => PrometheusThing sort name help '[ '(l1, t1), '(l2, t2), '(l3, t3), '(l4, t4)] where
-  data instance PromRep sort name help '[ '(l1, t1), '(l2, t2), '(l3, t3), '(l4, t4)] =
+  => PrometheusThing sort name '[ '(l1, t1), '(l2, t2), '(l3, t3), '(l4, t4)] where
+  data instance PromRep sort name '[ '(l1, t1), '(l2, t2), '(l3, t3), '(l4, t4)] =
     PromRepVec4 (P.Vector (T.Text, T.Text, T.Text, T.Text) (PromPrim sort))
-  registerMetric con _ =
+  registerMetric con help _ =
     let
       name = pack $ symbolVal' @name proxy#
-      help = pack $ symbolVal' @help proxy#
     in
       (P.register
         $ P.vector
@@ -645,7 +635,7 @@ instance ( KnownSymbol name
           , pack $ symbolVal' @l3 proxy#
           , pack $ symbolVal' @l4 proxy#
           )
-        $ con $ P.Info name help)
+        $ con $ P.Info name $ T.pack help)
         >>= pure . PromRepVec4
   type PromAction '[ '(l1, t1), '(l2, t2), '(l3, t3), '(l4, t4)]
     = t1 -> t2 -> t3 -> t4 -> IO ()
@@ -660,21 +650,20 @@ instance ( KnownSymbol name
 
 -- | 5-ary vector
 instance ( KnownSymbol name
-         , KnownSymbol help
          , KnownSymbol l1, Show t1, Typeable t1
          , KnownSymbol l2, Show t2, Typeable t2
          , KnownSymbol l3, Show t3, Typeable t3
          , KnownSymbol l4, Show t4, Typeable t4
          , KnownSymbol l5, Show t5, Typeable t5
          )
-  => PrometheusThing sort name help
+  => PrometheusThing sort name
     '[ '(l1, t1)
     , '(l2, t2)
     , '(l3, t3)
     , '(l4, t4)
     , '(l5, t5)
     ] where
-  data instance PromRep sort name help
+  data instance PromRep sort name
     '[ '(l1, t1)
     , '(l2, t2)
     , '(l3, t3)
@@ -682,10 +671,9 @@ instance ( KnownSymbol name
     , '(l5, t5)
     ] =
     PromRepVec5 (P.Vector (T.Text, T.Text, T.Text, T.Text, T.Text) (PromPrim sort))
-  registerMetric con _ =
+  registerMetric con help _ =
     let
       name = pack $ symbolVal' @name proxy#
-      help = pack $ symbolVal' @help proxy#
     in
       (P.register
         $ P.vector
@@ -695,7 +683,7 @@ instance ( KnownSymbol name
           , pack $ symbolVal' @l4 proxy#
           , pack $ symbolVal' @l5 proxy#
           )
-        $ con $ P.Info name help)
+        $ con $ P.Info name $ T.pack help)
         >>= pure . PromRepVec5
   type PromAction '[ '(l1, t1), '(l2, t2), '(l3, t3), '(l4, t4), '(l5, t5)]
     = t1 -> t2 -> t3 -> t4 -> t5 -> IO ()
@@ -711,7 +699,6 @@ instance ( KnownSymbol name
 
 -- | 6-ary vector
 instance ( KnownSymbol name
-         , KnownSymbol help
          , KnownSymbol l1, Show t1, Typeable t1
          , KnownSymbol l2, Show t2, Typeable t2
          , KnownSymbol l3, Show t3, Typeable t3
@@ -719,7 +706,7 @@ instance ( KnownSymbol name
          , KnownSymbol l5, Show t5, Typeable t5
          , KnownSymbol l6, Show t6, Typeable t6
          )
-  => PrometheusThing sort name help
+  => PrometheusThing sort name
     '[ '(l1, t1)
     , '(l2, t2)
     , '(l3, t3)
@@ -727,7 +714,7 @@ instance ( KnownSymbol name
     , '(l5, t5)
     , '(l6, t6)
     ] where
-  data instance PromRep sort name help
+  data instance PromRep sort name
     '[ '(l1, t1)
     , '(l2, t2)
     , '(l3, t3)
@@ -743,10 +730,10 @@ instance ( KnownSymbol name
       , T.Text
       , T.Text
       ) (PromPrim sort))
-  registerMetric con _ =
+  registerMetric con help _ =
     let
       name = pack $ symbolVal' @name proxy#
-      help = pack $ symbolVal' @help proxy#
+      -- help = pack $ symbolVal' @help proxy#
     in
       (P.register
         $ P.vector
@@ -757,7 +744,7 @@ instance ( KnownSymbol name
           , pack $ symbolVal' @l5 proxy#
           , pack $ symbolVal' @l6 proxy#
           )
-        $ con $ P.Info name help)
+        $ con $ P.Info name $ T.pack help)
         >>= pure . PromRepVec6
   type PromAction
     '[ '(l1, t1)
@@ -781,7 +768,6 @@ instance ( KnownSymbol name
 
 -- | 7-ary vector
 instance ( KnownSymbol name
-         , KnownSymbol help
          , KnownSymbol l1, Show t1, Typeable t1
          , KnownSymbol l2, Show t2, Typeable t2
          , KnownSymbol l3, Show t3, Typeable t3
@@ -790,7 +776,7 @@ instance ( KnownSymbol name
          , KnownSymbol l6, Show t6, Typeable t6
          , KnownSymbol l7, Show t7, Typeable t7
          )
-  => PrometheusThing sort name help
+  => PrometheusThing sort name
     '[ '(l1, t1)
     , '(l2, t2)
     , '(l3, t3)
@@ -799,7 +785,7 @@ instance ( KnownSymbol name
     , '(l6, t6)
     , '(l7, t7)
     ] where
-  data instance PromRep sort name help
+  data instance PromRep sort name
     '[ '(l1, t1)
     , '(l2, t2)
     , '(l3, t3)
@@ -817,10 +803,10 @@ instance ( KnownSymbol name
       , T.Text
       , T.Text
       ) (PromPrim sort))
-  registerMetric con _ =
+  registerMetric con help _ =
     let
       name = pack $ symbolVal' @name proxy#
-      help = pack $ symbolVal' @help proxy#
+      -- help = pack $ symbolVal' @help proxy#
     in
       (P.register
         $ P.vector
@@ -832,7 +818,7 @@ instance ( KnownSymbol name
           , pack $ symbolVal' @l6 proxy#
           , pack $ symbolVal' @l7 proxy#
           )
-        $ con $ P.Info name help)
+        $ con $ P.Info name $ T.pack help)
         >>= pure . PromRepVec7
   type PromAction
     '[ '(l1, t1)
