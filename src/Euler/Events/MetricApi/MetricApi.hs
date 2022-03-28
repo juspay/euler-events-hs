@@ -43,8 +43,11 @@ module Euler.Events.MetricApi.MetricApi
 
     -- * Building metrics
     counter
+  , counter'
   , gauge
+  , gauge'
   , histogram
+  , histogram'
   , (.&)
   , lbl
   , build
@@ -153,15 +156,15 @@ This module solves all the issues mentioned by leveraging type-level Haskell fea
 
 Define a __counter__ with name __c0__  without any labels:
 
->>> c0 = counter #c0 "help" .& build
+>>> c0 = counter #c0 .& build
 
 Let's add a counter __c2__ with two labels, the first being 'Int' and the other being 'Bool':
 
->>> c2 = counter #c2 "help" .& lbl @"foo" @Int .& lbl @"bar" @Bool .& build
+>>> c2 = counter' #c2 "help" .& lbl @"foo" @Int .& lbl @"bar" @Bool .& build
 
 And a gauge for good measure:
 
->>> g1 = gauge #g1 "help" .& lbl @"foo" @Int .& build
+>>> g1 = gauge' #g1 "help" .& lbl @"foo" @Int .& build
 
 Now we are ready to pack all those metrics in a collection:
 
@@ -185,7 +188,7 @@ Let's check the results:
 # HELP c2 help
 # TYPE c2 counter
 c2{foo="42",bar="True"} 1.0
-# HELP c0 help
+# HELP c0
 # TYPE c0 counter
 c0 0.0
 
@@ -296,26 +299,44 @@ defaultBuckets :: [Double]
 defaultBuckets =
  [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 20, 30]
 
--- | Creates a basic counter definition
+-- | Creates a basic counter definition with empty help
 counter :: forall name. NotEmpty name
+  => Proxy name
+  -> MetricDef 'Counter name '[]
+counter p = counter' p $ T.pack ""
+
+-- | Creates a basic counter definition with empty help
+counter' :: forall name. NotEmpty name
   => Proxy name
   -> T.Text
   -> MetricDef 'Counter name '[]
-counter _ = MetricDef
+counter' _ = MetricDef
 
 -- | Created a basic gauge definition
 gauge :: forall name. NotEmpty name
   => Proxy name
+  -> MetricDef 'Gauge name '[]
+gauge p = gauge' p $ T.pack ""
+
+-- | Created a basic gauge definition
+gauge' :: forall name. NotEmpty name
+  => Proxy name
   -> T.Text
   -> MetricDef 'Gauge name '[]
-gauge _ = MetricDef
+gauge' _ = MetricDef
+
+-- | Created a basic histogram definition with empty help
+histogram :: forall name. NotEmpty name
+  => Proxy name
+  -> MetricDef 'Histogram name '[]
+histogram p = histogram' p $ T.pack ""
 
 -- | Created a basic histogram definition
-histogram :: forall name. NotEmpty name
+histogram' :: forall name. NotEmpty name
   => Proxy name
   -> T.Text
   -> MetricDef 'Histogram name '[]
-histogram _ = MetricDef
+histogram' _ = MetricDef
 
 type family Snoc (list ::[k]) (elem :: k) :: [k] where
   Snoc '[] e = '[e]
@@ -433,7 +454,7 @@ newtype SafetyBox a = SafetyBox a
 
 -- | Extract a metric by its name:
 --
--- >>> metricsCollection <- register ((counter #myCounter "help" .& build) .> MNil)
+-- >>> metricsCollection <- register ((counter' #myCounter "help" .& build) .> MNil)
 -- >>> myReadyToUseCounter = metricsCollection </> #myCounter
 (</>) :: forall (s :: Symbol) (as :: STAssoc)
        . (ElemST s as, KnownSymbol s)

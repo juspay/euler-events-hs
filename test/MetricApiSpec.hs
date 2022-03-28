@@ -141,76 +141,76 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
 
 
 
-c1 = counter #c1 "help"
+c1 = counter' #c1 "help"
   .& lbl @"foo" @Int
   .& build
 
-c2 = counter #c2 "help"
+c2 = counter' #c2 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c3 = counter #c3 "help"
+c3 = counter' #c3 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-g1 = gauge #g1 "help"
+g1 = gauge' #g1 "help"
       .& build
 
-c4 = counter #c4 "help"
+c4 = counter' #c4 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c5 = counter #c5 "help"
+c5 = counter' #c5 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c6 = counter #c6 "help"
+c6 = counter' #c6 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c7 = counter #c7 "help"
+c7 = counter' #c7 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c8 = counter #c8 "help"
+c8 = counter' #c8 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c9 = counter #c9 "help"
+c9 = counter' #c9 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c10 = counter #c10 "help"
+c10 = counter' #c10 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c11 = counter #c11 "help"
+c11 = counter' #c11 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-c12 = counter #c12 "help"
+c12 = counter' #c12 "help"
       .& lbl @"foo" @Text
       .& lbl @"bar" @String
       .& lbl @"bin" @ByteString
       .& lbl @"buz" @Bool
       .& build
 
-c13 = counter #c13 ""
+c13 = counter #c13
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
       .& build
 
-o14 = histogram #o14 "help"
+o14 = histogram' #o14 "help"
   .& lbl @"foo" @Int
   .& build
 

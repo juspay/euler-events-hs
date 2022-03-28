@@ -47,7 +47,7 @@ data ReadyHandler = ReadyHandler
 
 mkReadyHandler :: IO ReadyHandler
 mkReadyHandler = do
-  let up = (gauge #up "") .& build
+  let up = (gauge #up) .& build
   let collection = up .> MNil
   metrics <- register collection
   let go = setGauge $ metrics </> #up
@@ -74,7 +74,7 @@ sendHistorgam
   eulerInstance
   pid
   merchantId = do
-    let euler_http_request_duration = histogram
+    let euler_http_request_duration = histogram'
           #euler_http_request_duration histHelp
             .& lbl @"status_code" @Text
             .& lbl @"method" @Text
