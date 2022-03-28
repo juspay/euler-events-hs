@@ -47,7 +47,7 @@ data ReadyHandler = ReadyHandler
 
 mkReadyHandler :: IO ReadyHandler
 mkReadyHandler = do
-  let up = (gauge #up) .& build emptyHelp
+  let up = (gauge #up "") .& build
   let collection = up .> MNil
   metrics <- register collection
   let go = setGauge $ metrics </> #up
@@ -75,7 +75,7 @@ sendHistorgam
   pid
   merchantId = do
     let euler_http_request_duration = histogram
-          #euler_http_request_duration
+          #euler_http_request_duration histHelp
             .& lbl @"status_code" @Text
             .& lbl @"method" @Text
             .& lbl @"path" @Text
@@ -83,7 +83,7 @@ sendHistorgam
             .& lbl @"eulerInstance" @Text
             .& lbl @"pid" @Text
             .& lbl @"merchant_id" @Text
-            .& build histHelp
+            .& build
     let collectionHistogram = euler_http_request_duration .> MNil
     coll <- register collectionHistogram
     observe (coll </> #euler_http_request_duration)
@@ -96,7 +96,7 @@ sendHistorgam
        pid
        merchantId
 
-histHelp :: String
+histHelp :: Text
 histHelp = "duration histogram of http responses labeled with: status_code, method, path, host, eulerInstance, pid, merchant_id"
 
 observeSecondsNew ::

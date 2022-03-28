@@ -141,78 +141,78 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
 
 
 
-c1 = counter #c1
+c1 = counter #c1 "help"
   .& lbl @"foo" @Int
-  .& build "help"
+  .& build
 
-c2 = counter #c2
+c2 = counter #c2 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build "help"
+      .& build
 
-c3 = counter #c3
+c3 = counter #c3 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build "help"
+      .& build
 
-g1 = gauge #g1
-      .& build "help"
+g1 = gauge #g1 "help"
+      .& build
 
-c4 = counter #c4
+c4 = counter #c4 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build "help"
+      .& build
 
-c5 = counter #c5
+c5 = counter #c5 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build "help"
+      .& build
 
-c6 = counter #c6
+c6 = counter #c6 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build "help"
+      .& build
 
-c7 = counter #c7
+c7 = counter #c7 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build "help"
+      .& build
 
-c8 = counter #c8
+c8 = counter #c8 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build "help"
+      .& build
 
-c9 = counter #c9
+c9 = counter #c9 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build "help"
+      .& build
 
-c10 = counter #c10
+c10 = counter #c10 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build "help"
+      .& build
 
-c11 = counter #c11
+c11 = counter #c11 "help"
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build "help"
+      .& build
 
-c12 = counter #c12
+c12 = counter #c12 "help"
       .& lbl @"foo" @Text
       .& lbl @"bar" @String
       .& lbl @"bin" @ByteString
       .& lbl @"buz" @Bool
-      .& build "help"
+      .& build
 
-c13 = counter #c13
+c13 = counter #c13 ""
       .& lbl @"foo" @Int
       .& lbl @"bar" @Bool
-      .& build ""
+      .& build
 
-o14 = histogram #o14
+o14 = histogram #o14 "help"
   .& lbl @"foo" @Int
-  .& build "help"
+  .& build
 
 -- collection of metrics, prevents from ambiguos metric names
 collection =

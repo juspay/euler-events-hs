@@ -48,7 +48,6 @@ module Euler.Events.MetricApi.MetricApi
   , (.&)
   , lbl
   , build
-  , emptyHelp
 
     -- * Metrics collection
   , MetricsState
@@ -154,15 +153,15 @@ This module solves all the issues mentioned by leveraging type-level Haskell fea
 
 Define a __counter__ with name __c0__  without any labels:
 
->>> c0 = counter #c0 .& build "help"
+>>> c0 = counter #c0 "help" .& build
 
 Let's add a counter __c2__ with two labels, the first being 'Int' and the other being 'Bool':
 
->>> c2 = counter #c2 .& lbl @"foo" @Int .& lbl @"bar" @Bool .& build "help"
+>>> c2 = counter #c2 "help" .& lbl @"foo" @Int .& lbl @"bar" @Bool .& build
 
 And a gauge for good measure:
 
->>> g1 = gauge #g1 .& lbl @"foo" @Int .& build "help"
+>>> g1 = gauge #g1 "help" .& lbl @"foo" @Int .& build
 
 Now we are ready to pack all those metrics in a collection:
 
@@ -252,7 +251,7 @@ data MetricDef
     (sort :: MetricSort)
     (name :: Symbol)
     (labels :: STAssoc)
-    = MetricDef
+    = MetricDef T.Text
 
 -- type PromPrim :: MetricSort -> Type
 type family PromPrim s = r | r -> s where
@@ -267,7 +266,6 @@ class PrometheusThing
   (labels :: STAssoc) where
   data PromRep sort name labels :: Type
   registerMetric :: (P.Info -> P.Metric (PromPrim sort))
-    -> String  -- Help text
     -> MetricDef sort name labels
     -> IO (PromRep sort name labels)
   type PromAction labels :: Type
@@ -301,18 +299,21 @@ defaultBuckets =
 -- | Creates a basic counter definition
 counter :: forall name. NotEmpty name
   => Proxy name
+  -> T.Text
   -> MetricDef 'Counter name '[]
 counter _ = MetricDef
 
 -- | Created a basic gauge definition
 gauge :: forall name. NotEmpty name
   => Proxy name
+  -> T.Text
   -> MetricDef 'Gauge name '[]
 gauge _ = MetricDef
 
 -- | Created a basic histogram definition
 histogram :: forall name. NotEmpty name
   => Proxy name
+  -> T.Text
   -> MetricDef 'Histogram name '[]
 histogram _ = MetricDef
 
@@ -347,10 +348,9 @@ a .& f = f a
 build :: forall sort name labels
        . (PrometheusThing sort name labels
        , Registrable sort)
-      => String
-      -> MetricDef sort name labels
+      => MetricDef sort name labels
       -> PromRep sort name labels
-build help = unsafePerformIO . (registerMetric cons help)
+build = unsafePerformIO . (registerMetric cons)
 
 {-------------------------------------------------------------------------------
   Metrics collection
@@ -433,7 +433,7 @@ newtype SafetyBox a = SafetyBox a
 
 -- | Extract a metric by its name:
 --
--- >>> metricsCollection <- register ((counter #myCounter .& build "help") .> MNil)
+-- >>> metricsCollection <- register ((counter #myCounter "help" .& build) .> MNil)
 -- >>> myReadyToUseCounter = metricsCollection </> #myCounter
 (</>) :: forall (s :: Symbol) (as :: STAssoc)
        . (ElemST s as, KnownSymbol s)
@@ -454,9 +454,6 @@ newtype SafetyBox a = SafetyBox a
 -- | @OverloadedLabels@ instance for convenience
 instance (KnownSymbol s, l ~ s) => IsLabel s (Proxy l) where
   fromLabel = Proxy @l
-
-emptyHelp :: String
-emptyHelp = ""
 
 {-------------------------------------------------------------------------------
   Working with counters
@@ -531,11 +528,11 @@ showT a = case (checkString, checkText, checkBS) of
 instance (KnownSymbol name)
   => PrometheusThing sort name '[] where
   data instance PromRep sort name '[] = PromRepBare (PromPrim sort)
-  registerMetric con help _ =
+  registerMetric con (MetricDef help) =
     let
       name = pack $ symbolVal' @name proxy#
     in
-      (P.register $ con $ P.Info name $ T.pack help)
+      (P.register $ con $ P.Info name help)
         >>= pure . PromRepBare
   type PromAction '[] = IO ()
   runOperation op (PromRepBare ref) = op ref
@@ -546,13 +543,13 @@ instance (KnownSymbol name, KnownSymbol l1, Show t1, Typeable t1)
   => PrometheusThing sort name '[ '(l1, t1)] where
   data instance PromRep sort name '[ '(l1, t1)] =
     PromRepVec1 (P.Vector (T.Text) (PromPrim sort))
-  registerMetric con help _ =
+  registerMetric con (MetricDef help) =
     let
       name = pack $ symbolVal' @name proxy#
     in
       (P.register
         $ P.vector (pack $ symbolVal' @l1 proxy#)
-        $ con $ P.Info name $ T.pack help)
+        $ con $ P.Info name help)
         >>= pure . PromRepVec1
   type PromAction '[ '(l1, t1)] = t1 -> IO ()
   runOperation op (PromRepVec1 ref) v1 = P.withLabel ref (showT v1) op
@@ -565,7 +562,7 @@ instance ( KnownSymbol name
   => PrometheusThing sort name '[ '(l1, t1), '(l2, t2)] where
   data instance PromRep sort name '[ '(l1, t1), '(l2, t2)] =
     PromRepVec2 (P.Vector (T.Text, T.Text) (PromPrim sort))
-  registerMetric con help _ =
+  registerMetric con (MetricDef help) =
     let
       name = pack $ symbolVal' @name proxy#
     in
@@ -574,7 +571,7 @@ instance ( KnownSymbol name
           ( pack $ symbolVal' @l1 proxy#
           , pack $ symbolVal' @l2 proxy#
           )
-        $ con $ P.Info name $ T.pack help)
+        $ con $ P.Info name help)
         >>= pure . PromRepVec2
   type PromAction '[ '(l1, t1), '(l2, t2)] = t1 -> t2 -> IO ()
   runOperation op (PromRepVec2 ref) v1 v2 =
@@ -593,7 +590,7 @@ instance ( KnownSymbol name
   => PrometheusThing sort name '[ '(l1, t1), '(l2, t2), '(l3, t3)] where
   data instance PromRep sort name '[ '(l1, t1), '(l2, t2), '(l3, t3)] =
     PromRepVec3 (P.Vector (T.Text, T.Text, T.Text) (PromPrim sort))
-  registerMetric con help _ =
+  registerMetric con (MetricDef help) =
     let
       name = pack $ symbolVal' @name proxy#
     in
@@ -603,7 +600,7 @@ instance ( KnownSymbol name
           , pack $ symbolVal' @l2 proxy#
           , pack $ symbolVal' @l3 proxy#
           )
-        $ con $ P.Info name $ T.pack help)
+        $ con $ P.Info name help)
         >>= pure . PromRepVec3
   type PromAction '[ '(l1, t1), '(l2, t2), '(l3, t3)] = t1 -> t2 -> t3 -> IO ()
   runOperation op (PromRepVec3 ref) v1 v2 v3 =
@@ -624,7 +621,7 @@ instance ( KnownSymbol name
   => PrometheusThing sort name '[ '(l1, t1), '(l2, t2), '(l3, t3), '(l4, t4)] where
   data instance PromRep sort name '[ '(l1, t1), '(l2, t2), '(l3, t3), '(l4, t4)] =
     PromRepVec4 (P.Vector (T.Text, T.Text, T.Text, T.Text) (PromPrim sort))
-  registerMetric con help _ =
+  registerMetric con (MetricDef help) =
     let
       name = pack $ symbolVal' @name proxy#
     in
@@ -635,7 +632,7 @@ instance ( KnownSymbol name
           , pack $ symbolVal' @l3 proxy#
           , pack $ symbolVal' @l4 proxy#
           )
-        $ con $ P.Info name $ T.pack help)
+        $ con $ P.Info name help)
         >>= pure . PromRepVec4
   type PromAction '[ '(l1, t1), '(l2, t2), '(l3, t3), '(l4, t4)]
     = t1 -> t2 -> t3 -> t4 -> IO ()
@@ -671,7 +668,7 @@ instance ( KnownSymbol name
     , '(l5, t5)
     ] =
     PromRepVec5 (P.Vector (T.Text, T.Text, T.Text, T.Text, T.Text) (PromPrim sort))
-  registerMetric con help _ =
+  registerMetric con (MetricDef help) =
     let
       name = pack $ symbolVal' @name proxy#
     in
@@ -683,7 +680,7 @@ instance ( KnownSymbol name
           , pack $ symbolVal' @l4 proxy#
           , pack $ symbolVal' @l5 proxy#
           )
-        $ con $ P.Info name $ T.pack help)
+        $ con $ P.Info name help)
         >>= pure . PromRepVec5
   type PromAction '[ '(l1, t1), '(l2, t2), '(l3, t3), '(l4, t4), '(l5, t5)]
     = t1 -> t2 -> t3 -> t4 -> t5 -> IO ()
@@ -730,7 +727,7 @@ instance ( KnownSymbol name
       , T.Text
       , T.Text
       ) (PromPrim sort))
-  registerMetric con help _ =
+  registerMetric con (MetricDef help) =
     let
       name = pack $ symbolVal' @name proxy#
       -- help = pack $ symbolVal' @help proxy#
@@ -744,7 +741,7 @@ instance ( KnownSymbol name
           , pack $ symbolVal' @l5 proxy#
           , pack $ symbolVal' @l6 proxy#
           )
-        $ con $ P.Info name $ T.pack help)
+        $ con $ P.Info name help)
         >>= pure . PromRepVec6
   type PromAction
     '[ '(l1, t1)
@@ -803,10 +800,9 @@ instance ( KnownSymbol name
       , T.Text
       , T.Text
       ) (PromPrim sort))
-  registerMetric con help _ =
+  registerMetric con (MetricDef help) =
     let
       name = pack $ symbolVal' @name proxy#
-      -- help = pack $ symbolVal' @help proxy#
     in
       (P.register
         $ P.vector
@@ -818,7 +814,7 @@ instance ( KnownSymbol name
           , pack $ symbolVal' @l6 proxy#
           , pack $ symbolVal' @l7 proxy#
           )
-        $ con $ P.Info name $ T.pack help)
+        $ con $ P.Info name help)
         >>= pure . PromRepVec7
   type PromAction
     '[ '(l1, t1)
