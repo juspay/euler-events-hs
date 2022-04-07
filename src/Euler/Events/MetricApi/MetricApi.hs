@@ -646,8 +646,8 @@ instance ( KnownSymbol name
     let
       name = pack $ symbolVal' @name proxy#
     in
-      (P.register
-        $ P.vector
+      P.register
+        (P.vector
           ( pack $ symbolVal' @l1 proxy#
           , pack $ symbolVal' @l2 proxy#
           , pack $ symbolVal' @l3 proxy#
