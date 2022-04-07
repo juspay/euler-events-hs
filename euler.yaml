@@ -24,6 +24,11 @@ overrides:
       prometheus-metrics-ghc: {}
       wai-middleware-prometheus: {}
 
+  record-dot-preprocessor:
+    version: 0.2.14
+    sha256: 11zg0wgiy2awsblmazzk5rm22sr11fm3gyj9zsh230339ckrha88
+    source: hackage
+
   stm-containers: {}
 
   list-t: {}

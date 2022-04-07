@@ -105,7 +105,7 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
       -- traceTest respBody "c12 inc --------------"
       "c12{foo=\"text\",bar=\"string\",bin=\"bs\",buz=\"True\"} 1.0" `BS.isInfixOf` respBody `shouldBe` True
 
-    it "Set gauge metrics" $ \_ -> do
+    it "Set gauge metrics (Ready)" $ \_ -> do
       metric <- mkReadyHandler
       metric.setReadyGauge ReadyUp
       metric.setReadyGauge ReadyDown
@@ -138,7 +138,7 @@ spec = runIO $ bracket (async runMetricServer) cancel $ \_ -> hspec $
       let isTest = "euler_http_request_duration_sum{status_code=\"status_code\",method=\"method\",path=\"path\",host=\"host\",eulerInstance=\"eulerInstance\",pid=\"pid\",merchant_id=\"merchant_id\"} 3.0" `BS.isInfixOf` respBody
       case isTest of
         False -> do
-          traceTest respBody "c14 histogram --------------"
+          -- traceTest respBody "c14 histogram --------------"
           pure ()
         True -> isTest `shouldBe` True
 
