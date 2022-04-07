@@ -88,12 +88,8 @@ instance MetricLogger PrometheusConfig PrometheusLogger PrometheusMetric where
       let method = Just $ decodeUtf8 (Wai.requestMethod req)
       let status =
             Just $ T.pack (show (HTTP.statusCode (Wai.responseStatus res)))
-      let path =
-            normalizer
-              <$> ( Just $
-                      T.intercalate "/" $
-                        "" : filter (\e -> T.length e /= 0) (Wai.pathInfo req)
-                  )
+      let path = normalizer <$> Just
+            (T.intercalate "/" $ "" : filter (\e -> T.length e /= 0) (Wai.pathInfo req))
       -- TODO factor out headers from Server.hs get rid of the literal
       let merchantId =
             decodeUtf8
@@ -102,3 +98,5 @@ instance MetricLogger PrometheusConfig PrometheusLogger PrometheusMetric where
                   )
       observeSeconds status method path merchantId start end
       respond res
+
+

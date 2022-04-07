@@ -35,6 +35,13 @@ super.eulerBuild.mkEulerHaskellOverlay self super
     wai-middleware-prometheus = self.eulerBuild.fastBuildExternal {
       drv = super.haskell.lib.unmarkBroken (hself.callCabal2nix "wai-middleware-prometheus" wai-middleware-prometheus-path { });
     };
+    record-dot-preprocessor = self.eulerBuild.fastBuildExternal {
+      drv = super.haskell.lib.unmarkBroken (hself.callHackageDirect {
+        pkg = "record-dot-preprocessor";
+        ver = "0.2.14";
+        sha256 = "11zg0wgiy2awsblmazzk5rm22sr11fm3gyj9zsh230339ckrha88";
+      } { });
+    };
     stm-containers = self.eulerBuild.fastBuildExternal {
       drv = super.haskell.lib.unmarkBroken (hsuper.stm-containers);
     };

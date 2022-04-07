@@ -72,16 +72,10 @@ instance (FromJSON a) => FromJSON (Event a) where
   parseJSON =
     withObject "event" $ \e -> do
       timestampIST <- e .: "timestamp"
-      let timestamp =
-            fromMaybe
-              (posixSecondsToUTCTime 1)
-              ( localTimeToUTC (TimeZone 330 False "IST")
-                  <$> parseTimeM
-                    False
-                    defaultTimeLocale
-                    "%d-%m-%Y %H:%M:%S%Q"
-                    timestampIST
-              )
+      let timestamp = maybe
+            (posixSecondsToUTCTime 1)
+            (localTimeToUTC (TimeZone 330 False "IST"))
+            (parseTimeM False defaultTimeLocale "%d-%m-%Y %H:%M:%S%Q" timestampIST)
       hostname <- e .: "hostname"
       xRequestId <- e .: "x-request-id"
       xGlobalRequestId <- e .: "x-global-request-id"
