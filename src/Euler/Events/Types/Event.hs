@@ -4,7 +4,6 @@ import           Data.Aeson            (FromJSON, ToJSON, Value, object,
                                         parseJSON, toJSON, withObject, (.:),
                                         (.=))
 import           Data.Aeson.Types      (Parser)
-import           Data.Maybe            (fromMaybe)
 import           Data.Text             (Text)
 import           Data.Time             (UTCTime)
 import           Data.Time.Clock.POSIX (posixSecondsToUTCTime)
