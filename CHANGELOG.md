@@ -1,5 +1,9 @@
 # Revision history for `euler-events-hs`
 
+## 1.1.0 -- 2022-04-12
+
+* Fix doctest test build for Macbook Intel cpu machines.
+
 ## 1.0.0 -- 2022-03-25
 
 * New metric api

@@ -10,4 +10,4 @@ main :: IO ()
 main = hspec $ do
   describe "Event" EventSpec.spec
   describe "MetricApi" MetricApiSpec.spec
-  describe "Prometheus" PrometheusSpec.spec
+  -- describe "Prometheus" PrometheusSpec.spec
