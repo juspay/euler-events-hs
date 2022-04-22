@@ -42,18 +42,6 @@ super.eulerBuild.mkEulerHaskellOverlay self super
         sha256 = "11zg0wgiy2awsblmazzk5rm22sr11fm3gyj9zsh230339ckrha88";
       } { });
     };
-    stm-containers = self.eulerBuild.fastBuildExternal {
-      drv = super.haskell.lib.unmarkBroken (hsuper.stm-containers);
-    };
-    list-t = self.eulerBuild.fastBuildExternal {
-      drv = super.haskell.lib.unmarkBroken (hsuper.list-t);
-    };
-    stm-hamt = self.eulerBuild.fastBuildExternal {
-      drv = super.haskell.lib.unmarkBroken (hsuper.stm-hamt);
-    };
-    primitive-extras = self.eulerBuild.fastBuildExternal {
-      drv = super.haskell.lib.unmarkBroken (hsuper.primitive-extras);
-    };
     
     euler-events-hs = self.eulerBuild.fastBuild {
       drv = hself.callCabal2nix "euler-events-hs" euler-events-hs-src { };
