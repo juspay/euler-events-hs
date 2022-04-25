@@ -1,5 +1,11 @@
 # Revision history for `euler-events-hs`
 
+
+## 2.0.0 -- 2022-04-25
+
+* BREAKING CHANGES! Drop legacy prometheus metric interface.
+  Use new metric instead
+
 ## 1.1.0 -- 2022-04-12
 
 * Fix doctest test build for Macbook Intel cpu machines.
