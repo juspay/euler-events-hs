@@ -1,6 +1,6 @@
 cabal-version: 2.2
 name:          euler-events-hs
-version:       1.1.0
+version:       2.0.0
 synopsis:      Events library for euler
 homepage:      https://bitbucket.org/juspay/euler-events-hs
 license:
@@ -9,7 +9,7 @@ maintainer:    puneet.pahuja@juspay.in
 copyright:     (C) Juspay Technologies Pvt Ltd 2019-2020
 category:      Euler
 build-type:    Simple
-tested-with:   GHC ==8.6.5
+tested-with:   GHC ==8.8.4
 
 source-repository head
   type:     git
@@ -56,16 +56,13 @@ library
     Euler.Events.Logger.Stdout
     Euler.Events.MetricApi.Extra
     Euler.Events.MetricApi.MetricApi
-    Euler.Events.MetricLogger.Prometheus
     Euler.Events.Types.Event
     Euler.Events.Types.Metric
     Euler.Events.Types.Order
     Euler.Events.Types.Timer
     Euler.Events.Types.Txn
     Euler.Events.Types.TxnCardInfo
-    Euler.Events.Util.Prometheus
     Euler.Events.Types.MandateWorkflow
-  -- Euler.Events.Logger.Kafka
   other-modules:   Euler.Events.Util
   hs-source-dirs:  src
   build-depends:
@@ -80,7 +77,6 @@ library
     , prometheus-client
     , prometheus-metrics-ghc
     , prometheus-proc
-    , stm-containers
     , text
     , time
     , unix
@@ -88,14 +84,6 @@ library
     , wai-middleware-prometheus
     , warp
 
--- , either
--- , hspec
--- , http-conduit
---needed for tests hspec http-conduit either
--- , deepseq
--- , hw-kafka-client
--- , proto3-suite >=0.4.0.0
--- , proto3-wire
 test-suite tests
   import:         common-lang
   type:           exitcode-stdio-1.0
@@ -103,7 +91,6 @@ test-suite tests
   other-modules:
     EventSpec
     MetricApiSpec
-    PrometheusSpec
 
   build-depends:
     , aeson
