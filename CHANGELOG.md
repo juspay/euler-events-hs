@@ -1,6 +1,10 @@
 # Revision history for `euler-events-hs`
 
 
+## 2.1.0 -- 2022-07-29
+
+* Added UPDATE_ENROLLMENT mandate flow type.
+
 ## 2.0.0 -- 2022-04-25
 
 * BREAKING CHANGES! Drop legacy prometheus metric interface.
