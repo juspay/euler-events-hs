@@ -1,7 +1,7 @@
 # Revision history for `euler-events-hs`
 
 
-## 2.1.0 -- 2022-07-29
+## 2.0.1 -- 2022-07-29
 
 * Added UPDATE_ENROLLMENT mandate flow type.
 
