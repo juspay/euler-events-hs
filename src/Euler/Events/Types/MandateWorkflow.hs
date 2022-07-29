@@ -28,6 +28,7 @@ data Flow = NOTIFICATION
   | NOTIFICATION_SYNC
   | MANDATE_EXECUTE
   | MANDATE_EXECUTE_SYNC
+  | UPDATE_ENROLLMENT
 
   deriving (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
