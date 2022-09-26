@@ -211,7 +211,7 @@ type STAssoc = [(Symbol, Type)]
 
 -- type CheckLabelLimit :: STAssoc -> Constraint
 type family CheckLabelLimit (types :: STAssoc) :: Constraint where
-  CheckLabelLimit types = If ( Length types <=? 8) () (TypeError ('Text "You cannot use more than 9 labels."))
+  CheckLabelLimit types = If ( Length types <=? 15) () (TypeError ('Text "You cannot use more than 15 labels."))
 
 -- type CheckLabelUniqueness :: Symbol -> STAssoc -> Constraint
 type family CheckLabelUniqueness (name :: Symbol) (labels :: STAssoc) :: Constraint where
@@ -858,3 +858,484 @@ instance ( KnownSymbol name
       , showT v7
       )
       op
+
+-- | 8-ary vector
+instance ( KnownSymbol name
+         , KnownSymbol l1, Show t1, Typeable t1
+         , KnownSymbol l2, Show t2, Typeable t2
+         , KnownSymbol l3, Show t3, Typeable t3
+         , KnownSymbol l4, Show t4, Typeable t4
+         , KnownSymbol l5, Show t5, Typeable t5
+         , KnownSymbol l6, Show t6, Typeable t6
+         , KnownSymbol l7, Show t7, Typeable t7
+         , KnownSymbol l8, Show t8, Typeable t8
+         )
+  => PrometheusThing sort name
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    , '(l8, t8)
+    ] where
+  data instance PromRep sort name
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    , '(l8, t8)
+    ] =
+    PromRepVec8 (P.Vector
+      ( T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      ) (PromPrim sort))
+  registerMetric con (MetricDef help) =
+    let
+      name = pack $ symbolVal' @name proxy#
+    in
+      (P.register
+        $ P.vector
+          ( pack $ symbolVal' @l1 proxy#
+          , pack $ symbolVal' @l2 proxy#
+          , pack $ symbolVal' @l3 proxy#
+          , pack $ symbolVal' @l4 proxy#
+          , pack $ symbolVal' @l5 proxy#
+          , pack $ symbolVal' @l6 proxy#
+          , pack $ symbolVal' @l7 proxy#
+          , pack $ symbolVal' @l8 proxy#
+          )
+        $ con $ P.Info name help)
+        >>= pure . PromRepVec8
+  type PromAction
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    , '(l8, t8)
+    ]
+    = t1 -> t2 -> t3 -> t4 -> t5 -> t6 -> t7 -> t8 -> IO ()
+  runOperation op (PromRepVec8 ref) v1 v2 v3 v4 v5 v6 v7 v8 =
+    P.withLabel ref
+      ( showT v1
+      , showT v2
+      , showT v3
+      , showT v4
+      , showT v5
+      , showT v6
+      , showT v7
+      , showT v8
+      )
+      op
+
+-- | 9-ary vector
+instance ( KnownSymbol name
+         , KnownSymbol l1, Show t1, Typeable t1
+         , KnownSymbol l2, Show t2, Typeable t2
+         , KnownSymbol l3, Show t3, Typeable t3
+         , KnownSymbol l4, Show t4, Typeable t4
+         , KnownSymbol l5, Show t5, Typeable t5
+         , KnownSymbol l6, Show t6, Typeable t6
+         , KnownSymbol l7, Show t7, Typeable t7
+         , KnownSymbol l8, Show t8, Typeable t8
+         , KnownSymbol l9, Show t9, Typeable t9
+         )
+  => PrometheusThing sort name
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    , '(l8, t8)
+    , '(l9, t9)
+    ] where
+  data instance PromRep sort name
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    , '(l8, t8)
+    , '(l9, t9)
+    ] =
+    PromRepVec9 (P.Vector
+      ( T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      ) (PromPrim sort))
+  registerMetric con (MetricDef help) =
+    let
+      name = pack $ symbolVal' @name proxy#
+    in
+      (P.register
+        $ P.vector
+          ( pack $ symbolVal' @l1 proxy#
+          , pack $ symbolVal' @l2 proxy#
+          , pack $ symbolVal' @l3 proxy#
+          , pack $ symbolVal' @l4 proxy#
+          , pack $ symbolVal' @l5 proxy#
+          , pack $ symbolVal' @l6 proxy#
+          , pack $ symbolVal' @l7 proxy#
+          , pack $ symbolVal' @l8 proxy#
+          , pack $ symbolVal' @l9 proxy#
+          )
+        $ con $ P.Info name help)
+        >>= pure . PromRepVec9
+  type PromAction
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    , '(l8, t8)
+    , '(l9, t9)
+    ]
+    = t1 -> t2 -> t3 -> t4 -> t5 -> t6 -> t7 -> t8 -> t9 -> IO ()
+  runOperation op (PromRepVec9 ref) v1 v2 v3 v4 v5 v6 v7 v8 v9 =
+    P.withLabel ref
+      ( showT v1
+      , showT v2
+      , showT v3
+      , showT v4
+      , showT v5
+      , showT v6
+      , showT v7
+      , showT v8
+      , showT v9
+      )
+      op
+
+-- | 10-ary vector
+instance ( KnownSymbol name
+         , KnownSymbol l1, Show t1, Typeable t1
+         , KnownSymbol l2, Show t2, Typeable t2
+         , KnownSymbol l3, Show t3, Typeable t3
+         , KnownSymbol l4, Show t4, Typeable t4
+         , KnownSymbol l5, Show t5, Typeable t5
+         , KnownSymbol l6, Show t6, Typeable t6
+         , KnownSymbol l7, Show t7, Typeable t7
+         , KnownSymbol l8, Show t8, Typeable t8
+         , KnownSymbol l9, Show t9, Typeable t9
+         , KnownSymbol l10, Show t10, Typeable t10
+         )
+  => PrometheusThing sort name
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    , '(l8, t8)
+    , '(l9, t9)
+    , '(l10, t10)
+    ] where
+  data instance PromRep sort name
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    , '(l8, t8)
+    , '(l9, t9)
+    , '(l10, t10)
+    ] =
+    PromRepVec10 (P.Vector
+      ( T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      ) (PromPrim sort))
+  registerMetric con (MetricDef help) =
+    let
+      name = pack $ symbolVal' @name proxy#
+    in
+      (P.register
+        $ P.vector
+          ( pack $ symbolVal' @l1 proxy#
+          , pack $ symbolVal' @l2 proxy#
+          , pack $ symbolVal' @l3 proxy#
+          , pack $ symbolVal' @l4 proxy#
+          , pack $ symbolVal' @l5 proxy#
+          , pack $ symbolVal' @l6 proxy#
+          , pack $ symbolVal' @l7 proxy#
+          , pack $ symbolVal' @l8 proxy#
+          , pack $ symbolVal' @l9 proxy#
+          , pack $ symbolVal' @l10 proxy#
+          )
+        $ con $ P.Info name help)
+        >>= pure . PromRepVec10
+  type PromAction
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    , '(l8, t8)
+    , '(l9, t9)
+    , '(l10, t10)
+    ]
+    = t1 -> t2 -> t3 -> t4 -> t5 -> t6 -> t7 -> t8 -> t9 -> t10 -> IO ()
+  runOperation op (PromRepVec10 ref) v1 v2 v3 v4 v5 v6 v7 v8 v9 v10 =
+    P.withLabel ref
+      ( showT v1
+      , showT v2
+      , showT v3
+      , showT v4
+      , showT v5
+      , showT v6
+      , showT v7
+      , showT v8
+      , showT v9
+      , showT v10
+      )
+      op
+
+-- | 11-ary vector
+instance ( KnownSymbol name
+         , KnownSymbol l1, Show t1, Typeable t1
+         , KnownSymbol l2, Show t2, Typeable t2
+         , KnownSymbol l3, Show t3, Typeable t3
+         , KnownSymbol l4, Show t4, Typeable t4
+         , KnownSymbol l5, Show t5, Typeable t5
+         , KnownSymbol l6, Show t6, Typeable t6
+         , KnownSymbol l7, Show t7, Typeable t7
+         , KnownSymbol l8, Show t8, Typeable t8
+         , KnownSymbol l9, Show t9, Typeable t9
+         , KnownSymbol l10, Show t10, Typeable t10
+         , KnownSymbol l11, Show t11, Typeable t11
+         )
+  => PrometheusThing sort name
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    , '(l8, t8)
+    , '(l9, t9)
+    , '(l10, t10)
+    , '(l11, t11)
+    ] where
+  data instance PromRep sort name
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    , '(l8, t8)
+    , '(l9, t9)
+    , '(l10, t10)
+    , '(l11, t11)
+    ] =
+    PromRepVec11 (P.Vector
+      ( T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      ) (PromPrim sort))
+  registerMetric con (MetricDef help) =
+    let
+      name = pack $ symbolVal' @name proxy#
+    in
+      (P.register
+        $ P.vector
+          ( pack $ symbolVal' @l1 proxy#
+          , pack $ symbolVal' @l2 proxy#
+          , pack $ symbolVal' @l3 proxy#
+          , pack $ symbolVal' @l4 proxy#
+          , pack $ symbolVal' @l5 proxy#
+          , pack $ symbolVal' @l6 proxy#
+          , pack $ symbolVal' @l7 proxy#
+          , pack $ symbolVal' @l8 proxy#
+          , pack $ symbolVal' @l9 proxy#
+          , pack $ symbolVal' @l10 proxy#
+          , pack $ symbolVal' @l11 proxy#
+          )
+        $ con $ P.Info name help)
+        >>= pure . PromRepVec11
+  type PromAction
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    , '(l8, t8)
+    , '(l9, t9)
+    , '(l10, t10)
+    , '(l11, t11)
+    ]
+    = t1 -> t2 -> t3 -> t4 -> t5 -> t6 -> t7 -> t8 -> t9 -> t10 -> t11 -> IO ()
+  runOperation op (PromRepVec11 ref) v1 v2 v3 v4 v5 v6 v7 v8 v9 v10 v11 =
+    P.withLabel ref
+      ( showT v1
+      , showT v2
+      , showT v3
+      , showT v4
+      , showT v5
+      , showT v6
+      , showT v7
+      , showT v8
+      , showT v9
+      , showT v10
+      , showT v11
+      )
+      op
+
+-- | 12-ary vector
+instance ( KnownSymbol name
+         , KnownSymbol l1, Show t1, Typeable t1
+         , KnownSymbol l2, Show t2, Typeable t2
+         , KnownSymbol l3, Show t3, Typeable t3
+         , KnownSymbol l4, Show t4, Typeable t4
+         , KnownSymbol l5, Show t5, Typeable t5
+         , KnownSymbol l6, Show t6, Typeable t6
+         , KnownSymbol l7, Show t7, Typeable t7
+         , KnownSymbol l8, Show t8, Typeable t8
+         , KnownSymbol l9, Show t9, Typeable t9
+         , KnownSymbol l10, Show t10, Typeable t10
+         , KnownSymbol l11, Show t11, Typeable t11
+         , KnownSymbol l12, Show t12, Typeable t12
+         )
+  => PrometheusThing sort name
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    , '(l8, t8)
+    , '(l9, t9)
+    , '(l10, t10)
+    , '(l11, t11)
+    , '(l12, t12)
+    ] where
+  data instance PromRep sort name
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    , '(l8, t8)
+    , '(l9, t9)
+    , '(l10, t10)
+    , '(l11, t11)
+    , '(l12, t12)
+    ] =
+    PromRepVec12 (P.Vector
+      ( T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      , T.Text
+      ) (PromPrim sort))
+  registerMetric con (MetricDef help) =
+    let
+      name = pack $ symbolVal' @name proxy#
+    in
+      (P.register
+        $ P.vector
+          ( pack $ symbolVal' @l1 proxy#
+          , pack $ symbolVal' @l2 proxy#
+          , pack $ symbolVal' @l3 proxy#
+          , pack $ symbolVal' @l4 proxy#
+          , pack $ symbolVal' @l5 proxy#
+          , pack $ symbolVal' @l6 proxy#
+          , pack $ symbolVal' @l7 proxy#
+          , pack $ symbolVal' @l8 proxy#
+          , pack $ symbolVal' @l9 proxy#
+          , pack $ symbolVal' @l10 proxy#
+          , pack $ symbolVal' @l11 proxy#
+          , pack $ symbolVal' @l12 proxy#
+          )
+        $ con $ P.Info name help)
+        >>= pure . PromRepVec12
+  type PromAction
+    '[ '(l1, t1)
+    , '(l2, t2)
+    , '(l3, t3)
+    , '(l4, t4)
+    , '(l5, t5)
+    , '(l6, t6)
+    , '(l7, t7)
+    , '(l8, t8)
+    , '(l9, t9)
+    , '(l10, t10)
+    , '(l11, t11)
+    , '(l12, t12)
+    ]
+    = t1 -> t2 -> t3 -> t4 -> t5 -> t6 -> t7 -> t8 -> t9 -> t10 -> t11 -> t12 -> IO ()
+  runOperation op (PromRepVec12 ref) v1 v2 v3 v4 v5 v6 v7 v8 v9 v10 v11 v12 =
+    P.withLabel ref
+      ( showT v1
+      , showT v2
+      , showT v3
+      , showT v4
+      , showT v5
+      , showT v6
+      , showT v7
+      , showT v8
+      , showT v9
+      , showT v10
+      , showT v11
+      , showT v12
+      )
+      op
+

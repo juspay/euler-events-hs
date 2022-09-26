@@ -12,8 +12,8 @@ let
   };
 
   prometheus-haskell-repo = builtins.fetchTarball {
-    url = "https://github.com/juspay/prometheus-haskell/archive/7bf933ad3e0059020273ab9d7fc799c582d663ae.tar.gz";
-    sha256 = "1a00yb7258gk73idwffd2c1fvw6jci71mal143q81pgxaq9ivf78";
+    url = "https://github.com/juspay/prometheus-haskell/archive/54b8fbd57257dbec0b4b76814773c5cebfae2def.tar.gz";
+    sha256 = "1l1vg5y7a6nbjqf4syhnjcpq097152q477c0q9l2wjxaaysi769h";
   };
   prometheus-client-path = "${prometheus-haskell-repo}/prometheus-client";
   prometheus-proc-path = "${prometheus-haskell-repo}/prometheus-proc";
