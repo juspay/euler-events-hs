@@ -5,6 +5,7 @@ module Euler.Events.Class where
 import Control.Monad (void)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.ByteString.Lazy (ByteString)
+import Data.Map(Map)
 import Data.Text (Text)
 import Euler.Events.Constants (eventLibraryVersion)
 import Euler.Events.Types.Event (Event (Event), EventMetadata, EventType)
@@ -54,4 +55,4 @@ class
     IO (Either ErrorText (MetricResult metric))
   emitMetricIO :: logger -> MetricOperation metric -> IO ()
   emitMetricIO logger = void . metricEvent logger
-  instrumentApp :: metric -> (Text -> Text) -> Middleware
+  instrumentApp :: metric -> Map String String -> (Text -> Text) -> Middleware

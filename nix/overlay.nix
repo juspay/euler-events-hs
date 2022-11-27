@@ -20,7 +20,7 @@ let
   prometheus-metrics-ghc-path = "${prometheus-haskell-repo}/prometheus-metrics-ghc";
   wai-middleware-prometheus-path = "${prometheus-haskell-repo}/wai-middleware-prometheus";
 
-in 
+in
 super.eulerBuild.mkEulerHaskellOverlay self super
   (hself: hsuper: {
     prometheus-client = self.eulerBuild.fastBuildExternal {
