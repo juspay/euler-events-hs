@@ -16,7 +16,6 @@ module Euler.Events.MetricApi.Extra
 import Data.List (find)
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
-import Data.Ratio ((%))
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Text.Encoding (decodeUtf8)
@@ -24,10 +23,8 @@ import Euler.Events.MetricApi.MetricApi
 import qualified Network.HTTP.Types as HTTP
 import Network.Wai (Middleware)
 import qualified Network.Wai as Wai
-import System.Clock (TimeSpec, diffTimeSpec, toNanoSecs)
-import System.Clock (Clock (..), getTime)
-import System.Environment (getEnvironment)
 import System.Posix.Process (getProcessID)
+import Data.Time.Clock.System (SystemTime(..),getSystemTime)
 
 
 -------------------------------------------------------------------------------
@@ -104,15 +101,13 @@ observeSecondsNew ::
   Maybe Text ->
   Maybe Text ->
   Maybe Text ->
-  TimeSpec ->
-  TimeSpec ->
+  Map.Map String String ->
+  SystemTime ->
+  SystemTime ->
   IO ()
-observeSecondsNew status method path merchantId start end = do
+observeSecondsNew status method path merchantId envVars start end = do
   let latency
-        = fromRational
-        $ toRational
-        $ toNanoSecs (end `diffTimeSpec` start) % 1000000000
-  envVars <- Map.fromList <$> getEnvironment
+        = fromIntegral $ (systemNanoseconds end) - (systemNanoseconds start)
   let eulerInstance = T.pack <$> Map.lookup "HOSTNAME" envVars
   let host = Nothing
   processId <- getProcessID
@@ -128,11 +123,11 @@ observeSecondsNew status method path merchantId start end = do
     (fromMaybe "" merchantId)
 
 -- Previous 'instrumentApp'
-histogramRequestTime :: (Text -> Text) -> Middleware
-histogramRequestTime normalizer app req respond = do
-  start <- getTime Monotonic
+histogramRequestTime :: Map.Map String String -> (Text -> Text) -> Middleware
+histogramRequestTime envVars normalizer app req respond = do
+  start <- getSystemTime
   app req $ \res -> do
-    end <- getTime Monotonic
+    end <- getSystemTime
     let method = Just $ decodeUtf8 (Wai.requestMethod req)
     let status
           = Just
@@ -151,5 +146,5 @@ histogramRequestTime normalizer app req respond = do
             <$> ( fmap snd <$> find (\(h, _) -> h == "x-jp-merchant-id") $
                     Wai.responseHeaders res
                 )
-    observeSecondsNew status method path merchantId start end
+    observeSecondsNew status method path merchantId envVars start end
     respond res
