@@ -58,11 +58,7 @@ library
     Euler.Events.MetricApi.MetricApi
     Euler.Events.Types.Event
     Euler.Events.Types.Metric
-    Euler.Events.Types.Order
     Euler.Events.Types.Timer
-    Euler.Events.Types.Txn
-    Euler.Events.Types.TxnCardInfo
-    Euler.Events.Types.MandateWorkflow
   other-modules:   Euler.Events.Util
   hs-source-dirs:  src
   build-depends:
