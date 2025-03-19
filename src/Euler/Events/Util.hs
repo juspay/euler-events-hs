@@ -13,12 +13,18 @@
 
 module Euler.Events.Util where
 
+import Data.Char (toLower)
 import Data.Int (Int64)
+import Data.Maybe (fromMaybe)
 import Data.Text (Text, pack)
 import Data.Text.Lazy (fromStrict)
 import qualified Data.Text.Lazy as Text.Lazy
 import Data.Time.Clock (UTCTime, diffTimeToPicoseconds, diffUTCTime)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
+import Euler.Events.Constants (compressionLevel, compressionType, compressionEnable)
+import Network.Wai.Middleware.Prometheus (Compression(..))
+import System.Environment as SE
+import Text.Read (readMaybe)
 
 -- import           Proto3.Suite          (Enumerated (Enumerated))
 
@@ -41,3 +47,18 @@ utcTimeToNanos t =
 
 tshow :: Show a => a -> Text
 tshow = pack . show
+
+mbCompressionLevel :: IO (Maybe Int)
+mbCompressionLevel = (>>= readMaybe) <$> SE.lookupEnv compressionLevel
+
+mbCompressionEnable :: IO (Maybe Bool)
+mbCompressionEnable = (>>= readMaybe) <$> SE.lookupEnv compressionEnable
+
+mbCompressionType :: IO (Maybe Compression)
+mbCompressionType = do
+  v <- SE.lookupEnv compressionType
+  mbCmpLevelValue <- mbCompressionLevel
+  pure $ case fmap toLower <$> v of
+    Just "zstd" ->  Just $ Zstd $ fromMaybe 1 mbCmpLevelValue
+    Just "gzip" -> Just $ GZip $ fromMaybe 6 mbCmpLevelValue
+    _ -> Nothing

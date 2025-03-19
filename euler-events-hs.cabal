@@ -1,8 +1,8 @@
 cabal-version: 2.2
 name:          euler-events-hs
-version:       2.0.1
+version:       2.0.3
 synopsis:      Events library for euler
-homepage:      https://bitbucket.org/juspay/euler-events-hs
+homepage:      https://github.com/juspay/euler-events-hs
 license:
 author:        Juspay Technologies Pvt Ltd
 maintainer:    puneet.pahuja@juspay.in
@@ -13,7 +13,7 @@ tested-with:   GHC ==8.8.4
 
 source-repository head
   type:     git
-  location: https://bitbucket.org/juspay/euler-events-hs
+  location: https://github.com/juspay/euler-events-hs
 
 common common-lang
   ghc-options:
@@ -23,8 +23,9 @@ common common-lang
 
   build-depends:
         base >=4.13 && <5
-      , record-dot-preprocessor
+      , record-dot-preprocessor  ^>=0.2.14
       , record-hasfield
+      , wai-extra
   default-extensions:
     DataKinds
     DeriveAnyClass
@@ -58,7 +59,11 @@ library
     Euler.Events.MetricApi.MetricApi
     Euler.Events.Types.Event
     Euler.Events.Types.Metric
+    Euler.Events.Types.Order
     Euler.Events.Types.Timer
+    Euler.Events.Types.Txn
+    Euler.Events.Types.TxnCardInfo
+    Euler.Events.Types.MandateWorkflow
   other-modules:   Euler.Events.Util
   hs-source-dirs:  src
   build-depends:
@@ -114,4 +119,4 @@ test-suite metricapi-doctest
   default-language:   Haskell2010
   build-depends:
     , base >=4.13 && <5
-    , doctest
+    , doctest >=0.12 && <0.21

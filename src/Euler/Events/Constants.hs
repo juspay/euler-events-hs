@@ -26,3 +26,16 @@ kafkaTargetTopic = "test"
 
 eventLibraryVersion :: Text
 eventLibraryVersion = "0.0.2"
+
+-- | set the values gzip, zstd
+compressionType :: [Char]
+compressionType = "METRICS_COMPRESSION_TYPE"
+
+-- | when "METRICS_COMPRESSION_TYPE" is set to zstd
+-- pass this env with some compressionLevel more than 1.
+compressionLevel :: [Char]
+compressionLevel = "METRICS_COMPRESSION_LEVEL"
+
+-- | set the "true" or "false" with default gzip.
+compressionEnable :: [Char]
+compressionEnable = "METRICS_COMPRESSION_ENABLED"
