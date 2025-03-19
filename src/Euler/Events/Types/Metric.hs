@@ -11,6 +11,7 @@
  program. If not, see <https://www.gnu.org/licenses/>.
 -}
 
+
 module Euler.Events.Types.Metric where
 
 import           Data.Text    (Text)

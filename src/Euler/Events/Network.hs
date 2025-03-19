@@ -15,6 +15,7 @@ module Euler.Events.Network where
 
 import Control.Exception (SomeException, try)
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BSC
 import Data.Either.Combinators (fromRight')
 import Network.HTTP.Simple
   ( Request,
@@ -26,6 +27,8 @@ import Network.HTTP.Simple
   )
 import Network.Wai.Handler.Warp (run)
 import qualified Network.Wai.Middleware.Prometheus as Prometheus
+import qualified Network.Wai.Middleware.Gzip as Gzip
+import Euler.Events.Util (mbCompressionEnable)
 
 makeReq :: Request -> IO (Either SomeException (Response BS.ByteString))
 makeReq req = try $ httpBS req
@@ -43,13 +46,18 @@ requestMetric :: Request
 requestMetric = setRequestPort port defaultRequest
 
 runMetricServer :: IO ()
-runMetricServer = run port (Prometheus.metricsApp Nothing)
+runMetricServer = do
+  enbl <- mbCompressionEnable
+  run port $ (
+    if enbl == Just True
+      then Gzip.gzip Gzip.def
+      else id) (Prometheus.metricsApp Nothing)
 
 traceTest :: BS.ByteString -> String -> IO ()
 traceTest resp str = do
   putStrLn ""
   putStrLn str
-  BS.putStr resp
+  BSC.putStrLn resp
 
 _ghcMetrics :: [BS.ByteString]
 _ghcMetrics =

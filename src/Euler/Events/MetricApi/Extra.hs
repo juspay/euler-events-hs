@@ -161,3 +161,54 @@ histogramRequestTime envVars normalizer app req respond = do
                 )
     observeSecondsNew status method path merchantId envVars start end
     respond res
+
+observeSecondsNew' ::
+  Maybe Text ->
+  Maybe Text ->
+  Maybe Text ->
+  Maybe Text ->
+  Maybe Text ->
+  SystemTime ->
+  SystemTime ->
+  IO ()
+observeSecondsNew' status method path merchantId mHostName start end = do
+  let latency
+        = fromIntegral $ (systemNanoseconds end) - (systemNanoseconds start)
+  let host = Nothing
+  processId <- getProcessID
+  let pid = T.pack . show <$> Just processId
+  sendHistorgam
+    latency
+    (fromMaybe "" status)
+    (fromMaybe "" method)
+    (fromMaybe "" path)
+    (fromMaybe "" host)
+    (fromMaybe "" mHostName)
+    (fromMaybe "" pid)
+    (fromMaybe "" merchantId)
+
+histogramRequestTime' :: Maybe Text -> (Text -> Text) -> Middleware
+histogramRequestTime' mHostName normalizer app req respond = do
+  start <- getSystemTime
+  app req $ \res -> do
+    end <- getSystemTime
+    let method = Just $ decodeUtf8 (Wai.requestMethod req)
+    let status
+          = Just
+          $ T.pack
+          $ show
+          $ HTTP.statusCode
+          $ Wai.responseStatus res
+    let path
+          = fmap normalizer
+          $ Just
+          $ T.intercalate "/"
+          $ "" : filter (\e -> T.length e /= 0) (Wai.pathInfo req)
+    -- TODO  factor out headers from Server.hs get rid of the literal
+    let merchantId =
+          decodeUtf8
+            <$> ( fmap snd <$> find (\(h, _) -> h == "x-jp-merchant-id") $
+                    Wai.responseHeaders res
+                )
+    observeSecondsNew' status method path merchantId mHostName start end
+    respond res
